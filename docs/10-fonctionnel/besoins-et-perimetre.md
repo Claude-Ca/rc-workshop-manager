@@ -36,10 +36,10 @@ Tableau de bord, catalogue visuel par catégories, recherche et filtres, fiches 
 
 ## Exigences d'évolution à traiter
 
-Ces demandes sont enregistrées au backlog fonctionnel ; elles ne sont pas déclarées livrées tant que le code et les tests ne les couvrent pas.
+Ces demandes sont implémentées dans la branche de fonctionnalité et soumises à validation automatisée puis aux essais fonctionnels du propriétaire avant d’être déclarées livrées.
 
 - **CAT-MNT-01 — Modifier une référence catalogue :** permettre de modifier les propriétés descriptives d'une référence, notamment sa désignation. Les exemplaires et lots doivent rester liés à l'identifiant stable de la référence ; les libellés affichés doivent provenir de la référence mise à jour, sans recopier les propriétés descriptives dans chaque exemplaire.
-- **CAT-MNT-02 — Supprimer une référence catalogue :** proposer une confirmation explicite. Si des exemplaires, des lots ou des mouvements historiques y font référence, afficher les dépendances et empêcher une suppression qui casserait l'intégrité ou l'historique. Privilégier l'archivage ou la désactivation lorsque la référence a été utilisée ; aucune suppression en cascade silencieuse.
+- **CAT-MNT-02 — Supprimer une référence catalogue :** demander confirmation. Si des exemplaires, lots ou mouvements historiques y font référence, archiver la référence, conserver les liens et l’historique et empêcher de l’utiliser pour de nouveaux exemplaires. Une référence sans dépendance peut être supprimée définitivement.
 - **AIR-MNT-01 — Modifier un avion :** permettre de modifier les propriétés d'un avion existant sans changer son identifiant, ni perdre les affectations des équipements.
 - **AIR-MNT-02 — Enrichir la fiche avion :** ajouter un champ d'immatriculation UAF facultatif, modifiable et persistant. Le champ ne doit pas être rendu obligatoire tant que le besoin métier ne l'exige pas.
 
