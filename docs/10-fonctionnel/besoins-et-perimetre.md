@@ -34,6 +34,15 @@ Motorisation, électronique, batteries, hélices, connectique, commandes, struct
 
 Tableau de bord, catalogue visuel par catégories, recherche et filtres, fiches détaillées avec photos facultatives, gestion des avions/projets, localisation physique facultative et historique des mouvements.
 
+## Exigences d'évolution à traiter
+
+Ces demandes sont enregistrées au backlog fonctionnel ; elles ne sont pas déclarées livrées tant que le code et les tests ne les couvrent pas.
+
+- **CAT-MNT-01 — Modifier une référence catalogue :** permettre de modifier les propriétés descriptives d'une référence, notamment sa désignation. Les exemplaires et lots doivent rester liés à l'identifiant stable de la référence ; les libellés affichés doivent provenir de la référence mise à jour, sans recopier les propriétés descriptives dans chaque exemplaire.
+- **CAT-MNT-02 — Supprimer une référence catalogue :** proposer une confirmation explicite. Si des exemplaires, des lots ou des mouvements historiques y font référence, afficher les dépendances et empêcher une suppression qui casserait l'intégrité ou l'historique. Privilégier l'archivage ou la désactivation lorsque la référence a été utilisée ; aucune suppression en cascade silencieuse.
+- **AIR-MNT-01 — Modifier un avion :** permettre de modifier les propriétés d'un avion existant sans changer son identifiant, ni perdre les affectations des équipements.
+- **AIR-MNT-02 — Enrichir la fiche avion :** ajouter un champ d'immatriculation UAF facultatif, modifiable et persistant. Le champ ne doit pas être rendu obligatoire tant que le besoin métier ne l'exige pas.
+
 ## Critères d'acceptation du premier incrément
 
 - Créer, modifier, consulter et archiver une référence.
