@@ -102,7 +102,9 @@ describe("InventoryService", () => {
     const repository = new MemoryRepository();
     const service = new InventoryService(repository);
     service.addAircraft({ id: "AIR-EDIT", name: "Carbon Cub" });
-    service.addItem({ id: "ITEM-AIR", referenceId: "REF-DUMMY", inventoryCode: "DUMMY-001", status: "installed", aircraftId: "AIR-EDIT", createdAt: "2026-11-01T12:00:00.000Z" });
+    service.createReference(reference("REF-DUMMY", "motor", "individual"));
+    service.addItem({ id: "ITEM-AIR", referenceId: "REF-DUMMY", inventoryCode: "DUMMY-001", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
+    service.assignItem("ITEM-AIR", { kind: "aircraft", id: "AIR-EDIT" }, "MOV-AIR", "2026-11-01T12:05:00.000Z");
     service.updateAircraft({ id: "AIR-EDIT", name: "Carbon-Z Cub", manufacturer: "E-flite", model: "SS", uafRegistration: "UAF-123" });
     expect(repository.snapshot.aircraft).toHaveLength(1);
     expect(repository.snapshot.aircraft[0]).toMatchObject({ id: "AIR-EDIT", name: "Carbon-Z Cub", uafRegistration: "UAF-123" });
