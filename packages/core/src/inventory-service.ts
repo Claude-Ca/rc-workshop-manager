@@ -25,6 +25,14 @@ export class InventoryService {
     if (reference.category === "receiver" && reference.trackingMode !== "individual") {
       throw new InventoryError("Un récepteur doit être suivi individuellement.");
     }
+    if (reference.category === "receiver") {
+      if (!Number.isInteger(reference.receiverChannels) || (reference.receiverChannels ?? 0) < 1) {
+        throw new InventoryError("Le nombre de voies du récepteur doit être un entier strictement positif.");
+      }
+      if (!reference.receiverProtocol?.trim()) {
+        throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
+      }
+    }
     this.repository.saveReference({ ...reference, name: reference.name.trim(), archived: false });
   }
 

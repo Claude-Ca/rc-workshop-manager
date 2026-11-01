@@ -11,7 +11,15 @@ export default defineConfig({
     resolve: { alias: { "@core": resolve(root, "../../packages/core/src") } },
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    // Emit a CommonJS preload that can run inside Electron's sandbox.
+    build: {
+      rollupOptions: {
+        output: {
+          format: "cjs",
+          entryFileNames: "index.cjs",
+        },
+      },
+    },
   },
   renderer: {
     root: resolve(root, "src/renderer"),
