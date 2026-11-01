@@ -47,7 +47,10 @@ export class InventoryService {
       if (!Number.isInteger(reference.receiverChannels) || (reference.receiverChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies du récepteur doit être un entier strictement positif.");
       if (!reference.receiverProtocol?.trim()) throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
     }
-    this.repository.saveReference({ ...reference, name: reference.name.trim(), ...(reference.brand?.trim() ? { brand: reference.brand.trim() } : { brand: undefined }), ...(reference.model?.trim() ? { model: reference.model.trim() } : { model: undefined }), archived: false });
+    const updated: ComponentReference = { ...reference, name: reference.name.trim(), archived: false };
+    if (reference.brand?.trim()) updated.brand = reference.brand.trim(); else delete updated.brand;
+    if (reference.model?.trim()) updated.model = reference.model.trim(); else delete updated.model;
+    this.repository.saveReference(updated);
   }
 
   deleteReference(referenceId: string): { archived: boolean } {
@@ -112,14 +115,12 @@ export class InventoryService {
     const snapshot = this.repository.getSnapshot();
     if (!snapshot.aircraft.some((entry) => entry.id === aircraft.id)) throw new InventoryError("Avion introuvable.");
     if (!aircraft.name.trim()) throw new InventoryError("Le nom de l'avion est obligatoire.");
-    this.repository.saveAircraft({
-      ...aircraft,
-      name: aircraft.name.trim(),
-      ...(aircraft.manufacturer?.trim() ? { manufacturer: aircraft.manufacturer.trim() } : { manufacturer: undefined }),
-      ...(aircraft.model?.trim() ? { model: aircraft.model.trim() } : { model: undefined }),
-      ...(aircraft.notes?.trim() ? { notes: aircraft.notes.trim() } : { notes: undefined }),
-      ...(aircraft.uafRegistration?.trim() ? { uafRegistration: aircraft.uafRegistration.trim() } : { uafRegistration: undefined }),
-    });
+    const updated: Aircraft = { ...aircraft, name: aircraft.name.trim() };
+    if (aircraft.manufacturer?.trim()) updated.manufacturer = aircraft.manufacturer.trim(); else delete updated.manufacturer;
+    if (aircraft.model?.trim()) updated.model = aircraft.model.trim(); else delete updated.model;
+    if (aircraft.notes?.trim()) updated.notes = aircraft.notes.trim(); else delete updated.notes;
+    if (aircraft.uafRegistration?.trim()) updated.uafRegistration = aircraft.uafRegistration.trim(); else delete updated.uafRegistration;
+    this.repository.saveAircraft(updated);
   }
 
   addProject(project: Project): void {
