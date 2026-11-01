@@ -15,6 +15,9 @@ export interface ComponentReference {
   model?: string;
   description?: string;
   trackingMode: TrackingMode;
+  /** Required radio properties for receiver references. */
+  receiverChannels?: number;
+  receiverProtocol?: string;
   attributes: Record<string, string | number | boolean>;
   photoPath?: string;
   archived: boolean;

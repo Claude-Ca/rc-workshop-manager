@@ -15,13 +15,23 @@ class MemoryRepository implements InventoryRepository {
 }
 
 const reference = (id: string, category: ComponentReference["category"], trackingMode: ComponentReference["trackingMode"]): ComponentReference => ({
-  id, name: "Récepteur 8 voies", category, trackingMode, attributes: {}, archived: false, createdAt: "2026-11-01T12:00:00.000Z",
+  id, name: "Récepteur 8 voies", category, trackingMode,
+  ...(category === "receiver" ? { receiverChannels: 8, receiverProtocol: "ExpressLRS" } : {}),
+  attributes: {}, archived: false, createdAt: "2026-11-01T12:00:00.000Z",
 });
 
 describe("InventoryService", () => {
   it("requires receiver references to be individually tracked", () => {
     const service = new InventoryService(new MemoryRepository());
     expect(() => service.createReference(reference("REF-1", "receiver", "quantity"))).toThrow(InventoryError);
+  });
+
+  it("requires receiver channel count and radio protocol", () => {
+    const service = new InventoryService(new MemoryRepository());
+    const missingChannels = { ...reference("REF-2", "receiver", "individual"), receiverChannels: undefined };
+    expect(() => service.createReference(missingChannels)).toThrow(/nombre de voies/);
+    const missingProtocol = { ...reference("REF-3", "receiver", "individual"), receiverProtocol: " " };
+    expect(() => service.createReference(missingProtocol)).toThrow(/protocole radio/);
   });
 
   it("assigns a stable TX16 name to a receiver when none is provided", () => {
