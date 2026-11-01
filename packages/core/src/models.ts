@@ -21,8 +21,6 @@ export interface ComponentReference {
   attributes: Record<string, string | number | boolean>;
   photoPath?: string;
   archived: boolean;
-  receiverChannels?: number;
-  receiverProtocol?: string;
   createdAt: string;
 }
 
