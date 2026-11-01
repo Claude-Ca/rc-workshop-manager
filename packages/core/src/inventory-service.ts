@@ -36,6 +36,42 @@ export class InventoryService {
     this.repository.saveReference({ ...reference, name: reference.name.trim(), archived: false });
   }
 
+  updateReference(reference: ComponentReference): void {
+    const snapshot = this.repository.getSnapshot();
+    const existing = snapshot.references.find((entry) => entry.id === reference.id);
+    if (!existing) throw new InventoryError("Référence catalogue introuvable.");
+    if (existing.archived) throw new InventoryError("Une référence archivée ne peut pas être modifiée.");
+    if (!reference.name.trim()) throw new InventoryError("La désignation est obligatoire.");
+    const hasStock = snapshot.items.some((item) => item.referenceId === reference.id) || snapshot.lots.some((lot) => lot.referenceId === reference.id);
+    const hasHistory = snapshot.movements.some((movement) => movement.referenceId === reference.id);
+    if ((hasStock || hasHistory) && reference.category !== existing.category) throw new InventoryError("La catégorie ne peut pas être modifiée après utilisation de cette référence.");
+    if (hasStock && reference.trackingMode !== existing.trackingMode) throw new InventoryError("Le mode de suivi ne peut pas être modifié tant que des exemplaires ou lots existent.");
+    if (reference.category === "receiver") {
+      if (reference.trackingMode !== "individual") throw new InventoryError("Un récepteur doit être suivi individuellement.");
+      if (!Number.isInteger(reference.receiverChannels) || (reference.receiverChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies du récepteur doit être un entier strictement positif.");
+      if (!reference.receiverProtocol?.trim()) throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
+    }
+    const updated: ComponentReference = { ...reference, id: existing.id, createdAt: existing.createdAt, name: reference.name.trim(), archived: false };
+    if (reference.brand?.trim()) updated.brand = reference.brand.trim(); else delete updated.brand;
+    if (reference.model?.trim()) updated.model = reference.model.trim(); else delete updated.model;
+    this.repository.saveReference(updated);
+  }
+
+  deleteReference(referenceId: string): { archived: boolean } {
+    const snapshot = this.repository.getSnapshot();
+    const reference = snapshot.references.find((entry) => entry.id === referenceId);
+    if (!reference) throw new InventoryError("Référence catalogue introuvable.");
+    const items = snapshot.items.filter((item) => item.referenceId === referenceId).length;
+    const lots = snapshot.lots.filter((lot) => lot.referenceId === referenceId).length;
+    const movements = snapshot.movements.filter((movement) => movement.referenceId === referenceId).length;
+    if (items + lots + movements > 0) {
+      this.repository.saveReference({ ...reference, archived: true });
+      return { archived: true };
+    }
+    this.repository.deleteReference(referenceId);
+    return { archived: false };
+  }
+
   addItem(item: StockItem): void {
     const snapshot = this.repository.getSnapshot();
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId && !entry.archived);
@@ -77,6 +113,18 @@ export class InventoryService {
   addAircraft(aircraft: Aircraft): void {
     if (!aircraft.id.trim() || !aircraft.name.trim()) throw new InventoryError("Identifiant et nom d'avion obligatoires.");
     this.repository.saveAircraft(aircraft);
+  }
+
+  updateAircraft(aircraft: Aircraft): void {
+    const snapshot = this.repository.getSnapshot();
+    if (!snapshot.aircraft.some((entry) => entry.id === aircraft.id)) throw new InventoryError("Avion introuvable.");
+    if (!aircraft.name.trim()) throw new InventoryError("Le nom de l'avion est obligatoire.");
+    const updated: Aircraft = { ...aircraft, name: aircraft.name.trim() };
+    if (aircraft.manufacturer?.trim()) updated.manufacturer = aircraft.manufacturer.trim(); else delete updated.manufacturer;
+    if (aircraft.model?.trim()) updated.model = aircraft.model.trim(); else delete updated.model;
+    if (aircraft.notes?.trim()) updated.notes = aircraft.notes.trim(); else delete updated.notes;
+    if (aircraft.uafRegistration?.trim()) updated.uafRegistration = aircraft.uafRegistration.trim(); else delete updated.uafRegistration;
+    this.repository.saveAircraft(updated);
   }
 
   addProject(project: Project): void {

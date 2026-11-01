@@ -52,6 +52,7 @@ export interface Aircraft {
   manufacturer?: string;
   model?: string;
   notes?: string;
+  uafRegistration?: string;
 }
 
 export interface Project {

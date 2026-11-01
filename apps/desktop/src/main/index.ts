@@ -32,6 +32,14 @@ function createWindow(): void {
 
 function registerHandlers(): void {
   ipcMain.handle("inventory:snapshot", () => inventory.getSnapshot());
+  ipcMain.handle("inventory:update-reference", (_event, input: ComponentReference) => {
+    inventory.updateReference(input);
+    return inventory.getSnapshot();
+  });
+  ipcMain.handle("inventory:delete-reference", (_event, referenceId: string) => {
+    const result = inventory.deleteReference(referenceId);
+    return { snapshot: inventory.getSnapshot(), archived: result.archived };
+  });
   ipcMain.handle("inventory:create-reference", (_event, input: Omit<ComponentReference, "createdAt" | "archived">) => {
     inventory.createReference({ ...input, createdAt: new Date().toISOString(), archived: false });
     return inventory.getSnapshot();
@@ -46,6 +54,10 @@ function registerHandlers(): void {
   });
   ipcMain.handle("inventory:add-aircraft", (_event, input: Aircraft) => {
     inventory.addAircraft(input);
+    return inventory.getSnapshot();
+  });
+  ipcMain.handle("inventory:update-aircraft", (_event, input: Aircraft) => {
+    inventory.updateAircraft(input);
     return inventory.getSnapshot();
   });
   ipcMain.handle("inventory:add-project", (_event, input: Project) => {
