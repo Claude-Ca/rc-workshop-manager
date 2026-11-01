@@ -28,7 +28,8 @@ describe("InventoryService", () => {
 
   it("requires receiver channel count and radio protocol", () => {
     const service = new InventoryService(new MemoryRepository());
-    const missingChannels = { ...reference("REF-2", "receiver", "individual"), receiverChannels: undefined };
+    const missingChannels = { ...reference("REF-2", "receiver", "individual") };
+    delete missingChannels.receiverChannels;
     expect(() => service.createReference(missingChannels)).toThrow(/nombre de voies/);
     const missingProtocol = { ...reference("REF-3", "receiver", "individual"), receiverProtocol: " " };
     expect(() => service.createReference(missingProtocol)).toThrow(/protocole radio/);
