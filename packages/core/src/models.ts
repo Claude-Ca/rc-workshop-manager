@@ -21,6 +21,8 @@ export interface ComponentReference {
   attributes: Record<string, string | number | boolean>;
   photoPath?: string;
   archived: boolean;
+  receiverChannels?: number;
+  receiverProtocol?: string;
   createdAt: string;
 }
 
@@ -52,6 +54,7 @@ export interface Aircraft {
   manufacturer?: string;
   model?: string;
   notes?: string;
+  uafRegistration?: string;
 }
 
 export interface Project {
