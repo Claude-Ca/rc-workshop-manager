@@ -47,7 +47,7 @@ export class InventoryService {
       if (!Number.isInteger(reference.receiverChannels) || (reference.receiverChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies du récepteur doit être un entier strictement positif.");
       if (!reference.receiverProtocol?.trim()) throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
     }
-    this.repository.saveReference({ ...reference, name: reference.name.trim(), brand: reference.brand?.trim() || undefined, model: reference.model?.trim() || undefined, archived: false });
+    this.repository.saveReference({ ...reference, name: reference.name.trim(), ...(reference.brand?.trim() ? { brand: reference.brand.trim() } : { brand: undefined }), ...(reference.model?.trim() ? { model: reference.model.trim() } : { model: undefined }), archived: false });
   }
 
   deleteReference(referenceId: string): { archived: boolean } {
@@ -115,10 +115,10 @@ export class InventoryService {
     this.repository.saveAircraft({
       ...aircraft,
       name: aircraft.name.trim(),
-      manufacturer: aircraft.manufacturer?.trim() || undefined,
-      model: aircraft.model?.trim() || undefined,
-      notes: aircraft.notes?.trim() || undefined,
-      uafRegistration: aircraft.uafRegistration?.trim() || undefined,
+      ...(aircraft.manufacturer?.trim() ? { manufacturer: aircraft.manufacturer.trim() } : { manufacturer: undefined }),
+      ...(aircraft.model?.trim() ? { model: aircraft.model.trim() } : { model: undefined }),
+      ...(aircraft.notes?.trim() ? { notes: aircraft.notes.trim() } : { notes: undefined }),
+      ...(aircraft.uafRegistration?.trim() ? { uafRegistration: aircraft.uafRegistration.trim() } : { uafRegistration: undefined }),
     });
   }
 
