@@ -36,6 +36,35 @@ export class InventoryService {
     this.repository.saveReference({ ...reference, name: reference.name.trim(), archived: false });
   }
 
+  updateReference(reference: ComponentReference): void {
+    const snapshot = this.repository.getSnapshot();
+    const existing = snapshot.references.find((entry) => entry.id === reference.id);
+    if (!existing) throw new InventoryError("Référence catalogue introuvable.");
+    if (existing.archived) throw new InventoryError("Une référence archivée ne peut pas être modifiée.");
+    if (!reference.name.trim()) throw new InventoryError("La désignation est obligatoire.");
+    if (reference.category === "receiver") {
+      if (reference.trackingMode !== "individual") throw new InventoryError("Un récepteur doit être suivi individuellement.");
+      if (!Number.isInteger(reference.receiverChannels) || (reference.receiverChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies du récepteur doit être un entier strictement positif.");
+      if (!reference.receiverProtocol?.trim()) throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
+    }
+    this.repository.saveReference({ ...reference, name: reference.name.trim(), brand: reference.brand?.trim() || undefined, model: reference.model?.trim() || undefined, archived: false });
+  }
+
+  deleteReference(referenceId: string): { archived: boolean } {
+    const snapshot = this.repository.getSnapshot();
+    const reference = snapshot.references.find((entry) => entry.id === referenceId);
+    if (!reference) throw new InventoryError("Référence catalogue introuvable.");
+    const items = snapshot.items.filter((item) => item.referenceId === referenceId).length;
+    const lots = snapshot.lots.filter((lot) => lot.referenceId === referenceId).length;
+    const movements = snapshot.movements.filter((movement) => movement.referenceId === referenceId).length;
+    if (items + lots + movements > 0) {
+      this.repository.saveReference({ ...reference, archived: true });
+      return { archived: true };
+    }
+    this.repository.deleteReference(referenceId);
+    return { archived: false };
+  }
+
   addItem(item: StockItem): void {
     const snapshot = this.repository.getSnapshot();
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId && !entry.archived);
@@ -77,6 +106,20 @@ export class InventoryService {
   addAircraft(aircraft: Aircraft): void {
     if (!aircraft.id.trim() || !aircraft.name.trim()) throw new InventoryError("Identifiant et nom d'avion obligatoires.");
     this.repository.saveAircraft(aircraft);
+  }
+
+  updateAircraft(aircraft: Aircraft): void {
+    const snapshot = this.repository.getSnapshot();
+    if (!snapshot.aircraft.some((entry) => entry.id === aircraft.id)) throw new InventoryError("Avion introuvable.");
+    if (!aircraft.name.trim()) throw new InventoryError("Le nom de l'avion est obligatoire.");
+    this.repository.saveAircraft({
+      ...aircraft,
+      name: aircraft.name.trim(),
+      manufacturer: aircraft.manufacturer?.trim() || undefined,
+      model: aircraft.model?.trim() || undefined,
+      notes: aircraft.notes?.trim() || undefined,
+      uafRegistration: aircraft.uafRegistration?.trim() || undefined,
+    });
   }
 
   addProject(project: Project): void {
