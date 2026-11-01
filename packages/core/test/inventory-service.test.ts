@@ -6,10 +6,12 @@ import type { InventorySnapshot, ComponentReference, StockItem, StockLot, Aircra
 class MemoryRepository implements InventoryRepository {
   snapshot: InventorySnapshot = { references: [], items: [], lots: [], aircraft: [], projects: [], movements: [] };
   getSnapshot() { return structuredClone(this.snapshot); }
-  saveReference(value: ComponentReference) { this.snapshot.references.push(value); }
+  saveReference(value: ComponentReference) { this.snapshot.references = [...this.snapshot.references.filter(x => x.id !== value.id), value]; }
+  deleteReference(referenceId: string) { this.snapshot.references = this.snapshot.references.filter(x => x.id !== referenceId); }
   saveItem(value: StockItem) { this.snapshot.items = [...this.snapshot.items.filter(x => x.id !== value.id), value]; }
   saveLot(value: StockLot) { this.snapshot.lots.push(value); }
-  saveAircraft(value: Aircraft) { this.snapshot.aircraft.push(value); }
+  saveAircraft(value: Aircraft) { this.snapshot.aircraft = [...this.snapshot.aircraft.filter(x => x.id !== value.id), value]; }
+  deleteAircraft(aircraftId: string) { this.snapshot.aircraft = this.snapshot.aircraft.filter(x => x.id !== aircraftId); }
   saveProject(value: Project) { this.snapshot.projects.push(value); }
   appendMovement(value: StockMovement) { this.snapshot.movements.push(value); }
 }
@@ -63,6 +65,48 @@ describe("InventoryService", () => {
     expect(() => service.assignItem("ITEM-1", { kind: "aircraft", id: "AIR-1" }, "MOV-3", "2026-11-01T12:20:00.000Z")).toThrow(/disponible/);
     service.releaseItem("ITEM-1", "MOV-4", "2026-11-01T12:30:00.000Z");
     expect(repository.snapshot.items[0]?.status).toBe("available");
+  });
+
+  it("updates a catalog reference without changing its identity", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    service.createReference(reference("REF-EDIT", "motor", "individual"));
+    service.addItem({ id: "ITEM-EDIT", referenceId: "REF-EDIT", inventoryCode: "MOT-001", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
+    const original = repository.snapshot.references[0]!;
+    service.updateReference({ ...original, name: "Motor renommé" });
+    expect(repository.snapshot.references).toHaveLength(1);
+    expect(repository.snapshot.references[0]).toMatchObject({ id: "REF-EDIT", name: "Motor renommé" });
+    expect(repository.snapshot.items[0]?.referenceId).toBe("REF-EDIT");
+  });
+
+  it("archives a referenced catalog entry instead of deleting its history", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    service.createReference(reference("REF-USED", "motor", "individual"));
+    service.addItem({ id: "ITEM-USED", referenceId: "REF-USED", inventoryCode: "MOT-USED", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
+    expect(service.deleteReference("REF-USED")).toEqual({ archived: true });
+    expect(repository.snapshot.references[0]?.archived).toBe(true);
+    expect(repository.snapshot.items[0]?.referenceId).toBe("REF-USED");
+    expect(() => service.addItem({ id: "ITEM-NEW", referenceId: "REF-USED", inventoryCode: "MOT-NEW", status: "available", createdAt: "2026-11-01T12:00:00.000Z" })).toThrow(/introuvable ou archivée/);
+  });
+
+  it("deletes an unused catalog entry", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    service.createReference(reference("REF-UNUSED", "motor", "individual"));
+    expect(service.deleteReference("REF-UNUSED")).toEqual({ archived: false });
+    expect(repository.snapshot.references).toHaveLength(0);
+  });
+
+  it("updates aircraft details including optional UAF registration without changing the id", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    service.addAircraft({ id: "AIR-EDIT", name: "Carbon Cub" });
+    service.addItem({ id: "ITEM-AIR", referenceId: "REF-DUMMY", inventoryCode: "DUMMY-001", status: "installed", aircraftId: "AIR-EDIT", createdAt: "2026-11-01T12:00:00.000Z" });
+    service.updateAircraft({ id: "AIR-EDIT", name: "Carbon-Z Cub", manufacturer: "E-flite", model: "SS", uafRegistration: "UAF-123" });
+    expect(repository.snapshot.aircraft).toHaveLength(1);
+    expect(repository.snapshot.aircraft[0]).toMatchObject({ id: "AIR-EDIT", name: "Carbon-Z Cub", uafRegistration: "UAF-123" });
+    expect(repository.snapshot.items[0]?.aircraftId).toBe("AIR-EDIT");
   });
 
   it("validates quantity lots as positive integers", () => {
