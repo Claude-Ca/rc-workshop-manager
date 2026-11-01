@@ -42,12 +42,16 @@ export class InventoryService {
     if (!existing) throw new InventoryError("Référence catalogue introuvable.");
     if (existing.archived) throw new InventoryError("Une référence archivée ne peut pas être modifiée.");
     if (!reference.name.trim()) throw new InventoryError("La désignation est obligatoire.");
+    const hasStock = snapshot.items.some((item) => item.referenceId === reference.id) || snapshot.lots.some((lot) => lot.referenceId === reference.id);
+    const hasHistory = snapshot.movements.some((movement) => movement.referenceId === reference.id);
+    if ((hasStock || hasHistory) && reference.category !== existing.category) throw new InventoryError("La catégorie ne peut pas être modifiée après utilisation de cette référence.");
+    if (hasStock && reference.trackingMode !== existing.trackingMode) throw new InventoryError("Le mode de suivi ne peut pas être modifié tant que des exemplaires ou lots existent.");
     if (reference.category === "receiver") {
       if (reference.trackingMode !== "individual") throw new InventoryError("Un récepteur doit être suivi individuellement.");
       if (!Number.isInteger(reference.receiverChannels) || (reference.receiverChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies du récepteur doit être un entier strictement positif.");
       if (!reference.receiverProtocol?.trim()) throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
     }
-    const updated: ComponentReference = { ...reference, name: reference.name.trim(), archived: false };
+    const updated: ComponentReference = { ...reference, id: existing.id, createdAt: existing.createdAt, name: reference.name.trim(), archived: false };
     if (reference.brand?.trim()) updated.brand = reference.brand.trim(); else delete updated.brand;
     if (reference.model?.trim()) updated.model = reference.model.trim(); else delete updated.model;
     this.repository.saveReference(updated);
