@@ -25,11 +25,12 @@ export class SqliteInventoryRepository implements InventoryRepository {
       CREATE TABLE IF NOT EXISTS component_references (
         id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL,
         brand TEXT, model TEXT, description TEXT, tracking_mode TEXT NOT NULL,
+        receiver_channels INTEGER, receiver_protocol TEXT,
         attributes_json TEXT NOT NULL DEFAULT '{}', photo_path TEXT,
         archived INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS aircraft (
-        id TEXT PRIMARY KEY, name TEXT NOT NULL, manufacturer TEXT, model TEXT, notes TEXT
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, manufacturer TEXT, model TEXT, notes TEXT, uaf_registration TEXT
       );
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL, notes TEXT
@@ -51,6 +52,11 @@ export class SqliteInventoryRepository implements InventoryRepository {
         to_location_id TEXT, aircraft_id TEXT, project_id TEXT, notes TEXT, occurred_at TEXT NOT NULL
       );
     `);
+    const referenceColumns = this.db.prepare("PRAGMA table_info(component_references)").all() as Row[];
+    if (!referenceColumns.some((column) => column.name === "receiver_channels")) this.db.exec("ALTER TABLE component_references ADD COLUMN receiver_channels INTEGER");
+    if (!referenceColumns.some((column) => column.name === "receiver_protocol")) this.db.exec("ALTER TABLE component_references ADD COLUMN receiver_protocol TEXT");
+    const aircraftColumns = this.db.prepare("PRAGMA table_info(aircraft)").all() as Row[];
+    if (!aircraftColumns.some((column) => column.name === "uaf_registration")) this.db.exec("ALTER TABLE aircraft ADD COLUMN uaf_registration TEXT");
   }
 
   getSnapshot(): InventorySnapshot {
@@ -63,6 +69,8 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.model ? { model: String(row.model) } : {}),
       ...(row.description ? { description: String(row.description) } : {}),
       ...(row.photo_path ? { photoPath: String(row.photo_path) } : {}),
+      ...(row.receiver_channels !== null && row.receiver_channels !== undefined ? { receiverChannels: Number(row.receiver_channels) } : {}),
+      ...(row.receiver_protocol ? { receiverProtocol: String(row.receiver_protocol) } : {}),
     }));
     const items = (this.db.prepare("SELECT * FROM stock_items ORDER BY inventory_code").all() as Row[]).map((row): StockItem => ({
       id: String(row.id), referenceId: String(row.reference_id), inventoryCode: String(row.inventory_code),
@@ -83,6 +91,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.manufacturer ? { manufacturer: String(row.manufacturer) } : {}),
       ...(row.model ? { model: String(row.model) } : {}),
       ...(row.notes ? { notes: String(row.notes) } : {}),
+      ...(row.uaf_registration ? { uafRegistration: String(row.uaf_registration) } : {}),
     }));
     const projects = (this.db.prepare("SELECT * FROM projects ORDER BY name").all() as Row[]).map((row): Project => ({
       id: String(row.id), name: String(row.name), status: row.status as Project["status"],
@@ -104,14 +113,20 @@ export class SqliteInventoryRepository implements InventoryRepository {
 
   saveReference(value: ComponentReference): void {
     this.db.prepare(`INSERT INTO component_references
-      (id,name,category,brand,model,description,tracking_mode,attributes_json,photo_path,archived,created_at)
-      VALUES (@id,@name,@category,@brand,@model,@description,@trackingMode,@attributes,@photoPath,@archived,@createdAt)
+      (id,name,category,brand,model,description,tracking_mode,attributes_json,photo_path,archived,created_at,receiver_channels,receiver_protocol)
+      VALUES (@id,@name,@category,@brand,@model,@description,@trackingMode,@attributes,@photoPath,@archived,@createdAt,@receiverChannels,@receiverProtocol)
       ON CONFLICT(id) DO UPDATE SET name=excluded.name,category=excluded.category,brand=excluded.brand,
       model=excluded.model,description=excluded.description,tracking_mode=excluded.tracking_mode,
-      attributes_json=excluded.attributes_json,photo_path=excluded.photo_path,archived=excluded.archived`)
+      attributes_json=excluded.attributes_json,photo_path=excluded.photo_path,archived=excluded.archived,
+      receiver_channels=excluded.receiver_channels,receiver_protocol=excluded.receiver_protocol`)
       .run({ id:value.id,name:value.name,category:value.category,brand:value.brand??null,model:value.model??null,
         description:value.description??null,trackingMode:value.trackingMode,attributes:JSON.stringify(value.attributes),
-        photoPath:value.photoPath??null,archived:value.archived?1:0,createdAt:value.createdAt });
+        photoPath:value.photoPath??null,archived:value.archived?1:0,createdAt:value.createdAt,
+        receiverChannels:value.receiverChannels??null,receiverProtocol:value.receiverProtocol??null });
+  }
+
+  deleteReference(referenceId: string): void {
+    this.db.prepare("DELETE FROM component_references WHERE id = ?").run(referenceId);
   }
 
   saveItem(value: StockItem): void {
@@ -134,9 +149,13 @@ export class SqliteInventoryRepository implements InventoryRepository {
   }
 
   saveAircraft(value: Aircraft): void {
-    this.db.prepare(`INSERT INTO aircraft (id,name,manufacturer,model,notes) VALUES (@id,@name,@manufacturer,@model,@notes)
-      ON CONFLICT(id) DO UPDATE SET name=excluded.name,manufacturer=excluded.manufacturer,model=excluded.model,notes=excluded.notes`)
-      .run({ id:value.id,name:value.name,manufacturer:value.manufacturer??null,model:value.model??null,notes:value.notes??null });
+    this.db.prepare(`INSERT INTO aircraft (id,name,manufacturer,model,notes,uaf_registration) VALUES (@id,@name,@manufacturer,@model,@notes,@uafRegistration)
+      ON CONFLICT(id) DO UPDATE SET name=excluded.name,manufacturer=excluded.manufacturer,model=excluded.model,notes=excluded.notes,uaf_registration=excluded.uaf_registration`)
+      .run({ id:value.id,name:value.name,manufacturer:value.manufacturer??null,model:value.model??null,notes:value.notes??null,uafRegistration:value.uafRegistration??null });
+  }
+
+  deleteAircraft(aircraftId: string): void {
+    this.db.prepare("DELETE FROM aircraft WHERE id = ?").run(aircraftId);
   }
 
   saveProject(value: Project): void {
