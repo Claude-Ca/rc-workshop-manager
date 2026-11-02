@@ -9,6 +9,7 @@ class MemoryRepository implements InventoryRepository {
   saveReference(value: ComponentReference) { this.snapshot.references = [...this.snapshot.references.filter(x => x.id !== value.id), value]; }
   deleteReference(referenceId: string) { this.snapshot.references = this.snapshot.references.filter(x => x.id !== referenceId); }
   saveItem(value: StockItem) { this.snapshot.items = [...this.snapshot.items.filter(x => x.id !== value.id), value]; }
+  deleteItem(itemId: string) { this.snapshot.items = this.snapshot.items.filter(x => x.id !== itemId); }
   saveLot(value: StockLot) { this.snapshot.lots.push(value); }
   saveAircraft(value: Aircraft) { this.snapshot.aircraft = [...this.snapshot.aircraft.filter(x => x.id !== value.id), value]; }
   deleteAircraft(aircraftId: string) { this.snapshot.aircraft = this.snapshot.aircraft.filter(x => x.id !== aircraftId); }
