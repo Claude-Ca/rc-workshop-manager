@@ -22,10 +22,10 @@ export class InventoryService {
     const snapshot = this.repository.getSnapshot();
     if (!reference.id.trim() || !reference.name.trim()) throw new InventoryError("Identifiant et désignation obligatoires.");
     if (snapshot.references.some((entry) => entry.id === reference.id)) throw new InventoryError("Cette référence existe déjà.");
-    if (reference.category === "receiver" && reference.trackingMode !== "individual") {
+    if ((reference.category === "radio" && (reference.radioType ?? "receiver") === "receiver") && reference.trackingMode !== "individual") {
       throw new InventoryError("Un récepteur doit être suivi individuellement.");
     }
-    if (reference.category === "receiver") {
+    if ((reference.category === "radio" && (reference.radioType ?? "receiver") === "receiver")) {
       if (!Number.isInteger(reference.receiverChannels) || (reference.receiverChannels ?? 0) < 1) {
         throw new InventoryError("Le nombre de voies du récepteur doit être un entier strictement positif.");
       }
@@ -46,7 +46,7 @@ export class InventoryService {
     const hasHistory = snapshot.movements.some((movement) => movement.referenceId === reference.id);
     if ((hasStock || hasHistory) && reference.category !== existing.category) throw new InventoryError("La catégorie ne peut pas être modifiée après utilisation de cette référence.");
     if (hasStock && reference.trackingMode !== existing.trackingMode) throw new InventoryError("Le mode de suivi ne peut pas être modifié tant que des exemplaires ou lots existent.");
-    if (reference.category === "receiver") {
+    if ((reference.category === "radio" && (reference.radioType ?? "receiver") === "receiver")) {
       if (reference.trackingMode !== "individual") throw new InventoryError("Un récepteur doit être suivi individuellement.");
       if (!Number.isInteger(reference.receiverChannels) || (reference.receiverChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies du récepteur doit être un entier strictement positif.");
       if (!reference.receiverProtocol?.trim()) throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
@@ -72,6 +72,13 @@ export class InventoryService {
     return { archived: false };
   }
 
+  restoreReference(referenceId: string): void {
+    const reference = this.repository.getSnapshot().references.find((entry) => entry.id === referenceId);
+    if (!reference) throw new InventoryError("Référence catalogue introuvable.");
+    if (!reference.archived) throw new InventoryError("Cette référence n'est pas archivée.");
+    this.repository.saveReference({ ...reference, archived: false });
+  }
+
   addItem(item: StockItem): void {
     const snapshot = this.repository.getSnapshot();
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId && !entry.archived);
@@ -81,7 +88,7 @@ export class InventoryService {
     if (snapshot.items.some((entry) => entry.inventoryCode.toLowerCase() === item.inventoryCode.toLowerCase())) {
       throw new InventoryError("Cet identifiant d'inventaire est déjà utilisé.");
     }
-    if (reference.category === "receiver") {
+    if ((reference.category === "radio" && (reference.radioType ?? "receiver") === "receiver")) {
       const tx16Name = item.tx16Name?.trim() || item.inventoryCode.trim();
       if (snapshot.items.some((entry) => entry.tx16Name?.toLowerCase() === tx16Name.toLowerCase())) {
         throw new InventoryError("Ce nom TX16 est déjà attribué à un récepteur.");
