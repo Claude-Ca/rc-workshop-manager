@@ -20,6 +20,12 @@ export class SqliteInventoryRepository implements InventoryRepository {
     await this.db.backup(destinationPath);
   }
 
+  reset(): void {
+    this.db.transaction(() => {
+      this.db.exec("DELETE FROM stock_movements; DELETE FROM stock_items; DELETE FROM stock_lots; DELETE FROM component_references; DELETE FROM aircraft; DELETE FROM projects;");
+    })();
+  }
+
   close(): void {
     this.db.close();
   }

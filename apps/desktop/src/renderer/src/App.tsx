@@ -12,7 +12,7 @@ import {
 
 import type { InventoryList } from "../../preload/index.js";
 
-type Section = "dashboard" | "inventory" | "aircraft" | "projects" | "movements" | "export";
+type Section = "dashboard" | "inventory" | "aircraft" | "projects" | "movements" | "export" | "admin" | "reset";
 type AssignmentTarget = { kind: "aircraft" | "project"; id: string };
 const labels: Record<ComponentCategory, string> = {
   motor: "Motorisation", esc: "Variateurs ESC", radio: "Radio", servo: "Servos",
@@ -46,6 +46,8 @@ function App() {
   const [inventoryList, setInventoryList] = useState<InventoryList | null>(null);
   const [showInventoryManager, setShowInventoryManager] = useState(false);
   const [exportCategories, setExportCategories] = useState<ComponentCategory[] | "all">("all");
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [notice, setNotice] = useState("");
   const actionLock = useRef(false);
 
   const refresh = async () => {
@@ -97,6 +99,17 @@ function App() {
     actionLock.current = true; setBusy(true); setError("");
     try {
       if (await action()) window.alert("L’export a été enregistré.");
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { actionLock.current = false; setBusy(false); }
+  }
+
+  async function resetInventory() {
+    if (actionLock.current) return;
+    actionLock.current = true; setBusy(true); setError(""); setNotice("");
+    try {
+      setSnapshot(await window.rcWorkshop.resetInventory());
+      setShowResetConfirmation(false);
+      setNotice("L’inventaire a été remis à zéro. Une sauvegarde a été conservée avant l’opération.");
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { actionLock.current = false; setBusy(false); }
   }
@@ -194,12 +207,14 @@ function App() {
           <button className={section === "projects" ? "nav-item active" : "nav-item"} onClick={() => setSection("projects")}>▧ <span>Projets</span><b>{snapshot.projects.length}</b></button>
           <button className={section === "movements" ? "nav-item active" : "nav-item"} onClick={() => setSection("movements")}>↔ <span>Mouvements</span></button>
           <button className={section === "export" ? "nav-item active" : "nav-item"} onClick={() => setSection("export")}>⇩ <span>Exporter</span></button>
+          <button className={section === "admin" || section === "reset" ? "nav-item active" : "nav-item"} onClick={() => setSection("admin")}>⚙ <span>Administration</span></button>
+          <button className={section === "reset" ? "nav-sub-item active" : "nav-sub-item"} onClick={() => setSection("reset")}>↳ Réinitialiser l’inventaire</button>
         </nav>
         <div className="sidebar-bottom"><span className="status-dot" /> Base locale SQLite <small>Stockée sur ce PC</small></div>
       </aside>
       <main className="main">
-        <header className="topbar"><div><span className="eyebrow">RC WORKSHOP MANAGER</span><h1>{section === "dashboard" ? "Vue d'ensemble" : section === "inventory" ? "Inventaire" : section === "aircraft" ? "Ma flotte" : section === "projects" ? "Mes projets" : section === "movements" ? "Historique des mouvements" : "Exporter l’inventaire"}</h1></div><div className="top-actions"><button className="inventory-switcher" disabled={busy} onClick={() => setShowInventoryManager(true)}>▣ {inventoryList?.items.find((entry) => entry.active)?.name ?? "Choisir une base"}</button><span className="local-chip">● Hors ligne · Données locales</span>{section !== "export" && <button className="primary" disabled={busy} onClick={() => { if (busy) return; setError(""); if (section === "inventory" && (category === "supplies" || category === "tool")) setStockGroupCategory(category); else setShowNewReference(true); }}>{section === "inventory" && (category === "supplies" || category === "tool") ? (category === "supplies" ? "＋ Ajouter une fourniture" : "＋ Ajouter un outil / équipement") : "＋ Nouveau composant"}</button>}</div></header>
-        {error && <div className="error-banner">{error}<button onClick={() => setError("")}>×</button></div>}
+        <header className="topbar"><div><span className="eyebrow">RC WORKSHOP MANAGER</span><h1>{section === "dashboard" ? "Vue d'ensemble" : section === "inventory" ? "Inventaire" : section === "aircraft" ? "Ma flotte" : section === "projects" ? "Mes projets" : section === "movements" ? "Historique des mouvements" : section === "export" ? "Exporter l’inventaire" : section === "admin" ? "Administration" : "Réinitialiser l’inventaire"}</h1></div><div className="top-actions"><button className="inventory-switcher" disabled={busy} onClick={() => setShowInventoryManager(true)}>▣ {inventoryList?.items.find((entry) => entry.active)?.name ?? "Choisir une base"}</button><span className="local-chip">● Hors ligne · Données locales</span>{section !== "export" && <button className="primary" disabled={busy} onClick={() => { if (busy) return; setError(""); if (section === "inventory" && (category === "supplies" || category === "tool")) setStockGroupCategory(category); else setShowNewReference(true); }}>{section === "inventory" && (category === "supplies" || category === "tool") ? (category === "supplies" ? "＋ Ajouter une fourniture" : "＋ Ajouter un outil / équipement") : "＋ Nouveau composant"}</button>}</div></header>
+        {error && <div className="error-banner">{error}<button onClick={() => setError("")}>×</button></div>}{notice && <div className="success-banner">{notice}<button onClick={() => setNotice("")}>×</button></div>}
         {section === "dashboard" && <section className="content">
           <div className="welcome"><div><span className="eyebrow">TON ATELIER, EN UN COUP D'ŒIL</span><h2>Bienvenue dans ton atelier RC.</h2><p>Retrouve tes composants, leur disponibilité et leur affectation.</p></div><div className="welcome-icon">🛩️</div></div>
           <div className="stats"><Stat label="Références catalogue" value={snapshot.references.length} note="Types de composants" icon="▤" /><Stat label="Exemplaires disponibles" value={availableItems + totalQuantity} note="Prêts à être utilisés" icon="✓" /><Stat label="Installés sur un avion" value={installedItems} note="Équipements affectés" icon="✈" /><Stat label="Réservés" value={reservedItems} note="Pour tes projets" icon="◷" /></div>
@@ -220,6 +235,14 @@ function App() {
         {section === "aircraft" && <section className="content"><div className="section-heading"><div><span className="eyebrow">FLOTTE RC</span><h2>Mes avions</h2></div></div><div className="aircraft-grid">{snapshot.aircraft.map((aircraft) => { const installed = snapshot.items.filter((item) => item.aircraftId === aircraft.id); const receiver = installed.find((item) => { const ref = snapshot.references.find((entry) => entry.id === item.referenceId); return ref?.category === "radio" && ref.radioType === "receiver"; }); const receiverRef = receiver && snapshot.references.find((entry) => entry.id === receiver.referenceId); return <div className="aircraft-card" key={aircraft.id}><span className="aircraft-icon">✈</span><strong>{aircraft.name}</strong><small>{[aircraft.manufacturer, aircraft.model].filter(Boolean).join(" · ") || "Modèle non précisé"}</small>{aircraft.uafRegistration && <small>Immatriculation UAF : {aircraft.uafRegistration}</small>}{receiver && <small>RX affecté : {receiverRef?.name ?? "Récepteur"} · {receiver.inventoryCode}</small>}<span className="aircraft-count">{installed.length} équipement(s) installé(s)</span><div className="aircraft-actions"><button className="secondary" disabled={busy} onClick={() => setPreviewAircraft(aircraft)}>Aperçu</button><button className="subtle-button" disabled={busy} onClick={() => setEditingAircraft(aircraft)}>Modifier la fiche</button></div></div>; })}</div><AddAircraft onAdd={(aircraft) => runAction(() => window.rcWorkshop.addAircraft({ id: crypto.randomUUID(), ...aircraft }))} busy={busy} /></section>}
         {section === "projects" && <section className="content"><div className="section-heading"><div><span className="eyebrow">CONSTRUCTIONS & MODIFICATIONS</span><h2>Mes projets</h2></div></div><div className="project-grid">{snapshot.projects.map((project) => <div className="project-card" key={project.id}><strong>{project.name}</strong><span className={`project-status ${project.status}`}>{project.status}</span><small>{snapshot.items.filter((item) => item.projectId === project.id).length} composant(s) réservé(s)</small></div>)}</div><AddProject onAdd={(name) => runAction(() => window.rcWorkshop.addProject({ id: crypto.randomUUID(), name, status: "planned" }))} busy={busy} /></section>}
         {section === "movements" && <section className="content"><div className="movement-list">{snapshot.movements.map((movement) => <div className="movement-row" key={movement.id}><span className="movement-icon">↔</span><div><strong>{movement.type}</strong><small>{movement.referenceId} · {movement.itemId ?? movement.lotId ?? ""}</small></div><time>{new Date(movement.occurredAt).toLocaleString("fr-FR")}</time></div>)}{snapshot.movements.length === 0 && <EmptyState title="Pas encore de mouvement" text="Les entrées, installations et réservations apparaîtront ici." />}</div></section>}
+        {section === "admin" && <section className="content admin-page">
+          <div className="export-intro"><span className="eyebrow">OUTILS DE GESTION</span><h2>Administration de la base</h2><p>Les opérations d’administration s’appliquent à la base active : <strong>{inventoryList?.items.find((entry) => entry.active)?.name ?? "base ouverte"}</strong>.</p></div>
+          <div className="admin-card"><div><h3>Réinitialiser l’inventaire</h3><p>Efface le catalogue, les exemplaires, les quantités, les avions, les projets et l’historique de la base active. Une sauvegarde SQLite sera créée avant l’opération.</p></div><button className="danger-button" disabled={busy} onClick={() => setSection("reset")}>Accéder à la réinitialisation</button></div>
+        </section>}
+        {section === "reset" && <section className="content admin-page">
+          <div className="export-intro"><span className="eyebrow">ACTION DESTRUCTIVE</span><h2>Réinitialiser l’inventaire actif</h2><p>Cette opération effacera toutes les données de <strong>{inventoryList?.items.find((entry) => entry.active)?.name ?? "la base active"}</strong>. Les autres bases resteront intactes. Une copie SQLite sera sauvegardée automatiquement avant la remise à zéro.</p></div>
+          <div className="admin-card reset-card"><div><h3>Contenu supprimé de la base active</h3><p>Références, exemplaires, fournitures et quantités, avions, projets et mouvements.</p></div><button className="danger-button" disabled={busy} onClick={() => { setError(""); setShowResetConfirmation(true); }}>Réinitialiser l’inventaire…</button></div>
+        </section>}
         {section === "export" && <section className="content export-page">
           <div className="export-intro"><span className="eyebrow">SAUVEGARDER OU PARTAGER</span><h2>Exporter les données</h2><p>Crée une copie complète de la base ou un fichier CSV pour tout l’inventaire ou les catégories choisies.</p></div>
           <div className="export-card">
@@ -235,6 +258,7 @@ function App() {
         </section>}
       </main>
       {(stockGroupCategory || editingStockGroup) && <StockGroupModal key={editingStockGroup?.id ?? stockGroupCategory} category={(editingStockGroup?.category ?? stockGroupCategory) as "supplies" | "tool"} reference={editingStockGroup ?? undefined} initialQuantity={editingStockGroup ? snapshot.lots.filter((lot) => lot.referenceId === editingStockGroup.id).reduce((sum, lot) => sum + lot.quantity, 0) : undefined} initialUnit={editingStockGroup ? snapshot.lots.find((lot) => lot.referenceId === editingStockGroup.id)?.unit : undefined} busy={busy} onClose={() => { setStockGroupCategory(null); setEditingStockGroup(null); }} onSubmit={(value) => handleSaveStockGroup({ ...value, category: (editingStockGroup?.category ?? stockGroupCategory) as "supplies" | "tool", ...(editingStockGroup ? { referenceId: editingStockGroup.id } : {}) })} />}
+      {showResetConfirmation && <ResetInventoryModal inventoryName={inventoryList?.items.find((entry) => entry.active)?.name ?? "base active"} busy={busy} error={error} onClose={() => setShowResetConfirmation(false)} onConfirm={() => void resetInventory()} />}
       {showInventoryManager && <InventoryManagerModal inventoryList={inventoryList} busy={busy} error={error} onClose={() => setShowInventoryManager(false)} onOpen={(id) => void openInventory(id)} onCreate={(name) => void createInventory(name)} onImport={() => void importInventory()} />}
       {showNewReference && <ReferenceModal error={error} busy={busy} onClose={() => setShowNewReference(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.createReference(value); setShowNewReference(false); setSection("inventory"); setCategory("all"); setSelectedId(value.id); return result; })} />}
       {showEditReference && selected && <ReferenceModal reference={selected} error={error} busy={busy} onClose={() => setShowEditReference(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.updateReference(value as ComponentReference); setShowEditReference(false); return result; })} />}
@@ -352,6 +376,18 @@ function AircraftPreviewModal({ aircraft, snapshot, onClose }: { aircraft: Aircr
 function AircraftModal({ aircraft, onClose, onSubmit, busy, error }: { aircraft: Aircraft; onClose: () => void; onSubmit: (value: Aircraft) => void; busy: boolean; error: string }) { const [name,setName]=useState(aircraft.name); const [manufacturer,setManufacturer]=useState(aircraft.manufacturer??""); const [model,setModel]=useState(aircraft.model??""); const [uafRegistration,setUafRegistration]=useState(aircraft.uafRegistration??""); const [notes,setNotes]=useState(aircraft.notes??""); return <Modal title="Modifier la fiche avion" onClose={onClose} error={error}><form className="form-grid" onSubmit={(e)=>{e.preventDefault();onSubmit({id:aircraft.id,name:name.trim(),...(manufacturer.trim()?{manufacturer:manufacturer.trim()}:{}),...(model.trim()?{model:model.trim()}:{}),...(uafRegistration.trim()?{uafRegistration:uafRegistration.trim()}:{}),...(notes.trim()?{notes:notes.trim()}:{})});}}><label>Nom de l’avion *<input required autoFocus value={name} onChange={(e)=>setName(e.target.value)} /></label><div className="form-row"><label>Constructeur<input value={manufacturer} onChange={(e)=>setManufacturer(e.target.value)} /></label><label>Modèle<input value={model} onChange={(e)=>setModel(e.target.value)} /></label></div><label>Immatriculation UAF (facultatif)<input value={uafRegistration} onChange={(e)=>setUafRegistration(e.target.value)} placeholder="Ex. F-XXXX" /></label><label>Notes<textarea value={notes} onChange={(e)=>setNotes(e.target.value)} /></label><div className="modal-actions"><button type="button" className="secondary" onClick={onClose}>Annuler</button><button className="primary" disabled={busy||!name.trim()}>Enregistrer les modifications</button></div></form></Modal>; }
 function AddProject({ onAdd, busy }: { onAdd: (name: string) => void; busy: boolean }) { const [name,setName]=useState(""); return <form className="inline-add" onSubmit={(e)=>{e.preventDefault();if(name.trim()){onAdd(name.trim());setName("");}}}><input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Nom du nouveau projet..." /><button className="primary" disabled={busy || !name.trim()}>＋ Ajouter un projet</button></form>; }
 function Modal({ title, onClose, children, error }: { title: string; onClose: () => void; children: React.ReactNode; error?: string }) { return <div className="modal-backdrop" onMouseDown={(e)=>{if(e.target===e.currentTarget)onClose();}}><div className="modal" onMouseDown={(event) => event.stopPropagation()}><div className="modal-header"><h2>{title}</h2><button type="button" onClick={onClose}>×</button></div>{error && <div className="error-banner modal-error" role="alert">{error}</div>}{children}</div></div>; }
+function ResetInventoryModal({ inventoryName, busy, error, onClose, onConfirm }: {
+  inventoryName: string; busy: boolean; error: string; onClose: () => void; onConfirm: () => void;
+}) {
+  const [confirmation, setConfirmation] = useState("");
+  return <Modal title="Confirmer la réinitialisation" onClose={onClose} error={error}>
+    <div className="form-grid reset-confirmation">
+      <p>La base <strong>{inventoryName}</strong> sera vidée de toutes ses références, de son stock, de ses avions, de ses projets et de son historique. Une sauvegarde SQLite sera créée automatiquement avant l’opération.</p>
+      <label>Pour confirmer, saisis <strong>REINITIALISER</strong><input autoFocus value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label>
+      <div className="modal-actions"><button type="button" className="secondary" disabled={busy} onClick={onClose}>Annuler</button><button type="button" className="danger-button" disabled={busy || confirmation !== "REINITIALISER"} onClick={onConfirm}>Confirmer la remise à zéro</button></div>
+    </div>
+  </Modal>;
+}
 function InventoryManagerModal({ inventoryList, busy, error, onClose, onOpen, onCreate, onImport }: {
   inventoryList: InventoryList | null; busy: boolean; error: string; onClose: () => void;
   onOpen: (id: string) => void; onCreate: (name: string) => void; onImport: () => void;

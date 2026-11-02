@@ -166,6 +166,17 @@ function inventoryManagerHandlers(): void {
     await writeFile(filePath, buildInventoryCsv(inventory.getSnapshot(), categories), "utf8");
     return true;
   });
+  ipcMain.handle("inventory:reset", async () => {
+    const entry = registry.entries.find((candidate) => candidate.id === registry.activeId);
+    if (!entry) throw new Error("Aucune base n’est ouverte.");
+    const backupDirectory = join(app.getPath("userData"), "backups");
+    await mkdir(backupDirectory, { recursive: true });
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const backupPath = join(backupDirectory, safeFileName(entry.name) + "-before-reset-" + timestamp + ".sqlite");
+    await repository.backupTo(backupPath);
+    repository.reset();
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventories:list", () => ({ items: summaries(), activeId: registry.activeId, lastUsedId: registry.lastUsedId }));
   ipcMain.handle("inventories:open", async (_event, id: string) => ({ items: await activateInventory(id), activeId: registry.activeId, lastUsedId: registry.lastUsedId }));
   ipcMain.handle("inventories:create", async (_event, rawName: string) => {

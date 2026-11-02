@@ -35,3 +35,16 @@
 .export-category-list label{display:flex;align-items:center;gap:8px;color:#b7c5d4;font-size:11px}
 .export-card button{justify-self:end}
 @media(max-width:900px){.export-category-list{grid-template-columns:repeat(2,minmax(0,1fr))}.export-card{grid-template-columns:1fr}.export-card button{justify-self:start}}
+
+.nav-sub-item{display:block;width:calc(100% - 18px);margin:0 0 4px 18px;padding:8px 12px;text-align:left;border:0;border-left:1px solid #435265;background:transparent;color:#9eafc1;font-size:11px}
+.nav-sub-item:hover,.nav-sub-item.active{color:#dceeff;background:#202d3b}
+.admin-page{display:grid;gap:16px;max-width:940px}
+.admin-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.admin-card h3{font:700 15px Manrope;margin:0 0 8px}
+.admin-card p{font-size:12px;line-height:1.6;color:var(--muted);margin:0}
+.reset-card{border-color:#71434a}
+.reset-confirmation>p{font-size:12px;line-height:1.6;color:#d7e0eb}
+.reset-confirmation label strong{color:#ffd9d9;font-size:11px}
+.success-banner{margin:16px 42px 0;padding:11px 14px;background:#244339;border:1px solid #3a7656;color:#c4f0d6;border-radius:8px;font-size:11px;display:flex;justify-content:space-between}
+.success-banner button{border:0;background:transparent;color:inherit}
+@media(max-width:900px){.admin-card{align-items:flex-start;flex-direction:column}}

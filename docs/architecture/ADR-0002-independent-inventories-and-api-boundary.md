@@ -58,7 +58,13 @@ Supplies use simple availability/consumption tracking. No per-length remainder a
 - CSV export covers catalog references and current stock. The user can export all categories or select specific categories.
 - Save dialogs and file paths remain in the Electron main process.
 
-### 7. Other requested improvements
+### 7. Administration and reset
+
+- Administration can reset the active inventory after an explicit confirmation.
+- Before clearing references, stock, aircraft, projects, and movements, the application creates a full SQLite backup in its local backups folder.
+- Resetting one inventory never changes the other registered inventory files.
+
+### 8. Other requested improvements
 
 - Aircraft list has a read-only preview distinct from edit mode.
 - Archived catalog references can be restored.
