@@ -37,6 +37,47 @@ describe("InventoryService", () => {
     expect(() => service.createReference(missingProtocol)).toThrow(/protocole radio/);
   });
 
+  it("validates and stores a radio receiver subtype", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    const receiver: ComponentReference = {
+      id: "REF-RADIO-RX", name: "Récepteur 8 voies", category: "radio", radioType: "receiver",
+      trackingMode: "individual", receiverChannels: 8, receiverProtocol: "ExpressLRS",
+      attributes: {}, archived: false, createdAt: "2026-11-01T12:00:00.000Z",
+    };
+    service.createReference(receiver);
+    expect(repository.snapshot.references[0]).toMatchObject({
+      category: "radio", radioType: "receiver", receiverChannels: 8, receiverProtocol: "ExpressLRS",
+    });
+  });
+
+  it("validates and stores a radio transmitter subtype without receiver fields", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    const transmitter: ComponentReference = {
+      id: "REF-RADIO-TX", name: "Émetteur 16 voies", category: "radio", radioType: "transmitter",
+      trackingMode: "individual", transmitterChannels: 16, transmitterProtocols: ["ACCESS", "ExpressLRS"],
+      firmwareVersion: "3.0.0", attributes: {}, archived: false, createdAt: "2026-11-01T12:00:00.000Z",
+    };
+    service.createReference(transmitter);
+    expect(repository.snapshot.references[0]).toMatchObject({
+      category: "radio", radioType: "transmitter", transmitterChannels: 16,
+      transmitterProtocols: ["ACCESS", "ExpressLRS"], firmwareVersion: "3.0.0",
+    });
+    expect(repository.snapshot.references[0]?.receiverProtocol).toBeUndefined();
+  });
+
+  it("rejects transmitters without a channel count or protocol", () => {
+    const service = new InventoryService(new MemoryRepository());
+    const transmitter: ComponentReference = {
+      id: "REF-BAD-TX", name: "Émetteur incomplet", category: "radio", radioType: "transmitter",
+      trackingMode: "individual", transmitterChannels: 0, transmitterProtocols: [],
+      attributes: {}, archived: false, createdAt: "2026-11-01T12:00:00.000Z",
+    };
+    expect(() => service.createReference(transmitter)).toThrow(/nombre de voies/);
+    expect(() => service.createReference({ ...transmitter, transmitterChannels: 16 })).toThrow(/protocole radio/);
+  });
+
   it("assigns a stable TX16 name to a receiver when none is provided", () => {
     const repository = new MemoryRepository();
     const service = new InventoryService(repository);
