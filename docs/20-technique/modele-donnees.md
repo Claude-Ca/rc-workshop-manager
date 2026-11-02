@@ -1,26 +1,30 @@
-# Modèle de données — principes
+# Modèle de données — état du périmètre
 
-**Statut :** conceptuel, à détailler avant stabilisation du schéma SQL
+**Statut :** en revue  
+**Périmètre :** implémentation de la branche `feature/multi-inventory-and-catalog-rework`
 
-## Entités
+## Entités implémentées
 
-- `ComponentReference` : référence catalogue, catégorie, marque, modèle, description, attributs et médias.
-- `StockItem` : exemplaire individuel, identifiant unique, référence, numéro de série éventuel, état et notes.
-- `StockLot` : quantité non individualisée, unité, quantité disponible et emplacement éventuel.
-- `Aircraft` : avion de la flotte.
-- `Project` : construction, réparation ou évolution.
-- `Location` : emplacement physique hiérarchique facultatif.
-- `Assignment` : affectation temporelle d'un exemplaire ou d'une quantité.
-- `StockMovement` : événement d'entrée, sortie, réservation, installation, démontage, transfert, ajustement ou consommation.
-- `MediaAsset` : photo/document local associé à une référence, un exemplaire ou un avion.
+- `ComponentReference` : désignation, catégorie, marque/modèle/description facultatifs, propriétés radio ou motorisation typées, attributs, photo facultative et statut d’archivage.
+- `StockItem` : exemplaire individuel avec code inventaire unique, référence, état, série, emplacement, notes, identifiants d’avion/projet et nom TX16 éventuel.
+- `StockLot` : quantité, unité et référence. Les fournitures et outils utilisent ce suivi quantitatif.
+- `Aircraft` : nom, constructeur, modèle, notes et immatriculation UAF facultatifs.
+- `Project` : nom, statut et notes.
+- `StockMovement` : événements datés liés à une référence et, selon le cas, à un exemplaire, un lot, un avion ou un projet.
 
-## Règles d'intégrité
+## Règles métier
 
-- Une référence catalogue n'est pas un objet physique.
-- Un exemplaire possède un identifiant unique et au plus une affectation active.
-- Un lot ne peut avoir une quantité négative.
-- Les quantités réservées/installées ne sont pas disponibles.
-- Les mouvements sont historisés ; corriger par ajustement plutôt que supprimer l'historique.
-- Localisation indépendante de l'affectation et facultative.
-- Le code TX16 d'un récepteur est explicite et unique parmi les récepteurs actifs ; valeur initiale proposée identique à son identifiant inventaire.
-- Les attributs par catégorie restent typés et validés.
+- Une référence catalogue n’est pas un exemplaire physique.
+- Les exemplaires reçoivent un identifiant unique généré selon la catégorie.
+- Un RX a un nom TX16 unique; il peut être lié à zéro ou un TX.
+- Un TX ne peut pas être affecté à un avion ou à un projet.
+- Un exemplaire disponible peut être installé sur un avion ou réservé à un projet. Une seule affectation est active à la fois.
+- Fournitures et outils sont gérés par quantité; ils ne sont pas affectés individuellement.
+- Les quantités de lot sont entières et non négatives. Un ajustement conserve une trace de mouvement.
+- L’archivage d’une référence conserve son identité pour préserver les références et l’historique.
+- La suppression d’un exemplaire et les ajustements de quantité n’effacent pas les mouvements déjà enregistrés.
+- Les migrations SQLite sont additives afin de conserver les données locales existantes.
+
+## À distinguer du modèle futur
+
+La base SQLite actuelle est locale à l’installation. Plusieurs bases indépendantes, leur sélection ou leur synchronisation ne sont pas implémentées dans cette branche.

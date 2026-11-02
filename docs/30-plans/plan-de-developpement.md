@@ -1,16 +1,27 @@
 # Plan de développement
 
-**Version de travail :** 0.1.0
+**Version de travail :** 0.1.0  
+**Statut :** périmètre de la branche en validation finale
 
-## Lots
+## Lots du périmètre actuel
 
-1. Fondation : gouvernance, documentation, monorepo, CI et conventions.
-2. Backend métier : références, lots/exemplaires, affectations, mouvements et tests.
-3. Frontend : navigation, tableau de bord, catalogue visuel, fiches et formulaires.
-4. Persistance desktop : SQLite, migrations, photos locales et IPC sécurisé.
-5. Flotte et projets : avions, projets et affectations.
-6. Validation Windows : packaging, installation, persistance, sauvegarde et essai utilisateur.
+| Lot | Contenu | État |
+|---|---|---|
+| 1. Fondation | Gouvernance, documentation, monorepo, CI et conventions | Terminé |
+| 2. Backend métier | Références, exemplaires, quantités, affectations, mouvements et tests | Terminé |
+| 3. Interface | Navigation, recherche/filtres, catalogue, formulaires et vues de stock simplifiées | Terminé |
+| 4. Persistance desktop | SQLite locale, migrations additives et IPC sécurisé | Terminé |
+| 5. Flotte et projets | Fiches avions, équipement, RX/TX, réservations et aperçu avion | Terminé |
+| 6. Validation Windows | Démarrage, parcours fonctionnels, persistance et validation propriétaire | En cours |
 
-## Critère de sortie du premier test fonctionnel
+## Validation automatisée
 
-L'utilisateur doit pouvoir lancer l'application Windows, créer une référence, ajouter des exemplaires ou une quantité de lot, associer un récepteur à un avion, consulter une fiche avec photo facultative, fermer puis relancer et retrouver les données. Aucun lot n'est déclaré terminé sans tests automatisés et vérification fonctionnelle.
+Sur le commit `9ad4b53a38fd4d8ca82e7b2c9ae5e37afae52a94), la CI GitHub a réussi les tests, le typecheck et le build. La suite de tests est lancée par `pnpm test`; le typecheck et le build passent également dans le workflow.
+
+## Critère de sortie du périmètre
+
+Le périmètre est prêt à être déclaré terminé lorsque le propriétaire a vérifié sous Windows les parcours de création/modification/suppression, les filtres, les quantités de fournitures et outils, les affectations radio/avions et la persistance après redémarrage.
+
+## Lot ultérieur
+
+La gestion multi-base, évoquée pour la suite, est différée. Elle fera l’objet d’un cadrage et d’un lot séparés après stabilisation de ce périmètre.

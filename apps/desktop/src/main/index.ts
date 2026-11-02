@@ -36,6 +36,10 @@ function registerHandlers(): void {
     inventory.updateReference(input);
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:restore-reference", (_event, referenceId: string) => {
+    inventory.restoreReference(referenceId);
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventory:delete-reference", (_event, referenceId: string) => {
     const result = inventory.deleteReference(referenceId);
     return { snapshot: inventory.getSnapshot(), archived: result.archived };
@@ -44,8 +48,20 @@ function registerHandlers(): void {
     inventory.createReference({ ...input, createdAt: new Date().toISOString(), archived: false });
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:update-item", (_event, input: StockItem) => {
+    inventory.updateItem(input);
+    return inventory.getSnapshot();
+  });
+  ipcMain.handle("inventory:delete-item", (_event, itemId: string) => {
+    inventory.deleteItem(itemId, randomUUID(), new Date().toISOString());
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventory:add-item", (_event, input: Omit<StockItem, "createdAt">) => {
     inventory.addItem({ ...input, createdAt: new Date().toISOString() });
+    return inventory.getSnapshot();
+  });
+  ipcMain.handle("inventory:set-stock-group-quantity", (_event, referenceId: string, quantity: number, unit: string) => {
+    inventory.setStockGroupQuantity(referenceId, quantity, unit, randomUUID(), randomUUID(), new Date().toISOString());
     return inventory.getSnapshot();
   });
   ipcMain.handle("inventory:add-lot", (_event, input: StockLot) => {
@@ -66,6 +82,10 @@ function registerHandlers(): void {
   });
   ipcMain.handle("inventory:assign-item", (_event, itemId: string, target: { kind: "aircraft"; id: string } | { kind: "project"; id: string }) => {
     inventory.assignItem(itemId, target, randomUUID(), new Date().toISOString());
+    return inventory.getSnapshot();
+  });
+  ipcMain.handle("inventory:set-receiver-binding", (_event, receiverItemId: string, transmitterItemId: string | null) => {
+    inventory.setReceiverBinding(receiverItemId, transmitterItemId);
     return inventory.getSnapshot();
   });
   ipcMain.handle("inventory:release-item", (_event, itemId: string) => {

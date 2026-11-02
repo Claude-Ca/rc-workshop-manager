@@ -25,7 +25,8 @@ export class SqliteInventoryRepository implements InventoryRepository {
       CREATE TABLE IF NOT EXISTS component_references (
         id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL,
         brand TEXT, model TEXT, description TEXT, tracking_mode TEXT NOT NULL,
-        receiver_channels INTEGER, receiver_protocol TEXT,
+        receiver_channels INTEGER, receiver_protocol TEXT, radio_type TEXT, transmitter_channels INTEGER, transmitter_protocols_json TEXT, firmware_version TEXT,
+        motorization_kind TEXT, motor_type TEXT, motor_voltage TEXT, motor_displacement TEXT, propeller_diameter TEXT, propeller_pitch TEXT,
         attributes_json TEXT NOT NULL DEFAULT '{}', photo_path TEXT,
         archived INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL
       );
@@ -39,7 +40,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
         id TEXT PRIMARY KEY, reference_id TEXT NOT NULL REFERENCES component_references(id),
         inventory_code TEXT NOT NULL COLLATE NOCASE UNIQUE, serial_number TEXT,
         status TEXT NOT NULL, location_id TEXT, aircraft_id TEXT REFERENCES aircraft(id),
-        project_id TEXT REFERENCES projects(id), tx16_name TEXT COLLATE NOCASE UNIQUE,
+        project_id TEXT REFERENCES projects(id), tx16_name TEXT COLLATE NOCASE UNIQUE, bound_transmitter_id TEXT,
         notes TEXT, created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS stock_lots (
@@ -55,6 +56,17 @@ export class SqliteInventoryRepository implements InventoryRepository {
     const referenceColumns = this.db.prepare("PRAGMA table_info(component_references)").all() as Row[];
     if (!referenceColumns.some((column) => column.name === "receiver_channels")) this.db.exec("ALTER TABLE component_references ADD COLUMN receiver_channels INTEGER");
     if (!referenceColumns.some((column) => column.name === "receiver_protocol")) this.db.exec("ALTER TABLE component_references ADD COLUMN receiver_protocol TEXT");
+    if (!referenceColumns.some((column) => column.name === "radio_type")) this.db.exec("ALTER TABLE component_references ADD COLUMN radio_type TEXT");
+    if (!referenceColumns.some((column) => column.name === "transmitter_channels")) this.db.exec("ALTER TABLE component_references ADD COLUMN transmitter_channels INTEGER");
+    if (!referenceColumns.some((column) => column.name === "transmitter_protocols_json")) this.db.exec("ALTER TABLE component_references ADD COLUMN transmitter_protocols_json TEXT");
+    if (!referenceColumns.some((column) => column.name === "firmware_version")) this.db.exec("ALTER TABLE component_references ADD COLUMN firmware_version TEXT");
+    const stockColumns = this.db.prepare("PRAGMA table_info(stock_items)").all() as Row[];
+    if (!stockColumns.some((column) => column.name === "bound_transmitter_id")) this.db.exec("ALTER TABLE stock_items ADD COLUMN bound_transmitter_id TEXT");
+    for (const [column, type] of [["motorization_kind", "TEXT"], ["motor_type", "TEXT"], ["motor_voltage", "TEXT"], ["motor_displacement", "TEXT"], ["propeller_diameter", "TEXT"], ["propeller_pitch", "TEXT"]]) {
+      if (!referenceColumns.some((entry) => entry.name === column)) this.db.exec("ALTER TABLE component_references ADD COLUMN " + column + " " + type);
+    }
+    this.db.exec("UPDATE component_references SET category='radio', radio_type='receiver' WHERE category='receiver'");
+    this.db.exec("UPDATE component_references SET category='supplies' WHERE category IN ('connector','control','structure','material','construction')");
     const aircraftColumns = this.db.prepare("PRAGMA table_info(aircraft)").all() as Row[];
     if (!aircraftColumns.some((column) => column.name === "uaf_registration")) this.db.exec("ALTER TABLE aircraft ADD COLUMN uaf_registration TEXT");
   }
@@ -71,6 +83,16 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.photo_path ? { photoPath: String(row.photo_path) } : {}),
       ...(row.receiver_channels !== null && row.receiver_channels !== undefined ? { receiverChannels: Number(row.receiver_channels) } : {}),
       ...(row.receiver_protocol ? { receiverProtocol: String(row.receiver_protocol) } : {}),
+      ...(row.radio_type === "transmitter" || row.radio_type === "receiver" ? { radioType: row.radio_type } : {}),
+      ...(row.transmitter_channels !== null && row.transmitter_channels !== undefined ? { transmitterChannels: Number(row.transmitter_channels) } : {}),
+      ...(row.transmitter_protocols_json ? { transmitterProtocols: JSON.parse(String(row.transmitter_protocols_json)) as string[] } : {}),
+      ...(row.firmware_version ? { firmwareVersion: String(row.firmware_version) } : {}),
+      ...(row.motorization_kind ? { motorizationKind: row.motorization_kind as "motor" | "propeller" } : {}),
+      ...(row.motor_type ? { motorType: row.motor_type as "electric" | "glow" } : {}),
+      ...(row.motor_voltage ? { motorVoltage: String(row.motor_voltage) } : {}),
+      ...(row.motor_displacement ? { motorDisplacement: String(row.motor_displacement) } : {}),
+      ...(row.propeller_diameter ? { propellerDiameter: String(row.propeller_diameter) } : {}),
+      ...(row.propeller_pitch ? { propellerPitch: String(row.propeller_pitch) } : {}),
     }));
     const items = (this.db.prepare("SELECT * FROM stock_items ORDER BY inventory_code").all() as Row[]).map((row): StockItem => ({
       id: String(row.id), referenceId: String(row.reference_id), inventoryCode: String(row.inventory_code),
@@ -80,6 +102,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.aircraft_id ? { aircraftId: String(row.aircraft_id) } : {}),
       ...(row.project_id ? { projectId: String(row.project_id) } : {}),
       ...(row.tx16_name ? { tx16Name: String(row.tx16_name) } : {}),
+      ...(row.bound_transmitter_id ? { boundTransmitterId: String(row.bound_transmitter_id) } : {}),
       ...(row.notes ? { notes: String(row.notes) } : {}),
     }));
     const lots = (this.db.prepare("SELECT * FROM stock_lots").all() as Row[]).map((row): StockLot => ({
@@ -113,16 +136,17 @@ export class SqliteInventoryRepository implements InventoryRepository {
 
   saveReference(value: ComponentReference): void {
     this.db.prepare(`INSERT INTO component_references
-      (id,name,category,brand,model,description,tracking_mode,attributes_json,photo_path,archived,created_at,receiver_channels,receiver_protocol)
-      VALUES (@id,@name,@category,@brand,@model,@description,@trackingMode,@attributes,@photoPath,@archived,@createdAt,@receiverChannels,@receiverProtocol)
+      (id,name,category,brand,model,description,tracking_mode,attributes_json,photo_path,archived,created_at,receiver_channels,receiver_protocol,radio_type,transmitter_channels,transmitter_protocols_json,firmware_version,motorization_kind,motor_type,motor_voltage,motor_displacement,propeller_diameter,propeller_pitch)
+      VALUES (@id,@name,@category,@brand,@model,@description,@trackingMode,@attributes,@photoPath,@archived,@createdAt,@receiverChannels,@receiverProtocol,@radioType,@transmitterChannels,@transmitterProtocols,@firmwareVersion,@motorizationKind,@motorType,@motorVoltage,@motorDisplacement,@propellerDiameter,@propellerPitch)
       ON CONFLICT(id) DO UPDATE SET name=excluded.name,category=excluded.category,brand=excluded.brand,
       model=excluded.model,description=excluded.description,tracking_mode=excluded.tracking_mode,
       attributes_json=excluded.attributes_json,photo_path=excluded.photo_path,archived=excluded.archived,
-      receiver_channels=excluded.receiver_channels,receiver_protocol=excluded.receiver_protocol`)
+      receiver_channels=excluded.receiver_channels,receiver_protocol=excluded.receiver_protocol,radio_type=excluded.radio_type,transmitter_channels=excluded.transmitter_channels,transmitter_protocols_json=excluded.transmitter_protocols_json,firmware_version=excluded.firmware_version,motorization_kind=excluded.motorization_kind,motor_type=excluded.motor_type,motor_voltage=excluded.motor_voltage,motor_displacement=excluded.motor_displacement,propeller_diameter=excluded.propeller_diameter,propeller_pitch=excluded.propeller_pitch`)
       .run({ id:value.id,name:value.name,category:value.category,brand:value.brand??null,model:value.model??null,
         description:value.description??null,trackingMode:value.trackingMode,attributes:JSON.stringify(value.attributes),
         photoPath:value.photoPath??null,archived:value.archived?1:0,createdAt:value.createdAt,
-        receiverChannels:value.receiverChannels??null,receiverProtocol:value.receiverProtocol??null });
+        receiverChannels:value.receiverChannels??null,receiverProtocol:value.receiverProtocol??null,radioType:value.radioType??null,transmitterChannels:value.transmitterChannels??null,transmitterProtocols:value.transmitterProtocols?JSON.stringify(value.transmitterProtocols):null,firmwareVersion:value.firmwareVersion??null,
+        motorizationKind:value.motorizationKind??null,motorType:value.motorType??null,motorVoltage:value.motorVoltage??null,motorDisplacement:value.motorDisplacement??null,propellerDiameter:value.propellerDiameter??null,propellerPitch:value.propellerPitch??null });
   }
 
   deleteReference(referenceId: string): void {
@@ -131,14 +155,23 @@ export class SqliteInventoryRepository implements InventoryRepository {
 
   saveItem(value: StockItem): void {
     this.db.prepare(`INSERT INTO stock_items
-      (id,reference_id,inventory_code,serial_number,status,location_id,aircraft_id,project_id,tx16_name,notes,created_at)
-      VALUES (@id,@referenceId,@inventoryCode,@serialNumber,@status,@locationId,@aircraftId,@projectId,@tx16Name,@notes,@createdAt)
+      (id,reference_id,inventory_code,serial_number,status,location_id,aircraft_id,project_id,tx16_name,notes,created_at,bound_transmitter_id)
+      VALUES (@id,@referenceId,@inventoryCode,@serialNumber,@status,@locationId,@aircraftId,@projectId,@tx16Name,@notes,@createdAt,@boundTransmitterId)
       ON CONFLICT(id) DO UPDATE SET inventory_code=excluded.inventory_code,serial_number=excluded.serial_number,
       status=excluded.status,location_id=excluded.location_id,aircraft_id=excluded.aircraft_id,
-      project_id=excluded.project_id,tx16_name=excluded.tx16_name,notes=excluded.notes`)
+      project_id=excluded.project_id,tx16_name=excluded.tx16_name,notes=excluded.notes,bound_transmitter_id=excluded.bound_transmitter_id`)
       .run({ id:value.id,referenceId:value.referenceId,inventoryCode:value.inventoryCode,serialNumber:value.serialNumber??null,
         status:value.status,locationId:value.locationId??null,aircraftId:value.aircraftId??null,projectId:value.projectId??null,
-        tx16Name:value.tx16Name??null,notes:value.notes??null,createdAt:value.createdAt });
+        tx16Name:value.tx16Name??null,notes:value.notes??null,createdAt:value.createdAt,boundTransmitterId:value.boundTransmitterId??null });
+  }
+
+  deleteItem(itemId: string): void {
+    this.db.prepare("UPDATE stock_items SET bound_transmitter_id = NULL WHERE bound_transmitter_id = ?").run(itemId);
+    this.db.prepare("DELETE FROM stock_items WHERE id = ?").run(itemId);
+  }
+
+  deleteLot(lotId: string): void {
+    this.db.prepare("DELETE FROM stock_lots WHERE id = ?").run(lotId);
   }
 
   saveLot(value: StockLot): void {

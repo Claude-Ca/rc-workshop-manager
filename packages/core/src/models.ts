@@ -1,9 +1,8 @@
 export const COMPONENT_CATEGORIES = [
-  "motor", "esc", "battery", "propeller", "receiver", "servo", "connector",
-  "control", "structure", "material", "construction", "tool", "other",
+  "motor", "esc", "radio", "servo", "battery", "supplies", "tool", "other",
 ] as const;
 
-export type ComponentCategory = (typeof COMPONENT_CATEGORIES)[number];
+export type ComponentCategory = (typeof COMPONENT_CATEGORIES)[number] | "propeller" | "receiver" | "connector" | "control" | "structure" | "material" | "construction";
 export type TrackingMode = "individual" | "quantity";
 export type ItemStatus = "available" | "installed" | "reserved" | "repair" | "retired";
 
@@ -15,9 +14,19 @@ export interface ComponentReference {
   model?: string;
   description?: string;
   trackingMode: TrackingMode;
-  /** Required radio properties for receiver references. */
+  /** Radio reference subtype; transmitters are not assigned to aircraft. */
+  radioType?: "transmitter" | "receiver";
   receiverChannels?: number;
   receiverProtocol?: string;
+  transmitterChannels?: number;
+  transmitterProtocols?: string[];
+  firmwareVersion?: string;
+  motorizationKind?: "motor" | "propeller";
+  motorType?: "electric" | "glow";
+  motorVoltage?: string;
+  motorDisplacement?: string;
+  propellerDiameter?: string;
+  propellerPitch?: string;
   attributes: Record<string, string | number | boolean>;
   photoPath?: string;
   archived: boolean;
@@ -34,6 +43,7 @@ export interface StockItem {
   aircraftId?: string;
   projectId?: string;
   tx16Name?: string;
+  boundTransmitterId?: string;
   notes?: string;
   createdAt: string;
 }
@@ -64,7 +74,7 @@ export interface Project {
 
 export type MovementType =
   | "stock-in" | "installed" | "reserved" | "released"
-  | "transferred" | "adjusted" | "consumed" | "repair" | "retired";
+  | "transferred" | "adjusted" | "consumed" | "repair" | "retired" | "deleted";
 
 export interface StockMovement {
   id: string;
