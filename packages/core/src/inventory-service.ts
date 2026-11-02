@@ -33,6 +33,10 @@ export class InventoryService {
         throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
       }
     }
+    if (reference.category === "radio" && reference.radioType === "transmitter") {
+      if (!Number.isInteger(reference.transmitterChannels) || (reference.transmitterChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies de l'émetteur doit être un entier strictement positif.");
+      if (!reference.transmitterProtocols?.some((protocol) => protocol.trim())) throw new InventoryError("Au moins un protocole radio de l'émetteur est obligatoire.");
+    }
     this.repository.saveReference({ ...reference, name: reference.name.trim(), archived: false });
   }
 
@@ -50,6 +54,10 @@ export class InventoryService {
       if (reference.trackingMode !== "individual") throw new InventoryError("Un récepteur doit être suivi individuellement.");
       if (!Number.isInteger(reference.receiverChannels) || (reference.receiverChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies du récepteur doit être un entier strictement positif.");
       if (!reference.receiverProtocol?.trim()) throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
+    }
+    if (reference.category === "radio" && reference.radioType === "transmitter") {
+      if (!Number.isInteger(reference.transmitterChannels) || (reference.transmitterChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies de l'émetteur doit être un entier strictement positif.");
+      if (!reference.transmitterProtocols?.some((protocol) => protocol.trim())) throw new InventoryError("Au moins un protocole radio de l'émetteur est obligatoire.");
     }
     const updated: ComponentReference = { ...reference, id: existing.id, createdAt: existing.createdAt, name: reference.name.trim(), archived: false };
     if (reference.brand?.trim()) updated.brand = reference.brand.trim(); else delete updated.brand;
