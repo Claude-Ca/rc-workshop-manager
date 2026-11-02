@@ -6,3 +6,19 @@
 @media(max-width:900px){.aircraft-add{grid-template-columns:1fr}.detail-actions{justify-content:flex-start}}
 
 .supply-list{display:grid;gap:9px;max-width:900px}.supply-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 18px;background:var(--panel);border:1px solid var(--line);border-radius:9px}.supply-row strong{font-size:13px}.supply-row span{color:#b8d9f8;font-size:12px;white-space:nowrap}
+
+.inventory-switcher{border:1px solid #42678c;background:#293d52;color:#b9d8f6;border-radius:7px;padding:9px 12px;font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inventory-manager{display:grid;gap:14px}
+.last-inventory{display:flex;align-items:center;gap:12px;width:100%;padding:14px;text-align:left;border:1px solid #42678c;background:#223346;color:#dceaff;border-radius:9px}
+.last-inventory>span{font-size:21px}
+.last-inventory div{display:grid;gap:4px;flex:1}
+.last-inventory strong,.inventory-manager-row strong{font-size:12px}
+.last-inventory small,.inventory-manager-row small{font-size:10px;color:#a6b3c2}
+.inventory-manager-list{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.inventory-manager-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border-bottom:1px solid var(--line)}
+.inventory-manager-row:last-child{border:0}
+.inventory-manager-row>div{display:grid;gap:4px}
+.inventory-create{display:flex;align-items:end;gap:9px}
+.inventory-create label{display:grid;gap:7px;flex:1;font-size:11px;color:#afbdcd}
+.inventory-create input{background:#111923;border:1px solid #344151;border-radius:7px;padding:10px 11px;color:#e7edf5}
+.import-inventory{justify-self:start}

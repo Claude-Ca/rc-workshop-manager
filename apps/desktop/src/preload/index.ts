@@ -1,7 +1,14 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { Aircraft, ComponentReference, InventorySnapshot, Project, StockItem, StockLot } from "@rc-workshop/core";
 
+export type InventorySummary = { id: string; name: string; createdAt: string; lastUsedAt?: string; active: boolean; lastUsed: boolean };
+export type InventoryList = { items: InventorySummary[]; activeId: string; lastUsedId: string };
+
 export interface DesktopApi {
+  getInventories(): Promise<InventoryList>;
+  openInventory(id: string): Promise<InventoryList>;
+  createInventory(name: string): Promise<InventoryList>;
+  importInventory(): Promise<InventoryList>;
   getSnapshot(): Promise<InventorySnapshot>;
   createReference(input: Omit<ComponentReference, "createdAt" | "archived">): Promise<InventorySnapshot>;
   updateReference(input: ComponentReference): Promise<InventorySnapshot>;
@@ -21,6 +28,10 @@ export interface DesktopApi {
 }
 
 const api: DesktopApi = {
+  getInventories: () => ipcRenderer.invoke("inventories:list"),
+  openInventory: (id) => ipcRenderer.invoke("inventories:open", id),
+  createInventory: (name) => ipcRenderer.invoke("inventories:create", name),
+  importInventory: () => ipcRenderer.invoke("inventories:import"),
   getSnapshot: () => ipcRenderer.invoke("inventory:snapshot"),
   createReference: (input) => ipcRenderer.invoke("inventory:create-reference", input),
   updateReference: (input) => ipcRenderer.invoke("inventory:update-reference", input),

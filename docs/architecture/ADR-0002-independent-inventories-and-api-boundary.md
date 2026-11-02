@@ -11,8 +11,8 @@ RC Workshop Manager currently starts one SQLite database automatically. The next
 
 ### 1. Inventory files
 
-- Each inventory is a separate SQLite database file.
-- The user explicitly creates or opens an inventory through an inventory manager.
+- Each inventory is a separate SQLite database file. A local registry stores its display name, app-managed identifier, and last-used identifier; database paths remain inside the main process. Imported SQLite files are copied into the application inventory folder before being opened, leaving the selected source file untouched.
+- The user creates a base, opens a previously registered base, or imports a SQLite file through the inventory manager. The active base name is visible in the application shell. The manager offers a one-click action to reopen the last-used base, which is also reopened automatically on application startup.
 - The active inventory name is visible in the application shell.
 - Switching inventory closes the current repository before opening another.
 - Creating an inventory never deletes or overwrites an existing inventory.
@@ -62,7 +62,7 @@ Supplies use simple availability/consumption tracking. No per-length remainder a
 
 - Do not delete or reset the user's existing database as part of an upgrade.
 - New inventories start empty.
-- Keep the old database file intact and recommend a backup before migration.
+- Keep the old database file intact. Register it as the initial inventory without renaming or deleting it; imported files are copied before opening. Recommend a backup before any migration.
 - Use explicit schema migrations; do not rely on destructive recreation.
 - Test opening, closing, switching, and reopening inventories, and prove that records remain isolated.
 
@@ -75,11 +75,12 @@ Supplies use simple availability/consumption tracking. No per-length remainder a
 ## Acceptance criteria
 
 1. Two inventory files can be created and independently opened.
-2. Switching inventories never leaks aircraft, references, stock items, lots, or movements between them.
-3. Existing inventory files are not silently overwritten or deleted.
-4. Core services depend on repository abstractions, not SQLite implementation details.
-5. The seven categories and transmitter/receiver types are represented consistently in core models, UI, persistence, tests, and documentation.
-6. Archived references can be restored.
-7. Aircraft preview is read-only.
-8. Receiver protocol persists across edit and application restart.
-9. CI typecheck, tests, lint (where configured), and build pass.
+2. The inventory manager lists available bases, supports importing a SQLite file, and offers a quick action for the last-used base.
+3. Switching inventories never leaks aircraft, references, stock items, lots, or movements between them.
+4. Existing inventory files are not silently overwritten or deleted.
+5. Core services depend on repository abstractions, not SQLite implementation details.
+6. The seven categories and transmitter/receiver types are represented consistently in core models, UI, persistence, tests, and documentation.
+7. Archived references can be restored.
+8. Aircraft preview is read-only.
+9. Receiver protocol persists across edit and application restart.
+10. CI typecheck, tests, lint (where configured), and build pass.

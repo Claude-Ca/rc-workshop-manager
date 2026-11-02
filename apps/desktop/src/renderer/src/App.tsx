@@ -10,6 +10,8 @@ import {
   type TrackingMode,
 } from "@rc-workshop/core";
 
+import type { InventoryList } from "../../preload/index.js";
+
 type Section = "dashboard" | "inventory" | "aircraft" | "projects" | "movements";
 type AssignmentTarget = { kind: "aircraft" | "project"; id: string };
 const labels: Record<ComponentCategory, string> = {
@@ -41,6 +43,8 @@ function App() {
   const [editingItem, setEditingItem] = useState<StockItem | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [inventoryList, setInventoryList] = useState<InventoryList | null>(null);
+  const [showInventoryManager, setShowInventoryManager] = useState(false);
   const actionLock = useRef(false);
 
   const refresh = async () => {
@@ -49,7 +53,43 @@ function App() {
     }
     setSnapshot(await window.rcWorkshop.getSnapshot());
   };
-  useEffect(() => { void refresh().catch((e: unknown) => setError(String(e))); }, []);
+  useEffect(() => {
+    void Promise.all([refresh(), window.rcWorkshop.getInventories().then(setInventoryList)])
+      .catch((e: unknown) => setError(String(e)));
+  }, []);
+
+  async function openInventory(id: string) {
+    if (actionLock.current) return;
+    actionLock.current = true; setBusy(true); setError("");
+    try {
+      setInventoryList(await window.rcWorkshop.openInventory(id));
+      setSnapshot(await window.rcWorkshop.getSnapshot());
+      setSection("dashboard"); setCategory("all"); setSelectedId(null); setShowInventoryManager(false);
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { actionLock.current = false; setBusy(false); }
+  }
+
+  async function createInventory(name: string) {
+    if (actionLock.current) return;
+    actionLock.current = true; setBusy(true); setError("");
+    try {
+      setInventoryList(await window.rcWorkshop.createInventory(name));
+      setSnapshot(await window.rcWorkshop.getSnapshot());
+      setSection("dashboard"); setCategory("all"); setSelectedId(null); setShowInventoryManager(false);
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { actionLock.current = false; setBusy(false); }
+  }
+
+  async function importInventory() {
+    if (actionLock.current) return;
+    actionLock.current = true; setBusy(true); setError("");
+    try {
+      setInventoryList(await window.rcWorkshop.importInventory());
+      setSnapshot(await window.rcWorkshop.getSnapshot());
+      setSection("dashboard"); setCategory("all"); setSelectedId(null); setShowInventoryManager(false);
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { actionLock.current = false; setBusy(false); }
+  }
 
   const selected = snapshot.references.find((reference) => reference.id === selectedId) ?? null;
   const visibleReferences = useMemo(() => snapshot.references.filter((reference) =>
@@ -141,7 +181,7 @@ function App() {
         <div className="sidebar-bottom"><span className="status-dot" /> Base locale SQLite <small>Stockée sur ce PC</small></div>
       </aside>
       <main className="main">
-        <header className="topbar"><div><span className="eyebrow">RC WORKSHOP MANAGER</span><h1>{section === "dashboard" ? "Vue d'ensemble" : section === "inventory" ? "Inventaire" : section === "aircraft" ? "Ma flotte" : section === "projects" ? "Mes projets" : "Historique des mouvements"}</h1></div><div className="top-actions"><span className="local-chip">● Hors ligne · Données locales</span><button className="primary" disabled={busy} onClick={() => { if (busy) return; setError(""); if (section === "inventory" && (category === "supplies" || category === "tool")) setStockGroupCategory(category); else setShowNewReference(true); }}>{section === "inventory" && (category === "supplies" || category === "tool") ? (category === "supplies" ? "＋ Ajouter une fourniture" : "＋ Ajouter un outil / équipement") : "＋ Nouveau composant"}</button></div></header>
+        <header className="topbar"><div><span className="eyebrow">RC WORKSHOP MANAGER</span><h1>{section === "dashboard" ? "Vue d'ensemble" : section === "inventory" ? "Inventaire" : section === "aircraft" ? "Ma flotte" : section === "projects" ? "Mes projets" : "Historique des mouvements"}</h1></div><div className="top-actions"><button className="inventory-switcher" disabled={busy} onClick={() => setShowInventoryManager(true)}>▣ {inventoryList?.items.find((entry) => entry.active)?.name ?? "Choisir une base"}</button><span className="local-chip">● Hors ligne · Données locales</span><button className="primary" disabled={busy} onClick={() => { if (busy) return; setError(""); if (section === "inventory" && (category === "supplies" || category === "tool")) setStockGroupCategory(category); else setShowNewReference(true); }}>{section === "inventory" && (category === "supplies" || category === "tool") ? (category === "supplies" ? "＋ Ajouter une fourniture" : "＋ Ajouter un outil / équipement") : "＋ Nouveau composant"}</button></div></header>
         {error && <div className="error-banner">{error}<button onClick={() => setError("")}>×</button></div>}
         {section === "dashboard" && <section className="content">
           <div className="welcome"><div><span className="eyebrow">TON ATELIER, EN UN COUP D'ŒIL</span><h2>Bienvenue dans ton atelier RC.</h2><p>Retrouve tes composants, leur disponibilité et leur affectation.</p></div><div className="welcome-icon">🛩️</div></div>
@@ -165,6 +205,7 @@ function App() {
         {section === "movements" && <section className="content"><div className="movement-list">{snapshot.movements.map((movement) => <div className="movement-row" key={movement.id}><span className="movement-icon">↔</span><div><strong>{movement.type}</strong><small>{movement.referenceId} · {movement.itemId ?? movement.lotId ?? ""}</small></div><time>{new Date(movement.occurredAt).toLocaleString("fr-FR")}</time></div>)}{snapshot.movements.length === 0 && <EmptyState title="Pas encore de mouvement" text="Les entrées, installations et réservations apparaîtront ici." />}</div></section>}
       </main>
       {(stockGroupCategory || editingStockGroup) && <StockGroupModal key={editingStockGroup?.id ?? stockGroupCategory} category={(editingStockGroup?.category ?? stockGroupCategory) as "supplies" | "tool"} reference={editingStockGroup ?? undefined} initialQuantity={editingStockGroup ? snapshot.lots.filter((lot) => lot.referenceId === editingStockGroup.id).reduce((sum, lot) => sum + lot.quantity, 0) : undefined} initialUnit={editingStockGroup ? snapshot.lots.find((lot) => lot.referenceId === editingStockGroup.id)?.unit : undefined} busy={busy} onClose={() => { setStockGroupCategory(null); setEditingStockGroup(null); }} onSubmit={(value) => handleSaveStockGroup({ ...value, category: (editingStockGroup?.category ?? stockGroupCategory) as "supplies" | "tool", ...(editingStockGroup ? { referenceId: editingStockGroup.id } : {}) })} />}
+      {showInventoryManager && <InventoryManagerModal inventoryList={inventoryList} busy={busy} error={error} onClose={() => setShowInventoryManager(false)} onOpen={(id) => void openInventory(id)} onCreate={(name) => void createInventory(name)} onImport={() => void importInventory()} />}
       {showNewReference && <ReferenceModal error={error} busy={busy} onClose={() => setShowNewReference(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.createReference(value); setShowNewReference(false); setSection("inventory"); setCategory("all"); setSelectedId(value.id); return result; })} />}
       {showEditReference && selected && <ReferenceModal reference={selected} error={error} busy={busy} onClose={() => setShowEditReference(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.updateReference(value as ComponentReference); setShowEditReference(false); return result; })} />}
       {previewAircraft && <AircraftPreviewModal aircraft={previewAircraft} snapshot={snapshot} onClose={() => setPreviewAircraft(null)} />}
@@ -281,4 +322,19 @@ function AircraftPreviewModal({ aircraft, snapshot, onClose }: { aircraft: Aircr
 function AircraftModal({ aircraft, onClose, onSubmit, busy, error }: { aircraft: Aircraft; onClose: () => void; onSubmit: (value: Aircraft) => void; busy: boolean; error: string }) { const [name,setName]=useState(aircraft.name); const [manufacturer,setManufacturer]=useState(aircraft.manufacturer??""); const [model,setModel]=useState(aircraft.model??""); const [uafRegistration,setUafRegistration]=useState(aircraft.uafRegistration??""); const [notes,setNotes]=useState(aircraft.notes??""); return <Modal title="Modifier la fiche avion" onClose={onClose} error={error}><form className="form-grid" onSubmit={(e)=>{e.preventDefault();onSubmit({id:aircraft.id,name:name.trim(),...(manufacturer.trim()?{manufacturer:manufacturer.trim()}:{}),...(model.trim()?{model:model.trim()}:{}),...(uafRegistration.trim()?{uafRegistration:uafRegistration.trim()}:{}),...(notes.trim()?{notes:notes.trim()}:{})});}}><label>Nom de l’avion *<input required autoFocus value={name} onChange={(e)=>setName(e.target.value)} /></label><div className="form-row"><label>Constructeur<input value={manufacturer} onChange={(e)=>setManufacturer(e.target.value)} /></label><label>Modèle<input value={model} onChange={(e)=>setModel(e.target.value)} /></label></div><label>Immatriculation UAF (facultatif)<input value={uafRegistration} onChange={(e)=>setUafRegistration(e.target.value)} placeholder="Ex. F-XXXX" /></label><label>Notes<textarea value={notes} onChange={(e)=>setNotes(e.target.value)} /></label><div className="modal-actions"><button type="button" className="secondary" onClick={onClose}>Annuler</button><button className="primary" disabled={busy||!name.trim()}>Enregistrer les modifications</button></div></form></Modal>; }
 function AddProject({ onAdd, busy }: { onAdd: (name: string) => void; busy: boolean }) { const [name,setName]=useState(""); return <form className="inline-add" onSubmit={(e)=>{e.preventDefault();if(name.trim()){onAdd(name.trim());setName("");}}}><input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Nom du nouveau projet..." /><button className="primary" disabled={busy || !name.trim()}>＋ Ajouter un projet</button></form>; }
 function Modal({ title, onClose, children, error }: { title: string; onClose: () => void; children: React.ReactNode; error?: string }) { return <div className="modal-backdrop" onMouseDown={(e)=>{if(e.target===e.currentTarget)onClose();}}><div className="modal" onMouseDown={(event) => event.stopPropagation()}><div className="modal-header"><h2>{title}</h2><button type="button" onClick={onClose}>×</button></div>{error && <div className="error-banner modal-error" role="alert">{error}</div>}{children}</div></div>; }
+function InventoryManagerModal({ inventoryList, busy, error, onClose, onOpen, onCreate, onImport }: {
+  inventoryList: InventoryList | null; busy: boolean; error: string; onClose: () => void;
+  onOpen: (id: string) => void; onCreate: (name: string) => void; onImport: () => void;
+}) {
+  const [name, setName] = useState("");
+  const last = inventoryList?.items.find((entry) => entry.id === inventoryList.lastUsedId);
+  return <Modal title="Gérer les bases d’inventaire" onClose={onClose} error={error}>
+    <div className="inventory-manager">
+      {last && <button className="last-inventory" disabled={busy} onClick={() => onOpen(last.id)}><span>↻</span><div><strong>Reprendre la dernière base</strong><small>{last.name}</small></div><b>→</b></button>}
+      <div className="inventory-manager-list">{inventoryList?.items.map((entry) => <div className="inventory-manager-row" key={entry.id}><div><strong>{entry.name}</strong><small>{entry.active ? "Base ouverte" : entry.lastUsed ? "Dernière utilisée" : "Base locale"}</small></div><button className={entry.active ? "secondary" : "subtle-button"} disabled={busy || entry.active} onClick={() => onOpen(entry.id)}>{entry.active ? "Ouverte" : "Ouvrir"}</button></div>)}</div>
+      <form className="inventory-create" onSubmit={(event) => { event.preventDefault(); if (name.trim()) onCreate(name.trim()); }}><label>Créer une base vide<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex. Atelier personnel" /></label><button className="primary" disabled={busy || !name.trim()}>＋ Créer</button></form>
+      <button className="secondary import-inventory" disabled={busy} onClick={onImport}>Ouvrir / importer un fichier SQLite…</button>
+    </div>
+  </Modal>;
+}
 export default App;
