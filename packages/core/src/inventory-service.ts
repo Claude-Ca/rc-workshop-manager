@@ -33,6 +33,13 @@ export class InventoryService {
         throw new InventoryError("Le protocole radio du récepteur est obligatoire.");
       }
     }
+    if (reference.category === "motor") {
+      if (!reference.motorizationKind) throw new InventoryError("Type de motorisation obligatoire.");
+      if (reference.motorizationKind === "motor" && !reference.motorType) throw new InventoryError("Type de moteur obligatoire.");
+      if (reference.motorType === "electric" && !reference.motorVoltage?.trim()) throw new InventoryError("Tension obligatoire.");
+      if (reference.motorType === "glow" && !reference.motorDisplacement?.trim()) throw new InventoryError("Cylindree obligatoire.");
+      if (reference.motorizationKind === "propeller" && (!reference.propellerDiameter?.trim() || !reference.propellerPitch?.trim())) throw new InventoryError("Diametre et pas obligatoires.");
+    }
     if (reference.category === "radio" && reference.radioType === "transmitter") {
       if (!Number.isInteger(reference.transmitterChannels) || (reference.transmitterChannels ?? 0) < 1) throw new InventoryError("Le nombre de voies de l'émetteur doit être un entier strictement positif.");
       if (!reference.transmitterProtocols?.some((protocol) => protocol.trim())) throw new InventoryError("Au moins un protocole radio de l'émetteur est obligatoire.");
@@ -92,10 +99,12 @@ export class InventoryService {
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId && !entry.archived);
     if (!reference) throw new InventoryError("Référence catalogue introuvable ou archivée.");
     if (reference.trackingMode !== "individual") throw new InventoryError("Cette référence est gérée en quantité, pas par exemplaire.");
-    if (!item.inventoryCode.trim()) throw new InventoryError("L'identifiant d'inventaire est obligatoire.");
-    if (snapshot.items.some((entry) => entry.inventoryCode.toLowerCase() === item.inventoryCode.toLowerCase())) {
-      throw new InventoryError("Cet identifiant d'inventaire est déjà utilisé.");
-    }
+    const prefix = reference.category === "radio" && reference.radioType === "transmitter" ? "TX" : reference.category === "radio" ? "RX" : reference.category === "motor" && reference.motorizationKind === "propeller" ? "PROP" : reference.category === "motor" ? "MOT" : reference.category === "esc" ? "ESC" : reference.category === "servo" ? "SER" : reference.category === "battery" ? "BAT" : reference.category === "supplies" ? "FOU" : reference.category === "tool" ? "OUT" : "DIV";
+    let sequence = 1;
+    let inventoryCode = prefix + "-" + String(sequence).padStart(3, "0");
+    const usedCodes = new Set(snapshot.items.map((entry) => entry.inventoryCode.toLowerCase()));
+    while (usedCodes.has(inventoryCode.toLowerCase())) { sequence += 1; inventoryCode = prefix + "-" + String(sequence).padStart(3, "0"); }
+    item = { ...item, inventoryCode };
     if ((reference.category === "receiver" || (reference.category === "radio" && (reference.radioType ?? "receiver") === "receiver"))) {
       const tx16Name = item.tx16Name?.trim() || item.inventoryCode.trim();
       if (snapshot.items.some((entry) => entry.tx16Name?.toLowerCase() === tx16Name.toLowerCase())) {
@@ -147,11 +156,29 @@ export class InventoryService {
     this.repository.saveProject(project);
   }
 
+  setReceiverBinding(receiverItemId: string, transmitterItemId: string | null): void {
+    const snapshot = this.repository.getSnapshot();
+    const receiver = snapshot.items.find((entry) => entry.id === receiverItemId);
+    if (!receiver) throw new InventoryError("Receiver not found.");
+    const receiverReference = snapshot.references.find((entry) => entry.id === receiver.referenceId);
+    if (receiverReference?.category !== "radio" || receiverReference.radioType !== "receiver") throw new InventoryError("Only a receiver can be bound.");
+    const updated: StockItem = { ...receiver };
+    if (transmitterItemId) {
+      const transmitter = snapshot.items.find((entry) => entry.id === transmitterItemId);
+      const transmitterReference = transmitter && snapshot.references.find((entry) => entry.id === transmitter.referenceId);
+      if (!transmitter || transmitterReference?.category !== "radio" || transmitterReference.radioType !== "transmitter") throw new InventoryError("Selected item is not a transmitter.");
+      updated.boundTransmitterId = transmitter.id;
+    } else delete updated.boundTransmitterId;
+    this.repository.saveItem(updated);
+  }
+
   assignItem(itemId: string, target: { kind: "aircraft"; id: string } | { kind: "project"; id: string }, movementId: string, occurredAt: string): void {
     const snapshot = this.repository.getSnapshot();
     const item = snapshot.items.find((entry) => entry.id === itemId);
     if (!item) throw new InventoryError("Exemplaire introuvable.");
     if (item.status !== "available") throw new InventoryError("Seul un exemplaire disponible peut être affecté.");
+    const itemReference = snapshot.references.find((entry) => entry.id === item.referenceId);
+    if (itemReference?.category === "radio" && itemReference.radioType === "transmitter") throw new InventoryError("A transmitter cannot be assigned.");
     if (target.kind === "aircraft" && !snapshot.aircraft.some((entry) => entry.id === target.id)) throw new InventoryError("Avion introuvable.");
     if (target.kind === "project" && !snapshot.projects.some((entry) => entry.id === target.id)) throw new InventoryError("Projet introuvable.");
     const status: ItemStatus = target.kind === "aircraft" ? "installed" : "reserved";
