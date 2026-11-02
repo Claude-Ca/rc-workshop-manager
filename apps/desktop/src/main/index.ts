@@ -72,6 +72,10 @@ function registerHandlers(): void {
     inventory.assignItem(itemId, target, randomUUID(), new Date().toISOString());
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:set-receiver-binding", (_event, receiverItemId: string, transmitterItemId: string | null) => {
+    inventory.setReceiverBinding(receiverItemId, transmitterItemId);
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventory:release-item", (_event, itemId: string) => {
     inventory.releaseItem(itemId, randomUUID(), new Date().toISOString());
     return inventory.getSnapshot();
