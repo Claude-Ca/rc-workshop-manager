@@ -207,8 +207,6 @@ function App() {
           <button className={section === "projects" ? "nav-item active" : "nav-item"} onClick={() => setSection("projects")}>▧ <span>Projets</span><b>{snapshot.projects.length}</b></button>
           <button className={section === "movements" ? "nav-item active" : "nav-item"} onClick={() => setSection("movements")}>↔ <span>Mouvements</span></button>
           <button className={section === "admin" || section === "reset" || section === "export" ? "nav-item active" : "nav-item"} onClick={() => setSection("admin")}>⚙ <span>Administration</span></button>
-          <button className={section === "export" ? "nav-sub-item active" : "nav-sub-item"} onClick={() => setSection("export")}>↳ Exporter</button>
-          <button className={section === "reset" ? "nav-sub-item active" : "nav-sub-item"} onClick={() => setSection("reset")}>↳ Réinitialiser l’inventaire</button>
         </nav>
         <div className="sidebar-bottom"><span className="status-dot" /> Base locale SQLite <small>Stockée sur ce PC</small></div>
       </aside>
