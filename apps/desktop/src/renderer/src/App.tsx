@@ -12,7 +12,7 @@ import {
 
 import type { InventoryList } from "../../preload/index.js";
 
-type Section = "dashboard" | "inventory" | "aircraft" | "projects" | "movements";
+type Section = "dashboard" | "inventory" | "aircraft" | "projects" | "movements" | "export";
 type AssignmentTarget = { kind: "aircraft" | "project"; id: string };
 const labels: Record<ComponentCategory, string> = {
   motor: "Motorisation", esc: "Variateurs ESC", radio: "Radio", servo: "Servos",
@@ -45,6 +45,7 @@ function App() {
   const [busy, setBusy] = useState(false);
   const [inventoryList, setInventoryList] = useState<InventoryList | null>(null);
   const [showInventoryManager, setShowInventoryManager] = useState(false);
+  const [exportCategories, setExportCategories] = useState<ComponentCategory[] | "all">("all");
   const actionLock = useRef(false);
 
   const refresh = async () => {
@@ -89,6 +90,21 @@ function App() {
       setSection("dashboard"); setCategory("all"); setSelectedId(null); setShowInventoryManager(false);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { actionLock.current = false; setBusy(false); }
+  }
+
+  async function runExport(action: () => Promise<boolean>) {
+    if (actionLock.current) return;
+    actionLock.current = true; setBusy(true); setError("");
+    try {
+      if (await action()) window.alert("L’export a été enregistré.");
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { actionLock.current = false; setBusy(false); }
+  }
+
+  function toggleExportCategory(value: ComponentCategory, checked: boolean) {
+    const current = exportCategories === "all" ? [...COMPONENT_CATEGORIES] : exportCategories;
+    const next = checked ? [...current, value] : current.filter((entry) => entry !== value);
+    setExportCategories(next.length === COMPONENT_CATEGORIES.length ? "all" : next);
   }
 
   const selected = snapshot.references.find((reference) => reference.id === selectedId) ?? null;
@@ -177,11 +193,12 @@ function App() {
           <button className={section === "aircraft" ? "nav-item active" : "nav-item"} onClick={() => setSection("aircraft")}>✈ <span>Mes avions</span><b>{snapshot.aircraft.length}</b></button>
           <button className={section === "projects" ? "nav-item active" : "nav-item"} onClick={() => setSection("projects")}>▧ <span>Projets</span><b>{snapshot.projects.length}</b></button>
           <button className={section === "movements" ? "nav-item active" : "nav-item"} onClick={() => setSection("movements")}>↔ <span>Mouvements</span></button>
+          <button className={section === "export" ? "nav-item active" : "nav-item"} onClick={() => setSection("export")}>⇩ <span>Exporter</span></button>
         </nav>
         <div className="sidebar-bottom"><span className="status-dot" /> Base locale SQLite <small>Stockée sur ce PC</small></div>
       </aside>
       <main className="main">
-        <header className="topbar"><div><span className="eyebrow">RC WORKSHOP MANAGER</span><h1>{section === "dashboard" ? "Vue d'ensemble" : section === "inventory" ? "Inventaire" : section === "aircraft" ? "Ma flotte" : section === "projects" ? "Mes projets" : "Historique des mouvements"}</h1></div><div className="top-actions"><button className="inventory-switcher" disabled={busy} onClick={() => setShowInventoryManager(true)}>▣ {inventoryList?.items.find((entry) => entry.active)?.name ?? "Choisir une base"}</button><span className="local-chip">● Hors ligne · Données locales</span><button className="primary" disabled={busy} onClick={() => { if (busy) return; setError(""); if (section === "inventory" && (category === "supplies" || category === "tool")) setStockGroupCategory(category); else setShowNewReference(true); }}>{section === "inventory" && (category === "supplies" || category === "tool") ? (category === "supplies" ? "＋ Ajouter une fourniture" : "＋ Ajouter un outil / équipement") : "＋ Nouveau composant"}</button></div></header>
+        <header className="topbar"><div><span className="eyebrow">RC WORKSHOP MANAGER</span><h1>{section === "dashboard" ? "Vue d'ensemble" : section === "inventory" ? "Inventaire" : section === "aircraft" ? "Ma flotte" : section === "projects" ? "Mes projets" : section === "movements" ? "Historique des mouvements" : "Exporter l’inventaire"}</h1></div><div className="top-actions"><button className="inventory-switcher" disabled={busy} onClick={() => setShowInventoryManager(true)}>▣ {inventoryList?.items.find((entry) => entry.active)?.name ?? "Choisir une base"}</button><span className="local-chip">● Hors ligne · Données locales</span>{section !== "export" && <button className="primary" disabled={busy} onClick={() => { if (busy) return; setError(""); if (section === "inventory" && (category === "supplies" || category === "tool")) setStockGroupCategory(category); else setShowNewReference(true); }}>{section === "inventory" && (category === "supplies" || category === "tool") ? (category === "supplies" ? "＋ Ajouter une fourniture" : "＋ Ajouter un outil / équipement") : "＋ Nouveau composant"}</button>}</div></header>
         {error && <div className="error-banner">{error}<button onClick={() => setError("")}>×</button></div>}
         {section === "dashboard" && <section className="content">
           <div className="welcome"><div><span className="eyebrow">TON ATELIER, EN UN COUP D'ŒIL</span><h2>Bienvenue dans ton atelier RC.</h2><p>Retrouve tes composants, leur disponibilité et leur affectation.</p></div><div className="welcome-icon">🛩️</div></div>
@@ -203,6 +220,19 @@ function App() {
         {section === "aircraft" && <section className="content"><div className="section-heading"><div><span className="eyebrow">FLOTTE RC</span><h2>Mes avions</h2></div></div><div className="aircraft-grid">{snapshot.aircraft.map((aircraft) => { const installed = snapshot.items.filter((item) => item.aircraftId === aircraft.id); const receiver = installed.find((item) => { const ref = snapshot.references.find((entry) => entry.id === item.referenceId); return ref?.category === "radio" && ref.radioType === "receiver"; }); const receiverRef = receiver && snapshot.references.find((entry) => entry.id === receiver.referenceId); return <div className="aircraft-card" key={aircraft.id}><span className="aircraft-icon">✈</span><strong>{aircraft.name}</strong><small>{[aircraft.manufacturer, aircraft.model].filter(Boolean).join(" · ") || "Modèle non précisé"}</small>{aircraft.uafRegistration && <small>Immatriculation UAF : {aircraft.uafRegistration}</small>}{receiver && <small>RX affecté : {receiverRef?.name ?? "Récepteur"} · {receiver.inventoryCode}</small>}<span className="aircraft-count">{installed.length} équipement(s) installé(s)</span><div className="aircraft-actions"><button className="secondary" disabled={busy} onClick={() => setPreviewAircraft(aircraft)}>Aperçu</button><button className="subtle-button" disabled={busy} onClick={() => setEditingAircraft(aircraft)}>Modifier la fiche</button></div></div>; })}</div><AddAircraft onAdd={(aircraft) => runAction(() => window.rcWorkshop.addAircraft({ id: crypto.randomUUID(), ...aircraft }))} busy={busy} /></section>}
         {section === "projects" && <section className="content"><div className="section-heading"><div><span className="eyebrow">CONSTRUCTIONS & MODIFICATIONS</span><h2>Mes projets</h2></div></div><div className="project-grid">{snapshot.projects.map((project) => <div className="project-card" key={project.id}><strong>{project.name}</strong><span className={`project-status ${project.status}`}>{project.status}</span><small>{snapshot.items.filter((item) => item.projectId === project.id).length} composant(s) réservé(s)</small></div>)}</div><AddProject onAdd={(name) => runAction(() => window.rcWorkshop.addProject({ id: crypto.randomUUID(), name, status: "planned" }))} busy={busy} /></section>}
         {section === "movements" && <section className="content"><div className="movement-list">{snapshot.movements.map((movement) => <div className="movement-row" key={movement.id}><span className="movement-icon">↔</span><div><strong>{movement.type}</strong><small>{movement.referenceId} · {movement.itemId ?? movement.lotId ?? ""}</small></div><time>{new Date(movement.occurredAt).toLocaleString("fr-FR")}</time></div>)}{snapshot.movements.length === 0 && <EmptyState title="Pas encore de mouvement" text="Les entrées, installations et réservations apparaîtront ici." />}</div></section>}
+        {section === "export" && <section className="content export-page">
+          <div className="export-intro"><span className="eyebrow">SAUVEGARDER OU PARTAGER</span><h2>Exporter les données</h2><p>Crée une copie complète de la base ou un fichier CSV pour tout l’inventaire ou les catégories choisies.</p></div>
+          <div className="export-card">
+            <div><span className="export-icon">▣</span><h3>Copie complète de la base</h3><p>Exporte une sauvegarde SQLite avec toutes les données, références et mouvements de la base active.</p></div>
+            <button className="primary" disabled={busy} onClick={() => void runExport(() => window.rcWorkshop.exportDatabase())}>Exporter la base SQLite</button>
+          </div>
+          <div className="export-card csv-export-card">
+            <div><span className="export-icon">▤</span><h3>Inventaire au format CSV</h3><p>Le CSV contient les références, exemplaires, quantités, affectations et informations catalogue utiles. Tu peux l’ouvrir dans un tableur.</p></div>
+            <label className="export-all"><input type="checkbox" checked={exportCategories === "all"} onChange={(event) => setExportCategories(event.target.checked ? "all" : [])} /> Toutes les catégories</label>
+            <div className="export-category-list">{COMPONENT_CATEGORIES.map((value) => <label key={value}><input type="checkbox" checked={exportCategories === "all" || exportCategories.includes(value)} onChange={(event) => toggleExportCategory(value, event.target.checked)} /> {labels[value]}</label>)}</div>
+            <button className="primary" disabled={busy || (Array.isArray(exportCategories) && exportCategories.length === 0)} onClick={() => void runExport(() => window.rcWorkshop.exportInventoryCsv(exportCategories))}>Exporter le CSV</button>
+          </div>
+        </section>}
       </main>
       {(stockGroupCategory || editingStockGroup) && <StockGroupModal key={editingStockGroup?.id ?? stockGroupCategory} category={(editingStockGroup?.category ?? stockGroupCategory) as "supplies" | "tool"} reference={editingStockGroup ?? undefined} initialQuantity={editingStockGroup ? snapshot.lots.filter((lot) => lot.referenceId === editingStockGroup.id).reduce((sum, lot) => sum + lot.quantity, 0) : undefined} initialUnit={editingStockGroup ? snapshot.lots.find((lot) => lot.referenceId === editingStockGroup.id)?.unit : undefined} busy={busy} onClose={() => { setStockGroupCategory(null); setEditingStockGroup(null); }} onSubmit={(value) => handleSaveStockGroup({ ...value, category: (editingStockGroup?.category ?? stockGroupCategory) as "supplies" | "tool", ...(editingStockGroup ? { referenceId: editingStockGroup.id } : {}) })} />}
       {showInventoryManager && <InventoryManagerModal inventoryList={inventoryList} busy={busy} error={error} onClose={() => setShowInventoryManager(false)} onOpen={(id) => void openInventory(id)} onCreate={(name) => void createInventory(name)} onImport={() => void importInventory()} />}

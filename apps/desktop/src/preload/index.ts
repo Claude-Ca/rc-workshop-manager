@@ -1,10 +1,12 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { Aircraft, ComponentReference, InventorySnapshot, Project, StockItem, StockLot } from "@rc-workshop/core";
+import type { Aircraft, ComponentCategory, ComponentReference, InventorySnapshot, Project, StockItem, StockLot } from "@rc-workshop/core";
 
 export type InventorySummary = { id: string; name: string; createdAt: string; lastUsedAt?: string; active: boolean; lastUsed: boolean };
 export type InventoryList = { items: InventorySummary[]; activeId: string; lastUsedId: string };
 
 export interface DesktopApi {
+  exportDatabase(): Promise<boolean>;
+  exportInventoryCsv(categories: ComponentCategory[] | "all"): Promise<boolean>;
   getInventories(): Promise<InventoryList>;
   openInventory(id: string): Promise<InventoryList>;
   createInventory(name: string): Promise<InventoryList>;
@@ -28,6 +30,8 @@ export interface DesktopApi {
 }
 
 const api: DesktopApi = {
+  exportDatabase: () => ipcRenderer.invoke("export:database"),
+  exportInventoryCsv: (categories) => ipcRenderer.invoke("export:csv", categories),
   getInventories: () => ipcRenderer.invoke("inventories:list"),
   openInventory: (id) => ipcRenderer.invoke("inventories:open", id),
   createInventory: (name) => ipcRenderer.invoke("inventories:create", name),

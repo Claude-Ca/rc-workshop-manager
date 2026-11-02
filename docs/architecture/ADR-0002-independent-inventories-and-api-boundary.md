@@ -52,7 +52,13 @@ Receivers: brand, model, protocol, channel count, and any relevant additional at
 
 Supplies use simple availability/consumption tracking. No per-length remainder accounting and no mandatory aircraft assignment. Detailed consumable-lot tracking is outside the initial scope.
 
-### 6. Other requested improvements
+### 6. Export
+
+- The export menu creates a complete SQLite copy using SQLite’s backup API.
+- CSV export covers catalog references and current stock. The user can export all categories or select specific categories.
+- Save dialogs and file paths remain in the Electron main process.
+
+### 7. Other requested improvements
 
 - Aircraft list has a read-only preview distinct from edit mode.
 - Archived catalog references can be restored.

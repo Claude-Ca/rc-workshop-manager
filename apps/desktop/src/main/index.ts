@@ -1,8 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import { basename, extname, join } from "node:path";
+import { basename, extname, join, resolve } from "node:path";
 import { copyFile, mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { InventoryService, type Aircraft, type ComponentReference, type Project, type StockItem, type StockLot } from "@rc-workshop/core";
+import { COMPONENT_CATEGORIES, InventoryService, type Aircraft, type ComponentCategory, type ComponentReference, type InventorySnapshot, type Project, type StockItem, type StockLot } from "@rc-workshop/core";
 import { SqliteInventoryRepository } from "@rc-workshop/infrastructure";
 
 let mainWindow: BrowserWindow | null = null;
@@ -69,10 +69,103 @@ async function initializeInventories(): Promise<void> {
     registry.entries.push({ id, name: "Mon inventaire", path, createdAt: new Date().toISOString() });
   }
   const desired = registry.entries.find((entry) => entry.id === registry.lastUsedId) ?? registry.entries[0];
+  if (!desired) throw new Error("Aucune base d’inventaire n’a pu être initialisée.");
   await activateInventory(desired.id);
 }
 
+const exportCategoryLabels: Record<string, string> = {
+  motor: "Motorisation", esc: "Variateurs ESC", radio: "Radio", servo: "Servos",
+  battery: "Batteries", supplies: "Fournitures", tool: "Outils et équipements", other: "Divers",
+  propeller: "Hélices", receiver: "Radio", connector: "Fournitures", control: "Fournitures",
+  structure: "Fournitures", material: "Fournitures", construction: "Fournitures",
+};
+
+function csvCell(value: unknown): string {
+  const text = value === null || value === undefined ? "" : String(value);
+  return '"' + text.replaceAll('"', '""') + '"';
+}
+
+function buildInventoryCsv(snapshot: InventorySnapshot, categories: unknown): string {
+  const validCategories = Array.isArray(categories)
+    ? categories.filter((value): value is ComponentCategory => typeof value === "string" && (COMPONENT_CATEGORIES as readonly string[]).includes(value))
+    : [];
+  const filter = validCategories.length ? new Set(validCategories) : null;
+  const columns = [
+    "Type", "Catégorie", "Référence", "Marque", "Modèle", "Suivi", "Type radio", "Canaux RX/TX",
+    "Protocoles", "Firmware", "Motorisation", "Type moteur", "Tension", "Cylindrée", "Hélice DxP",
+    "Attributs", "Code inventaire", "N° série", "Statut", "Quantité", "Unité", "Emplacement",
+    "Avion", "Projet", "Nom TX16", "Bind", "Notes", "Créé le",
+  ];
+  const rows: string[][] = [columns];
+  const aircraftNames = new Map(snapshot.aircraft.map((entry) => [entry.id, entry.name]));
+  const projectNames = new Map(snapshot.projects.map((entry) => [entry.id, entry.name]));
+  const itemNames = new Map(snapshot.items.map((entry) => [entry.id, entry.inventoryCode]));
+  for (const reference of snapshot.references) {
+    if (filter && !filter.has(reference.category)) continue;
+    const base: string[] = [
+      "", exportCategoryLabels[reference.category] ?? reference.category, reference.name, reference.brand ?? "",
+      reference.model ?? "", reference.trackingMode, reference.radioType ?? "",
+      String(reference.receiverChannels ?? reference.transmitterChannels ?? ""),
+      [...(reference.transmitterProtocols ?? []), ...(reference.receiverProtocol ? [reference.receiverProtocol] : [])].join(", "),
+      reference.firmwareVersion ?? "", reference.motorizationKind ?? "", reference.motorType ?? "",
+      reference.motorVoltage ?? "", reference.motorDisplacement ?? "",
+      reference.propellerDiameter || reference.propellerPitch ? (reference.propellerDiameter ?? "") + "x" + (reference.propellerPitch ?? "") : "",
+      JSON.stringify(reference.attributes) ?? "",
+    ];
+    const referenceItems = snapshot.items.filter((item) => item.referenceId === reference.id);
+    const referenceLots = snapshot.lots.filter((lot) => lot.referenceId === reference.id);
+    const appendRow = (type: string, details: Array<string | number>) => {
+      const row = [type, ...base.slice(1), ...details].map(String);
+      while (row.length < columns.length) row.push("");
+      rows.push(row.slice(0, columns.length));
+    };
+    for (const item of referenceItems) {
+      appendRow("Exemplaire", [item.inventoryCode, item.serialNumber ?? "", item.status, "", "",
+        item.locationId ?? "", item.aircraftId ? aircraftNames.get(item.aircraftId) ?? item.aircraftId : "",
+        item.projectId ? projectNames.get(item.projectId) ?? item.projectId : "", item.tx16Name ?? "",
+        item.boundTransmitterId ? itemNames.get(item.boundTransmitterId) ?? item.boundTransmitterId : "",
+        item.notes ?? "", item.createdAt]);
+    }
+    for (const lot of referenceLots) {
+      appendRow("Stock", ["", "", "", lot.quantity, lot.unit, lot.locationId ?? ""]);
+    }
+    if (!referenceItems.length && !referenceLots.length) appendRow("Référence catalogue", []);
+  }
+  return "\uFEFF" + rows.map((row) => row.map(csvCell).join(";")).join("\r\n") + "\r\n";
+}
+
+function safeFileName(name: string): string {
+  return name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_").trim() || "inventaire";
+}
+
 function inventoryManagerHandlers(): void {
+  ipcMain.handle("export:database", async () => {
+    const entry = registry.entries.find((candidate) => candidate.id === registry.activeId);
+    if (!entry) throw new Error("Aucune base n’est ouverte.");
+    const { canceled, filePath } = await dialog.showSaveDialog(mainWindow!, {
+      title: "Exporter une copie complète de la base",
+      defaultPath: join(app.getPath("documents"), safeFileName(entry.name) + "-backup.sqlite"),
+      filters: [{ name: "Base SQLite", extensions: ["sqlite"] }],
+    });
+    if (canceled || !filePath) return false;
+    if (resolve(filePath).toLocaleLowerCase() === resolve(entry.path).toLocaleLowerCase()) {
+      throw new Error("Choisis un autre emplacement pour ne pas remplacer la base actuellement ouverte.");
+    }
+    await repository.backupTo(filePath);
+    return true;
+  });
+  ipcMain.handle("export:csv", async (_event, categories: unknown) => {
+    const entry = registry.entries.find((candidate) => candidate.id === registry.activeId);
+    if (!entry) throw new Error("Aucune base n’est ouverte.");
+    const { canceled, filePath } = await dialog.showSaveDialog(mainWindow!, {
+      title: "Exporter l’inventaire au format CSV",
+      defaultPath: join(app.getPath("documents"), safeFileName(entry.name) + "-inventaire.csv"),
+      filters: [{ name: "Fichier CSV", extensions: ["csv"] }],
+    });
+    if (canceled || !filePath) return false;
+    await writeFile(filePath, buildInventoryCsv(inventory.getSnapshot(), categories), "utf8");
+    return true;
+  });
   ipcMain.handle("inventories:list", () => ({ items: summaries(), activeId: registry.activeId, lastUsedId: registry.lastUsedId }));
   ipcMain.handle("inventories:open", async (_event, id: string) => ({ items: await activateInventory(id), activeId: registry.activeId, lastUsedId: registry.lastUsedId }));
   ipcMain.handle("inventories:create", async (_event, rawName: string) => {

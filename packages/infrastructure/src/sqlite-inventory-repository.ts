@@ -16,6 +16,10 @@ export class SqliteInventoryRepository implements InventoryRepository {
     this.initialize();
   }
 
+  async backupTo(destinationPath: string): Promise<void> {
+    await this.db.backup(destinationPath);
+  }
+
   close(): void {
     this.db.close();
   }
