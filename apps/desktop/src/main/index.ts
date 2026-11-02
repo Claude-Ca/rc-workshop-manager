@@ -36,6 +36,10 @@ function registerHandlers(): void {
     inventory.updateReference(input);
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:restore-reference", (_event, referenceId: string) => {
+    inventory.restoreReference(referenceId);
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventory:delete-reference", (_event, referenceId: string) => {
     const result = inventory.deleteReference(referenceId);
     return { snapshot: inventory.getSnapshot(), archived: result.archived };
