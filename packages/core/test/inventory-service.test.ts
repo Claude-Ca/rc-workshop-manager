@@ -38,6 +38,16 @@ describe("InventoryService", () => {
     expect(() => service.createReference(missingProtocol)).toThrow(/protocole radio/);
   });
 
+  it("validates motor and propeller specifications independently", () => {
+    const service = new InventoryService(new MemoryRepository());
+    const motor = { ...reference("REF-ELECTRIC", "motor", "individual"), motorizationKind: "motor" as const, motorType: "electric" as const, motorVoltage: "3-4S" };
+    const propeller = { ...reference("REF-PROP", "motor", "individual"), motorizationKind: "propeller" as const, propellerDiameter: "12", propellerPitch: "8" };
+    service.createReference(motor);
+    service.createReference(propeller);
+    expect(() => service.createReference({ ...motor, id: "REF-BAD-MOTOR", motorVoltage: "" })).toThrow(/Tension/);
+    expect(() => service.createReference({ ...propeller, id: "REF-BAD-PROP", propellerPitch: "" })).toThrow(/Diametre et pas/);
+  });
+
   it("validates and stores a radio receiver subtype", () => {
     const repository = new MemoryRepository();
     const service = new InventoryService(repository);
