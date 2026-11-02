@@ -14,6 +14,7 @@ export interface DesktopApi {
   addProject(input: Project): Promise<InventorySnapshot>;
   assignItem(itemId: string, target: { kind: "aircraft"; id: string } | { kind: "project"; id: string }): Promise<InventorySnapshot>;
   releaseItem(itemId: string): Promise<InventorySnapshot>;
+  setReceiverBinding(receiverItemId: string, transmitterItemId: string | null): Promise<InventorySnapshot>;
 }
 
 const api: DesktopApi = {
@@ -29,6 +30,7 @@ const api: DesktopApi = {
   addProject: (input) => ipcRenderer.invoke("inventory:add-project", input),
   assignItem: (itemId, target) => ipcRenderer.invoke("inventory:assign-item", itemId, target),
   releaseItem: (itemId) => ipcRenderer.invoke("inventory:release-item", itemId),
+  setReceiverBinding: (receiverItemId, transmitterItemId) => ipcRenderer.invoke("inventory:set-receiver-binding", receiverItemId, transmitterItemId),
 };
 
 contextBridge.exposeInMainWorld("rcWorkshop", api);
