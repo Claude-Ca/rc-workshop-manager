@@ -170,6 +170,10 @@ export class SqliteInventoryRepository implements InventoryRepository {
     this.db.prepare("DELETE FROM stock_items WHERE id = ?").run(itemId);
   }
 
+  deleteLot(lotId: string): void {
+    this.db.prepare("DELETE FROM stock_lots WHERE id = ?").run(lotId);
+  }
+
   saveLot(value: StockLot): void {
     this.db.prepare(`INSERT INTO stock_lots (id,reference_id,quantity,unit,location_id)
       VALUES (@id,@referenceId,@quantity,@unit,@locationId)

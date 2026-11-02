@@ -22,7 +22,7 @@ export class InventoryService {
     const snapshot = this.repository.getSnapshot();
     if (!reference.id.trim() || !reference.name.trim()) throw new InventoryError("Identifiant et désignation obligatoires.");
     if (snapshot.references.some((entry) => entry.id === reference.id)) throw new InventoryError("Cette référence existe déjà.");
-    if (reference.category === "supplies" && reference.trackingMode !== "quantity") throw new InventoryError("Les fournitures doivent être gérées par quantité.");
+    if ((reference.category === "supplies" || reference.category === "tool") && reference.trackingMode !== "quantity") throw new InventoryError("Les fournitures et outils doivent être gérés par quantité.");
     if ((reference.category === "receiver" || (reference.category === "radio" && (reference.radioType ?? "receiver") === "receiver")) && reference.trackingMode !== "individual") {
       throw new InventoryError("Un récepteur doit être suivi individuellement.");
     }
@@ -54,6 +54,7 @@ export class InventoryService {
     if (!existing) throw new InventoryError("Référence catalogue introuvable.");
     if (existing.archived) throw new InventoryError("Une référence archivée ne peut pas être modifiée.");
     if (!reference.name.trim()) throw new InventoryError("La désignation est obligatoire.");
+    if ((reference.category === "supplies" || reference.category === "tool") && reference.trackingMode !== "quantity") throw new InventoryError("Les fournitures et outils doivent être gérés par quantité.");
     const hasStock = snapshot.items.some((item) => item.referenceId === reference.id) || snapshot.lots.some((lot) => lot.referenceId === reference.id);
     const hasHistory = snapshot.movements.some((movement) => movement.referenceId === reference.id);
     if ((hasStock || hasHistory) && reference.category !== existing.category) throw new InventoryError("La catégorie ne peut pas être modifiée après utilisation de cette référence.");
@@ -107,8 +108,8 @@ export class InventoryService {
     const snapshot = this.repository.getSnapshot();
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId && !entry.archived);
     if (!reference) throw new InventoryError("Référence catalogue introuvable ou archivée.");
-    if (reference.category === "supplies" || reference.trackingMode !== "individual") throw new InventoryError("Cette référence est gérée en quantité, pas par exemplaire.");
-    const prefix = reference.category === "radio" && reference.radioType === "transmitter" ? "TX" : reference.category === "receiver" || reference.category === "radio" ? "RX" : reference.category === "motor" && reference.motorizationKind === "propeller" ? "PROP" : reference.category === "motor" ? "MOT" : reference.category === "esc" ? "ESC" : reference.category === "servo" ? "SER" : reference.category === "battery" ? "BAT" : reference.category === "tool" ? "OUT" : "DIV";
+    if (reference.category === "supplies" || reference.category === "tool" || reference.trackingMode !== "individual") throw new InventoryError("Cette référence est gérée en quantité, pas par exemplaire.");
+    const prefix = reference.category === "radio" && reference.radioType === "transmitter" ? "TX" : reference.category === "receiver" || reference.category === "radio" ? "RX" : reference.category === "motor" && reference.motorizationKind === "propeller" ? "PROP" : reference.category === "motor" ? "MOT" : reference.category === "esc" ? "ESC" : reference.category === "servo" ? "SER" : reference.category === "battery" ? "BAT" : "DIV";
     let sequence = 1;
     let inventoryCode = prefix + "-" + String(sequence).padStart(3, "0");
     const usedCodes = new Set(snapshot.items.map((entry) => entry.inventoryCode.toLowerCase()));
@@ -156,6 +157,20 @@ export class InventoryService {
     if (!item) throw new InventoryError("Exemplaire introuvable.");
     this.repository.appendMovement({ id: movementId, type: "deleted", referenceId: item.referenceId, itemId, occurredAt });
     this.repository.deleteItem(itemId);
+  }
+
+  setStockGroupQuantity(referenceId: string, quantity: number, unit: string, newLotId: string, movementId: string, occurredAt: string): void {
+    const snapshot = this.repository.getSnapshot();
+    const reference = snapshot.references.find((entry) => entry.id === referenceId && !entry.archived);
+    if (!reference || (reference.category !== "supplies" && reference.category !== "tool") || reference.trackingMode !== "quantity") throw new InventoryError("Fourniture ou outil introuvable.");
+    if (!Number.isInteger(quantity) || quantity < 0) throw new InventoryError("La quantité doit être un entier positif ou nul.");
+    if (!unit.trim()) throw new InventoryError("L’unité de stock est obligatoire.");
+    const existingLots = snapshot.lots.filter((lot) => lot.referenceId === referenceId);
+    const lotId = existingLots[0]?.id ?? newLotId;
+    const before = existingLots.reduce((sum, lot) => sum + lot.quantity, 0);
+    this.repository.saveLot({ id: lotId, referenceId, quantity, unit: unit.trim() });
+    for (const lot of existingLots.slice(1)) this.repository.deleteLot(lot.id);
+    this.repository.appendMovement({ id: movementId, type: "adjusted", referenceId, lotId, quantity: quantity - before, occurredAt });
   }
 
   addLot(lot: StockLot): void {
@@ -216,7 +231,7 @@ export class InventoryService {
     if (!item) throw new InventoryError("Exemplaire introuvable.");
     if (item.status !== "available") throw new InventoryError("Seul un exemplaire disponible peut être affecté.");
     const itemReference = snapshot.references.find((entry) => entry.id === item.referenceId);
-    if (itemReference?.category === "supplies") throw new InventoryError("Les fournitures ne peuvent pas être affectées.");
+    if (itemReference?.category === "supplies" || itemReference?.category === "tool") throw new InventoryError("Les fournitures et outils ne peuvent pas être affectés.");
     if (itemReference?.category === "radio" && itemReference.radioType === "transmitter") throw new InventoryError("A transmitter cannot be assigned.");
     if (target.kind === "aircraft" && !snapshot.aircraft.some((entry) => entry.id === target.id)) throw new InventoryError("Avion introuvable.");
     if (target.kind === "project" && !snapshot.projects.some((entry) => entry.id === target.id)) throw new InventoryError("Projet introuvable.");

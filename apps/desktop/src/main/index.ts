@@ -60,6 +60,10 @@ function registerHandlers(): void {
     inventory.addItem({ ...input, createdAt: new Date().toISOString() });
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:set-stock-group-quantity", (_event, referenceId: string, quantity: number, unit: string) => {
+    inventory.setStockGroupQuantity(referenceId, quantity, unit, randomUUID(), randomUUID(), new Date().toISOString());
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventory:add-lot", (_event, input: StockLot) => {
     inventory.addLot(input);
     return inventory.getSnapshot();

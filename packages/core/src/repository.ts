@@ -10,6 +10,7 @@ export interface InventoryRepository {
   saveItem(item: StockItem): void;
   deleteItem(itemId: string): void;
   saveLot(lot: StockLot): void;
+  deleteLot(lotId: string): void;
   saveAircraft(aircraft: Aircraft): void;
   deleteAircraft(aircraftId: string): void;
   saveProject(project: Project): void;
