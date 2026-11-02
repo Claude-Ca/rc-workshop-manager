@@ -48,6 +48,14 @@ function registerHandlers(): void {
     inventory.createReference({ ...input, createdAt: new Date().toISOString(), archived: false });
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:update-item", (_event, input: StockItem) => {
+    inventory.updateItem(input);
+    return inventory.getSnapshot();
+  });
+  ipcMain.handle("inventory:delete-item", (_event, itemId: string) => {
+    inventory.deleteItem(itemId, randomUUID(), new Date().toISOString());
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventory:add-item", (_event, input: Omit<StockItem, "createdAt">) => {
     inventory.addItem({ ...input, createdAt: new Date().toISOString() });
     return inventory.getSnapshot();

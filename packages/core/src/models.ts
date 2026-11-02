@@ -74,7 +74,7 @@ export interface Project {
 
 export type MovementType =
   | "stock-in" | "installed" | "reserved" | "released"
-  | "transferred" | "adjusted" | "consumed" | "repair" | "retired";
+  | "transferred" | "adjusted" | "consumed" | "repair" | "retired" | "deleted";
 
 export interface StockMovement {
   id: string;

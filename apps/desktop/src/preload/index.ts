@@ -8,6 +8,8 @@ export interface DesktopApi {
   deleteReference(referenceId: string): Promise<{ snapshot: InventorySnapshot; archived: boolean }>;
   restoreReference(referenceId: string): Promise<InventorySnapshot>;
   addItem(input: Omit<StockItem, "createdAt">): Promise<InventorySnapshot>;
+  updateItem(input: StockItem): Promise<InventorySnapshot>;
+  deleteItem(itemId: string): Promise<InventorySnapshot>;
   addLot(input: StockLot): Promise<InventorySnapshot>;
   addAircraft(input: Aircraft): Promise<InventorySnapshot>;
   updateAircraft(input: Aircraft): Promise<InventorySnapshot>;
@@ -24,6 +26,8 @@ const api: DesktopApi = {
   deleteReference: (referenceId) => ipcRenderer.invoke("inventory:delete-reference", referenceId),
   restoreReference: (referenceId) => ipcRenderer.invoke("inventory:restore-reference", referenceId),
   addItem: (input) => ipcRenderer.invoke("inventory:add-item", input),
+  updateItem: (input) => ipcRenderer.invoke("inventory:update-item", input),
+  deleteItem: (itemId) => ipcRenderer.invoke("inventory:delete-item", itemId),
   addLot: (input) => ipcRenderer.invoke("inventory:add-lot", input),
   addAircraft: (input) => ipcRenderer.invoke("inventory:add-aircraft", input),
   updateAircraft: (input) => ipcRenderer.invoke("inventory:update-aircraft", input),

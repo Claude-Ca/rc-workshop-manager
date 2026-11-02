@@ -165,6 +165,11 @@ export class SqliteInventoryRepository implements InventoryRepository {
         tx16Name:value.tx16Name??null,notes:value.notes??null,createdAt:value.createdAt,boundTransmitterId:value.boundTransmitterId??null });
   }
 
+  deleteItem(itemId: string): void {
+    this.db.prepare("UPDATE stock_items SET bound_transmitter_id = NULL WHERE bound_transmitter_id = ?").run(itemId);
+    this.db.prepare("DELETE FROM stock_items WHERE id = ?").run(itemId);
+  }
+
   saveLot(value: StockLot): void {
     this.db.prepare(`INSERT INTO stock_lots (id,reference_id,quantity,unit,location_id)
       VALUES (@id,@referenceId,@quantity,@unit,@locationId)

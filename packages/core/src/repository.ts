@@ -8,6 +8,7 @@ export interface InventoryRepository {
   saveReference(reference: ComponentReference): void;
   deleteReference(referenceId: string): void;
   saveItem(item: StockItem): void;
+  deleteItem(itemId: string): void;
   saveLot(lot: StockLot): void;
   saveAircraft(aircraft: Aircraft): void;
   deleteAircraft(aircraftId: string): void;

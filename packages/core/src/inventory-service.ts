@@ -127,6 +127,35 @@ export class InventoryService {
     });
   }
 
+  updateItem(input: StockItem): void {
+    const snapshot = this.repository.getSnapshot();
+    const existing = snapshot.items.find((item) => item.id === input.id);
+    if (!existing) throw new InventoryError("Exemplaire introuvable.");
+    if (input.referenceId !== existing.referenceId) throw new InventoryError("La référence d’un exemplaire ne peut pas être modifiée.");
+    const reference = snapshot.references.find((entry) => entry.id === existing.referenceId);
+    if (!reference) throw new InventoryError("Référence catalogue introuvable.");
+    const updated: StockItem = { ...existing };
+    if (input.serialNumber?.trim()) updated.serialNumber = input.serialNumber.trim(); else delete updated.serialNumber;
+    if (input.locationId?.trim()) updated.locationId = input.locationId.trim(); else delete updated.locationId;
+    if (input.notes?.trim()) updated.notes = input.notes.trim(); else delete updated.notes;
+    const isReceiver = reference.category === "receiver" || (reference.category === "radio" && reference.radioType === "receiver");
+    if (isReceiver) {
+      const tx16Name = input.tx16Name?.trim() || existing.inventoryCode;
+      if (snapshot.items.some((item) => item.id !== existing.id && item.tx16Name?.toLowerCase() === tx16Name.toLowerCase())) {
+        throw new InventoryError("Ce nom TX16 est déjà attribué à un récepteur.");
+      }
+      updated.tx16Name = tx16Name;
+    }
+    this.repository.saveItem(updated);
+  }
+
+  deleteItem(itemId: string, movementId: string, occurredAt: string): void {
+    const item = this.repository.getSnapshot().items.find((entry) => entry.id === itemId);
+    if (!item) throw new InventoryError("Exemplaire introuvable.");
+    this.repository.appendMovement({ id: movementId, type: "deleted", referenceId: item.referenceId, itemId, occurredAt });
+    this.repository.deleteItem(itemId);
+  }
+
   addLot(lot: StockLot): void {
     const snapshot = this.repository.getSnapshot();
     const reference = snapshot.references.find((entry) => entry.id === lot.referenceId && !entry.archived);
