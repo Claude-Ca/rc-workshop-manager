@@ -36,8 +36,8 @@ export class InventoryService {
     if (reference.category === "motor") {
       if (!reference.motorizationKind) throw new InventoryError("Type de motorisation obligatoire.");
       if (reference.motorizationKind === "motor" && !reference.motorType) throw new InventoryError("Type de moteur obligatoire.");
-      if (reference.motorType === "electric" && !reference.motorVoltage?.trim()) throw new InventoryError("Tension obligatoire.");
-      if (reference.motorType === "glow" && !reference.motorDisplacement?.trim()) throw new InventoryError("Cylindree obligatoire.");
+      if (reference.motorizationKind === "motor" && reference.motorType === "electric" && !reference.motorVoltage?.trim()) throw new InventoryError("Tension obligatoire.");
+      if (reference.motorizationKind === "motor" && reference.motorType === "glow" && !reference.motorDisplacement?.trim()) throw new InventoryError("Cylindree obligatoire.");
       if (reference.motorizationKind === "propeller" && (!reference.propellerDiameter?.trim() || !reference.propellerPitch?.trim())) throw new InventoryError("Diametre et pas obligatoires.");
     }
     if (reference.category === "radio" && reference.radioType === "transmitter") {
