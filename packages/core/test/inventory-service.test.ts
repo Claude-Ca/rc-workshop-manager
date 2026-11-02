@@ -92,7 +92,7 @@ describe("InventoryService", () => {
   it("generates unique inventory codes with category prefixes", () => {
     const repository = new MemoryRepository();
     const service = new InventoryService(repository);
-    service.createReference(reference("REF-RX", "radio", "individual"));
+    service.createReference({ ...reference("REF-RX", "radio", "individual"), radioType: "receiver", receiverChannels: 8, receiverProtocol: "ACCESS" });
     service.createReference({ ...reference("REF-MOTOR", "motor", "individual"), motorizationKind: "motor", motorType: "glow", motorDisplacement: "46" });
     service.addItem({ id: "ITEM-1", referenceId: "REF-RX", inventoryCode: "", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
     service.addItem({ id: "ITEM-2", referenceId: "REF-RX", inventoryCode: "", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
