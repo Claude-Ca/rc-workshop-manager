@@ -21,6 +21,12 @@ export interface ComponentReference {
   transmitterChannels?: number;
   transmitterProtocols?: string[];
   firmwareVersion?: string;
+  motorizationKind?: "motor" | "propeller";
+  motorType?: "electric" | "glow";
+  motorVoltage?: string;
+  motorDisplacement?: string;
+  propellerDiameter?: string;
+  propellerPitch?: string;
   attributes: Record<string, string | number | boolean>;
   photoPath?: string;
   archived: boolean;
@@ -37,6 +43,7 @@ export interface StockItem {
   aircraftId?: string;
   projectId?: string;
   tx16Name?: string;
+  boundTransmitterId?: string;
   notes?: string;
   createdAt: string;
 }
