@@ -54,12 +54,10 @@ async function initializeInventories(): Promise<void> {
   } catch {
     const legacyPath = join(app.getPath("userData"), "rc-workshop.sqlite");
     registry = { entries: [], activeId: "", lastUsedId: "" };
-    try {
-      await stat(legacyPath);
+    const legacyExists = await stat(legacyPath).then(() => true, () => false);
+    if (legacyExists) {
       await copyFile(legacyPath, join(inventoryDirectory(), "legacy-backup-" + Date.now() + ".sqlite"));
       registry.entries.push({ id: "legacy", name: "Inventaire principal", path: legacyPath, createdAt: new Date().toISOString() });
-    } catch {
-      // No existing database: create an empty first inventory below.
     }
   }
   registry.entries = registry.entries.filter((entry) => entry && entry.id && entry.name && entry.path);
