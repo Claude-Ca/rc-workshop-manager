@@ -6,3 +6,43 @@
 @media(max-width:900px){.aircraft-add{grid-template-columns:1fr}.detail-actions{justify-content:flex-start}}
 
 .supply-list{display:grid;gap:9px;max-width:900px}.supply-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 18px;background:var(--panel);border:1px solid var(--line);border-radius:9px}.supply-row strong{font-size:13px}.supply-row span{color:#b8d9f8;font-size:12px;white-space:nowrap}
+
+.inventory-switcher{border:1px solid #42678c;background:#293d52;color:#b9d8f6;border-radius:7px;padding:9px 12px;font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inventory-manager{display:grid;gap:14px}
+.last-inventory{display:flex;align-items:center;gap:12px;width:100%;padding:14px;text-align:left;border:1px solid #42678c;background:#223346;color:#dceaff;border-radius:9px}
+.last-inventory>span{font-size:21px}
+.last-inventory div{display:grid;gap:4px;flex:1}
+.last-inventory strong,.inventory-manager-row strong{font-size:12px}
+.last-inventory small,.inventory-manager-row small{font-size:10px;color:#a6b3c2}
+.inventory-manager-list{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.inventory-manager-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border-bottom:1px solid var(--line)}
+.inventory-manager-row:last-child{border:0}
+.inventory-manager-row>div{display:grid;gap:4px}
+.inventory-create{display:flex;align-items:end;gap:9px}
+.inventory-create label{display:grid;gap:7px;flex:1;font-size:11px;color:#afbdcd}
+.inventory-create input{background:#111923;border:1px solid #344151;border-radius:7px;padding:10px 11px;color:#e7edf5}
+.import-inventory{justify-self:start}
+
+.export-page{display:grid;gap:16px;max-width:1000px}
+.export-intro h2{font:800 22px Manrope;margin:7px 0}
+.export-intro p,.export-card p{font-size:12px;line-height:1.6;color:var(--muted);margin:6px 0}
+.export-card{display:grid;grid-template-columns:1fr auto;align-items:center;gap:15px;padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.export-card h3{font:700 15px Manrope;margin:10px 0 0}
+.export-icon{font-size:21px;color:#9acbff}
+.csv-export-card{grid-template-columns:1fr auto}
+.export-all{display:flex;align-items:center;gap:8px;color:#dce5ef;font-size:12px}
+.export-category-list{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px;background:#141c26;border:1px solid var(--line);border-radius:8px}
+.export-category-list label{display:flex;align-items:center;gap:8px;color:#b7c5d4;font-size:11px}
+.export-card button{justify-self:end}
+@media(max-width:900px){.export-category-list{grid-template-columns:repeat(2,minmax(0,1fr))}.export-card{grid-template-columns:1fr}.export-card button{justify-self:start}}
+
+.admin-page{display:grid;gap:16px;max-width:940px}
+.admin-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.admin-card h3{font:700 15px Manrope;margin:0 0 8px}
+.admin-card p{font-size:12px;line-height:1.6;color:var(--muted);margin:0}
+.reset-card{border-color:#71434a}
+.reset-confirmation>p{font-size:12px;line-height:1.6;color:#d7e0eb}
+.reset-confirmation label strong{color:#ffd9d9;font-size:11px}
+.success-banner{margin:16px 42px 0;padding:11px 14px;background:#244339;border:1px solid #3a7656;color:#c4f0d6;border-radius:8px;font-size:11px;display:flex;justify-content:space-between}
+.success-banner button{border:0;background:transparent;color:inherit}
+@media(max-width:900px){.admin-card{align-items:flex-start;flex-direction:column}}
