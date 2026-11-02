@@ -106,7 +106,7 @@ export class InventoryService {
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId && !entry.archived);
     if (!reference) throw new InventoryError("Référence catalogue introuvable ou archivée.");
     if (reference.trackingMode !== "individual") throw new InventoryError("Cette référence est gérée en quantité, pas par exemplaire.");
-    const prefix = reference.category === "radio" && reference.radioType === "transmitter" ? "TX" : reference.category === "radio" ? "RX" : reference.category === "motor" && reference.motorizationKind === "propeller" ? "PROP" : reference.category === "motor" ? "MOT" : reference.category === "esc" ? "ESC" : reference.category === "servo" ? "SER" : reference.category === "battery" ? "BAT" : reference.category === "supplies" ? "FOU" : reference.category === "tool" ? "OUT" : "DIV";
+    const prefix = reference.category === "radio" && reference.radioType === "transmitter" ? "TX" : reference.category === "receiver" || reference.category === "radio" ? "RX" : reference.category === "motor" && reference.motorizationKind === "propeller" ? "PROP" : reference.category === "motor" ? "MOT" : reference.category === "esc" ? "ESC" : reference.category === "servo" ? "SER" : reference.category === "battery" ? "BAT" : reference.category === "supplies" ? "FOU" : reference.category === "tool" ? "OUT" : "DIV";
     let sequence = 1;
     let inventoryCode = prefix + "-" + String(sequence).padStart(3, "0");
     const usedCodes = new Set(snapshot.items.map((entry) => entry.inventoryCode.toLowerCase()));
