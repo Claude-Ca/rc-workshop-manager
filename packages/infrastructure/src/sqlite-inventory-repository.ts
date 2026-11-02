@@ -77,7 +77,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.photo_path ? { photoPath: String(row.photo_path) } : {}),
       ...(row.receiver_channels !== null && row.receiver_channels !== undefined ? { receiverChannels: Number(row.receiver_channels) } : {}),
       ...(row.receiver_protocol ? { receiverProtocol: String(row.receiver_protocol) } : {}),
-      ...(row.radio_type ? { radioType: row.radio_type as ComponentReference["radioType"] } : {}),
+      ...(row.radio_type === "transmitter" || row.radio_type === "receiver" ? { radioType: row.radio_type } : {}),
       ...(row.transmitter_channels !== null && row.transmitter_channels !== undefined ? { transmitterChannels: Number(row.transmitter_channels) } : {}),
       ...(row.transmitter_protocols_json ? { transmitterProtocols: JSON.parse(String(row.transmitter_protocols_json)) as string[] } : {}),
       ...(row.firmware_version ? { firmwareVersion: String(row.firmware_version) } : {}),
