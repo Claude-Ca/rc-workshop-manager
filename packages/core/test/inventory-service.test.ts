@@ -125,4 +125,4 @@ describe("InventoryService", () => {
     expect(repository.snapshot.items.find((item) => item.id === "RX-ITEM")?.boundTransmitterId).toBeUndefined();
     expect(() => service.setReceiverBinding("TX-ITEM", "RX-ITEM")).toThrow(/receiver/i);
   });
-
+});
