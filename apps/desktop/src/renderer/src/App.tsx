@@ -26,6 +26,15 @@ const icons: Record<ComponentCategory, string> = {
 };
 const emptySnapshot: InventorySnapshot = { references: [], items: [], lots: [], aircraft: [], projects: [], movements: [] };
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return bytes + " octet(s)";
+  const units = ["Ko", "Mo", "Go"];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit += 1; }
+  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(value) + " " + units[unit];
+}
+
 function App() {
   const [snapshot, setSnapshot] = useState<InventorySnapshot>(emptySnapshot);
   const [section, setSection] = useState<Section>("dashboard");
@@ -90,6 +99,32 @@ function App() {
       setInventoryList(await window.rcWorkshop.importInventory());
       setSnapshot(await window.rcWorkshop.getSnapshot());
       setSection("dashboard"); setCategory("all"); setSelectedId(null); setShowInventoryManager(false);
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { actionLock.current = false; setBusy(false); }
+  }
+
+  async function deleteInventory(id: string) {
+    const target = inventoryList?.items.find((entry) => entry.id === id);
+    if (!target || target.primary || target.active) return;
+    if (!window.confirm("Supprimer définitivement l’inventaire « " + target.name + " » ? Son fichier SQLite sera supprimé. Cette opération est irréversible.")) return;
+    if (actionLock.current) return;
+    actionLock.current = true; setBusy(true); setError(""); setNotice("");
+    try {
+      setInventoryList(await window.rcWorkshop.deleteInventory(id));
+      setNotice("L’inventaire « " + target.name + " » a été supprimé.");
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { actionLock.current = false; setBusy(false); }
+  }
+
+  async function compactActiveDatabase() {
+    if (actionLock.current) return;
+    const activeName = inventoryList?.items.find((entry) => entry.active)?.name ?? "la base active";
+    if (!window.confirm("Compacter la base « " + activeName + " » ? L’opération peut prendre un peu de temps selon sa taille.")) return;
+    actionLock.current = true; setBusy(true); setError(""); setNotice("");
+    try {
+      const result = await window.rcWorkshop.compactDatabase();
+      setNotice("Compactage terminé : " + formatBytes(result.beforeBytes) + " → " + formatBytes(result.afterBytes) +
+        ". Espace récupéré : " + formatBytes(result.reclaimedBytes) + ".");
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { actionLock.current = false; setBusy(false); }
   }
@@ -236,6 +271,7 @@ function App() {
         {section === "admin" && <section className="content admin-page">
           <div className="export-intro"><span className="eyebrow">OUTILS DE GESTION</span><h2>Administration de la base</h2><p>Les opérations d’administration s’appliquent à la base active : <strong>{inventoryList?.items.find((entry) => entry.active)?.name ?? "base ouverte"}</strong>.</p></div>
           <div className="admin-card"><div><h3>Gérer les bases d’inventaire</h3><p>Créer une nouvelle base, ouvrir une base existante ou importer une base SQLite. Chaque inventaire reste indépendant.</p></div><button className="primary" disabled={busy} onClick={() => { setError(""); setShowInventoryManager(true); }}>Gérer les inventaires</button></div>
+          <div className="admin-card"><div><h3>Maintenance de la base SQLite</h3><p>Compacter la base active pour récupérer l’espace inutilisé après des suppressions ou des opérations de maintenance.</p></div><button className="subtle-button" disabled={busy} onClick={() => void compactActiveDatabase()}>Compacter la base</button></div>
           <div className="admin-card"><div><h3>Exporter l’inventaire</h3><p>Créer une sauvegarde SQLite complète ou exporter en CSV l’inventaire entier ou les catégories choisies.</p></div><button className="subtle-button" disabled={busy} onClick={() => setSection("export")}>Accéder aux exports</button></div>
           <div className="admin-card"><div><h3>Réinitialiser l’inventaire</h3><p>Efface le catalogue, les exemplaires, les quantités, les avions, les projets et l’historique de la base active. Une sauvegarde SQLite sera créée avant l’opération.</p></div><button className="danger-button" disabled={busy} onClick={() => setSection("reset")}>Accéder à la réinitialisation</button></div>
         </section>}
@@ -259,7 +295,7 @@ function App() {
       </main>
       {(stockGroupCategory || editingStockGroup) && <StockGroupModal key={editingStockGroup?.id ?? stockGroupCategory} category={(editingStockGroup?.category ?? stockGroupCategory) as "supplies" | "tool"} reference={editingStockGroup ?? undefined} initialQuantity={editingStockGroup ? snapshot.lots.filter((lot) => lot.referenceId === editingStockGroup.id).reduce((sum, lot) => sum + lot.quantity, 0) : undefined} initialUnit={editingStockGroup ? snapshot.lots.find((lot) => lot.referenceId === editingStockGroup.id)?.unit : undefined} busy={busy} onClose={() => { setStockGroupCategory(null); setEditingStockGroup(null); }} onSubmit={(value) => handleSaveStockGroup({ ...value, category: (editingStockGroup?.category ?? stockGroupCategory) as "supplies" | "tool", ...(editingStockGroup ? { referenceId: editingStockGroup.id } : {}) })} />}
       {showResetConfirmation && <ResetInventoryModal inventoryName={inventoryList?.items.find((entry) => entry.active)?.name ?? "base active"} busy={busy} error={error} onClose={() => setShowResetConfirmation(false)} onConfirm={() => void resetInventory()} />}
-      {showInventoryManager && <InventoryManagerModal inventoryList={inventoryList} busy={busy} error={error} onClose={() => setShowInventoryManager(false)} onOpen={(id) => void openInventory(id)} onCreate={(name) => void createInventory(name)} onImport={() => void importInventory()} />}
+      {showInventoryManager && <InventoryManagerModal inventoryList={inventoryList} busy={busy} error={error} onClose={() => setShowInventoryManager(false)} onOpen={(id) => void openInventory(id)} onCreate={(name) => void createInventory(name)} onImport={() => void importInventory()} onDelete={(id) => void deleteInventory(id)} />}
       {showNewReference && <ReferenceModal error={error} busy={busy} onClose={() => setShowNewReference(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.createReference(value); setShowNewReference(false); setSection("inventory"); setCategory("all"); setSelectedId(value.id); return result; })} />}
       {showEditReference && selected && <ReferenceModal reference={selected} error={error} busy={busy} onClose={() => setShowEditReference(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.updateReference(value as ComponentReference); setShowEditReference(false); return result; })} />}
       {previewAircraft && <AircraftPreviewModal aircraft={previewAircraft} snapshot={snapshot} onClose={() => setPreviewAircraft(null)} />}
@@ -388,16 +424,16 @@ function ResetInventoryModal({ inventoryName, busy, error, onClose, onConfirm }:
     </div>
   </Modal>;
 }
-function InventoryManagerModal({ inventoryList, busy, error, onClose, onOpen, onCreate, onImport }: {
+function InventoryManagerModal({ inventoryList, busy, error, onClose, onOpen, onCreate, onImport, onDelete }: {
   inventoryList: InventoryList | null; busy: boolean; error: string; onClose: () => void;
-  onOpen: (id: string) => void; onCreate: (name: string) => void; onImport: () => void;
+  onOpen: (id: string) => void; onCreate: (name: string) => void; onImport: () => void; onDelete: (id: string) => void;
 }) {
   const [name, setName] = useState("");
   const last = inventoryList?.items.find((entry) => entry.id === inventoryList.lastUsedId);
   return <Modal title="Gérer les bases d’inventaire" onClose={onClose} error={error}>
     <div className="inventory-manager">
       {last && <button className="last-inventory" disabled={busy} onClick={() => onOpen(last.id)}><span>↻</span><div><strong>Reprendre la dernière base</strong><small>{last.name}</small></div><b>→</b></button>}
-      <div className="inventory-manager-list">{inventoryList?.items.map((entry) => <div className="inventory-manager-row" key={entry.id}><div><strong>{entry.name}</strong><small>{entry.active ? "Base ouverte" : entry.lastUsed ? "Dernière utilisée" : "Base locale"}</small></div><button className={entry.active ? "secondary" : "subtle-button"} disabled={busy || entry.active} onClick={() => onOpen(entry.id)}>{entry.active ? "Ouverte" : "Ouvrir"}</button></div>)}</div>
+      <div className="inventory-manager-list">{inventoryList?.items.map((entry) => <div className="inventory-manager-row" key={entry.id}><div><strong>{entry.name}</strong><small>{entry.primary ? "Inventaire principal" : entry.active ? "Base ouverte" : entry.lastUsed ? "Dernière utilisée" : "Base locale"}</small></div><div className="inventory-manager-actions"><button className={entry.active ? "secondary" : "subtle-button"} disabled={busy || entry.active} onClick={() => onOpen(entry.id)}>{entry.active ? "Ouverte" : "Ouvrir"}</button>{!entry.primary && !entry.active && <button className="danger-button" disabled={busy} onClick={() => onDelete(entry.id)}>Supprimer</button>}</div></div>)}</div>
       <form className="inventory-create" onSubmit={(event) => { event.preventDefault(); if (name.trim()) onCreate(name.trim()); }}><label>Créer une base vide<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex. Atelier personnel" /></label><button className="primary" disabled={busy || !name.trim()}>＋ Créer</button></form>
       <button className="secondary import-inventory" disabled={busy} onClick={onImport}>Ouvrir / importer un fichier SQLite…</button>
     </div>
