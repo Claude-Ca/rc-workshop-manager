@@ -6,6 +6,46 @@ import type { InventoryRepository } from "@rc-workshop/core";
 
 type Row = Record<string, unknown>;
 
+const REQUIRED_INVENTORY_COLUMNS: Record<string, readonly string[]> = {
+  component_references: ["id", "name", "category", "brand", "model", "description", "tracking_mode", "attributes_json", "photo_path", "archived", "created_at"],
+  stock_items: ["id", "reference_id", "inventory_code", "serial_number", "status", "location_id", "aircraft_id", "project_id", "tx16_name", "notes", "created_at"],
+  stock_lots: ["id", "reference_id", "quantity", "unit", "location_id"],
+  aircraft: ["id", "name", "manufacturer", "model", "notes"],
+  projects: ["id", "name", "status", "notes"],
+  stock_movements: ["id", "type", "reference_id", "item_id", "lot_id", "quantity", "from_location_id", "to_location_id", "aircraft_id", "project_id", "notes", "occurred_at"],
+};
+
+/**
+ * Checks an imported file without modifying it. Schema upgrades are applied only
+ * after the file has passed this read-only compatibility check.
+ */
+export function validateInventoryDatabase(databasePath: string): void {
+  const db = new Database(databasePath, { readonly: true, fileMustExist: true });
+  try {
+    const integrity = db.pragma("quick_check") as Array<{ quick_check: string }>;
+    if (integrity.length !== 1 || integrity[0]?.quick_check !== "ok") {
+      throw new Error("le contrôle d’intégrité SQLite a échoué.");
+    }
+
+    const tables = new Set((db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as Row[]).map((row) => String(row.name)));
+    for (const [table, requiredColumns] of Object.entries(REQUIRED_INVENTORY_COLUMNS)) {
+      if (!tables.has(table)) {
+        throw new Error("la table « " + table + " » est absente.");
+      }
+      const columns = new Set((db.prepare("PRAGMA table_info(" + table + ")").all() as Row[]).map((row) => String(row.name)));
+      const missing = requiredColumns.filter((column) => !columns.has(column));
+      if (missing.length) {
+        throw new Error("la table « " + table + " » ne contient pas les colonnes attendues : " + missing.join(", ") + ".");
+      }
+    }
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error("Fichier incompatible avec un inventaire RC Workshop : " + detail);
+  } finally {
+    db.close();
+  }
+}
+
 export class SqliteInventoryRepository implements InventoryRepository {
   private readonly db: Database.Database;
 
