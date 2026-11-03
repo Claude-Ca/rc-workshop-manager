@@ -1,0 +1,23 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    init: true
+    volumes:
+      - .:/workspace
+      # Keep Linux dependencies out of the Windows/WSL working tree.
+      - root_node_modules:/workspace/node_modules
+      - desktop_node_modules:/workspace/apps/desktop/node_modules
+      - core_node_modules:/workspace/packages/core/node_modules
+      - infrastructure_node_modules:/workspace/packages/infrastructure/node_modules
+      - pnpm_store:/root/.local/share/pnpm/store
+    command: sh -lc "pnpm install --no-frozen-lockfile && sleep infinity"
+
+volumes:
+  root_node_modules:
+  desktop_node_modules:
+  core_node_modules:
+  infrastructure_node_modules:
+  pnpm_store:
