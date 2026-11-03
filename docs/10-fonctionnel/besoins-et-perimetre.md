@@ -21,7 +21,8 @@ Les données sont persistées dans des fichiers SQLite locaux. Un registre appli
 - Lister les inventaires enregistrés et identifier l’inventaire actif et le dernier utilisé.
 - Créer un inventaire SQLite vide.
 - Ouvrir un inventaire existant enregistré.
-- Importer un fichier SQLite en le copiant dans le répertoire applicatif ; le fichier source n’est pas ouvert directement.
+- Importer un fichier SQLite en le copiant dans le répertoire applicatif ; le fichier source n’est jamais ouvert directement ni modifié.
+- Contrôler en lecture seule l’intégrité SQLite et la structure métier de la copie avant toute ouverture avec migrations. Un fichier non SQLite, vide ou incompatible est refusé et n’est pas ajouté au registre des inventaires.
 - Reprendre rapidement le dernier inventaire utilisé et le rouvrir automatiquement au démarrage.
 - Isoler les données de chaque inventaire : références, exemplaires, lots, avions, projets et mouvements.
 - Afficher le nom de l’inventaire actif dans l’interface.
