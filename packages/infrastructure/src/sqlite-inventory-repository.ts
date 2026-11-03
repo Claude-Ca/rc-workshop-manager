@@ -60,6 +60,15 @@ export class SqliteInventoryRepository implements InventoryRepository {
     await this.db.backup(destinationPath);
   }
 
+  /**
+   * Reclaims unused pages in the active SQLite file.
+   * Checkpointing the WAL first ensures the compacted database is self-contained.
+   */
+  compact(): void {
+    this.db.pragma("wal_checkpoint(TRUNCATE)");
+    this.db.exec("VACUUM");
+  }
+
   reset(): void {
     this.db.transaction(() => {
       this.db.exec("DELETE FROM stock_movements; DELETE FROM stock_items; DELETE FROM stock_lots; DELETE FROM component_references; DELETE FROM aircraft; DELETE FROM projects;");
