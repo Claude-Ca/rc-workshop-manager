@@ -1,81 +1,94 @@
 # Besoins et périmètre fonctionnel
 
-**Statut :** en revue  
-**Périmètre :** branche `feature/multi-inventory-and-catalog-rework`
+**Statut :** périmètre fonctionnel implémenté dans `develop`, validation propriétaire en attente  
+**Référence de code :** PR #9 (catalogue, stocks, flotte et radios) et PR #10 (bases multiples, exports et administration)  
+**Dernière revue documentaire :** 2026-11-03
 
 ## Objectif
 
-Application Windows locale et hors ligne pour inventorier le matériel d’aéromodélisme, connaître les quantités disponibles, retrouver les équipements et savoir sur quel avion ou projet ils sont utilisés.
+Application desktop Windows, utilisable hors ligne, destinée à gérer un ou plusieurs inventaires locaux de matériel d’aéromodélisme. L’utilisateur doit pouvoir connaître les références et quantités disponibles, suivre individuellement les équipements importants, retrouver leur utilisation sur les avions et projets, et sauvegarder ou exporter ses données.
 
 ## Utilisateurs et usage
 
-L’application est destinée à un atelier individuel. Les données sont enregistrées localement dans SQLite et restent disponibles après fermeture puis redémarrage de l’application.
+Le produit cible d’abord un usage individuel d’atelier. Plusieurs inventaires locaux indépendants sont possibles (par exemple atelier personnel et club), mais ils restent utilisés sur une même installation locale. Il n’existe pas à ce stade de collaboration simultanée, de compte utilisateur ni de synchronisation réseau.
 
-## Concepts métier
+Les données sont persistées dans des fichiers SQLite locaux. Un registre applicatif conserve les inventaires connus et leurs métadonnées. L’application reprend au démarrage le dernier inventaire utilisé.
 
-- **Référence catalogue :** description d’un type de composant, avec désignation et propriétés facultatives.
-- **Exemplaire :** objet physique suivi individuellement, avec un code inventaire généré, un numéro de série facultatif et des notes.
-- **Stock quantitatif :** quantité d’un consommable, d’une fourniture ou d’un outil, avec unité et quantité modifiable.
-- **Avion :** modèle de la flotte auquel des équipements peuvent être affectés.
-- **Projet :** construction, modification ou réparation pour laquelle un équipement peut être réservé.
-- **Mouvement :** entrée, installation, réservation, libération, ajustement ou suppression d’un exemplaire, conservés dans l’historique.
+## Périmètre fonctionnel actuel
 
-## Références et catégories
+### 1. Gestion des inventaires locaux
 
-Le catalogue comprend les catégories moteur/hélice, ESC, radio, servo, batterie, fourniture, outil et divers. Les anciennes catégories importées restent lisibles via leur famille de compatibilité.
+- Lister les inventaires enregistrés et identifier l’inventaire actif et le dernier utilisé.
+- Créer un inventaire SQLite vide.
+- Ouvrir un inventaire existant enregistré.
+- Importer un fichier SQLite en le copiant dans le répertoire applicatif ; le fichier source n’est pas ouvert directement.
+- Reprendre rapidement le dernier inventaire utilisé et le rouvrir automatiquement au démarrage.
+- Isoler les données de chaque inventaire : références, exemplaires, lots, avions, projets et mouvements.
+- Afficher le nom de l’inventaire actif dans l’interface.
 
-Une référence peut avoir une marque, un modèle, une description et une image facultatifs. Les propriétés techniques sont propres à la catégorie :
+La suppression d’un inventaire enregistré et la gestion avancée de son cycle de vie ne sont pas documentées comme fonctionnalités disponibles.
 
-- Moteur : électrique avec tension, ou Glow avec cylindrée.
-- Hélice : diamètre et pas en pouces.
-- Émetteur radio : nombre de voies, protocoles et firmware facultatif.
-- Récepteur radio : nombre de voies et protocole obligatoires.
+### 2. Catalogue et catégories
 
-Une référence utilisée dans le stock ou l’historique ne peut pas être supprimée définitivement. Elle est archivée afin de préserver les liens et mouvements. Une référence sans dépendance peut être supprimée.
+Le catalogue distingue une référence (description d’un type de composant) des objets physiques et des stocks quantitatifs associés.
 
-## Exemplaires individuels
+Les catégories de premier niveau sont : **Aircraft, Motorization, Radio, Servos, Batteries, Supplies, Tools and equipment**. La catégorie Divers est également présente dans le modèle applicatif. Des catégories historiques restent reconnues par le type pour compatibilité et sont migrées ou regroupées lors de l’ouverture SQLite.
 
-Les batteries, moteurs, radios, servos, ESC et autres équipements traçables sont ajoutés individuellement. Chaque exemplaire reçoit un code inventaire unique adapté à sa catégorie (par exemple RX-001, TX-001, MOT-001 ou PROP-001).
+Les références peuvent comporter marque, modèle, description, photo et attributs techniques facultatifs. Les propriétés dédiées couvrent notamment :
+- Motorisation : moteur électrique ou Glow, tension ou cylindrée ; hélice avec diamètre et pas.
+- Radio : type émetteur ou récepteur, nombre de voies, protocoles et version firmware pour l’émetteur.
+- Les références utilisées dans le stock ou l’historique sont archivées plutôt que supprimées afin de préserver les liens.
 
-Un exemplaire peut être modifié, supprimé avec confirmation, installé sur un avion, réservé pour un projet, puis libéré. Sa fiche permet de modifier le numéro de série, l’emplacement, les notes et, pour un récepteur, son nom dans la TX16. La suppression conserve une trace dans l’historique.
+### 3. Exemplaires individuels et radio
 
-Les récepteurs sont suivis individuellement. Leur nom TX16 est unique parmi les récepteurs. Un récepteur peut être lié à un émetteur; la liaison peut être retirée. Un émetteur ne peut pas être installé sur un avion ni réservé pour un projet.
+Les équipements traçables (moteurs, batteries, servos, ESC, récepteurs et autres composants) sont suivis individuellement avec code inventaire, numéro de série facultatif, état, emplacement, notes et affectation éventuelle.
 
-## Fournitures, consommables et outils
+Les récepteurs peuvent porter un nom TX16 unique et être liés à un émetteur. Un récepteur peut être affecté à un avion ; l’émetteur lié est présenté dans le contexte de l’équipement. Les émetteurs ne sont pas affectés directement aux avions dans ce périmètre.
 
-Les fournitures et les outils/équipements sont gérés dans une liste quantitative, sans exemplaires individuels ni affectation à un avion ou à un projet.
+### 4. Fournitures, consommables et outillage
 
-La création se fait en une étape avec une désignation, une quantité et une unité. Une nouvelle quantité portant le même nom dans la même catégorie s’ajoute au stock existant. Depuis la liste filtrée, l’utilisateur peut modifier directement la quantité, y compris la ramener à zéro. Les ajustements sont historisés.
+Les fournitures et outils/équipements sont gérés en quantités et unités, sans suivi individuel ni affectation obligatoire à un avion ou projet. Les ajustements de quantités sont historisés. Le suivi fin des longueurs restantes ou des consommations par lot n’est pas inclus.
 
-Exemples : « Tube carbone 4 mm - 65 cm — Qté : 2 », « Corde à piano 2 mm — Qté : 3 », « Balsa — Qté : 8 plaques ».
+### 5. Avions et projets
 
-## Avions et projets
+Une fiche avion comporte nom, constructeur, modèle, notes et immatriculation UAF facultative. La flotte permet de consulter les équipements affectés et une prévisualisation en lecture seule.
 
-Une fiche avion contient un nom, un constructeur, un modèle, des notes et une immatriculation UAF facultative. La vue de flotte affiche le récepteur affecté, s’il y en a un.
+Les projets ont les statuts planned, active, completed ou cancelled. Un exemplaire disponible peut être affecté à un avion ou réservé à un projet ; une seule affectation active est permise.
 
-L’aperçu avion présente le récepteur, son émetteur lié, le moteur, l’hélice et l’ESC lorsqu’un moteur électrique est installé, ainsi que les autres équipements affectés.
+### 6. Historique et protection des données
 
-Les projets peuvent être créés avec un statut planned, active, completed ou cancelled. Un exemplaire disponible peut être réservé à un projet ou installé sur un avion; un exemplaire ne peut avoir qu’une affectation active.
+Les mouvements datés conservent les événements de stock et d’affectation. L’archivage des références, la suppression des exemplaires et les ajustements de quantité doivent préserver les traces déjà enregistrées.
 
-## Recherche, filtres et historique
+Les migrations de schéma SQLite sont additives. Les données utilisateur ne doivent pas être supprimées silencieusement lors d’une mise à jour.
 
-L’inventaire peut être filtré par catégorie et recherché par désignation, marque ou modèle. Les fournitures et outils filtrés apparaissent dans leur liste quantitative simplifiée.
+### 7. Export et administration
 
-L’historique présente les mouvements datés. L’archivage d’une référence, la suppression d’un exemplaire et l’ajustement d’un stock ne détruisent pas les événements historiques correspondants.
+Depuis l’inventaire actif, l’utilisateur peut :
+- exporter une copie SQLite complète via le mécanisme de sauvegarde SQLite ;
+- exporter un CSV de l’inventaire complet ou de catégories sélectionnées ;
+- demander la réinitialisation de l’inventaire actif après confirmation explicite.
 
-## Critères d’acceptation
+La réinitialisation crée d’abord une sauvegarde SQLite dans le répertoire local de sauvegarde, puis vide les données métier de l’inventaire actif. Les autres fichiers d’inventaire ne doivent pas être affectés.
 
-- [x] Créer, modifier, consulter, archiver et restaurer une référence.
-- [x] Gérer les variantes moteur électrique, Glow et hélice avec leurs propriétés.
-- [x] Créer, modifier, affecter, libérer et supprimer un exemplaire individuel.
-- [x] Suivre un RX et le lier à un TX; afficher ce lien dans l’inventaire et l’aperçu avion.
-- [x] Gérer fournitures et outils par désignation, quantité et unité, et ajuster le stock depuis leurs listes filtrées.
-- [x] Créer et modifier les fiches avions, consulter leur équipement et réserver des exemplaires pour les projets.
-- [x] Conserver les données au redémarrage de l’application.
-- [x] Passer les tests, le typecheck et le build CI sur le dernier commit de la branche.
+## État de réalisation et validation
 
-La vérification fonctionnelle Windows et la validation finale du propriétaire restent la dernière étape du périmètre.
+Les PR #9 et #10 sont fusionnées dans `develop`. Les descriptions de ces PR indiquent une CI verte pour tests, typecheck et build. Le code correspondant est présent dans la branche.
 
-## Hors périmètre
+Cela ne vaut pas validation complète des parcours par le propriétaire. Restent à confirmer sur Windows, avec des données de test puis une sauvegarde des données réelles :
+- création, import, ouverture, changement et reprise automatique de plusieurs inventaires ;
+- absence de fuite de données entre deux bases ;
+- import d’un ancien fichier et préservation du fichier source ;
+- export SQLite réouvrable et export CSV exploitable ;
+- sauvegarde préalable et portée exacte de la réinitialisation ;
+- parcours catalogue, affectations, radios, avions/projets et persistance après redémarrage.
 
-La gestion multi-base et la synchronisation entre plusieurs bases, utilisateurs ou appareils ne font pas partie de cette branche. Elles seront traitées dans un lot ultérieur. L’application mobile, la télémétrie batterie, l’intégration directe TX16 et la compatibilité technique automatisée restent également hors périmètre.
+Les critères détaillés et le statut de validation sont suivis dans le plan de développement.
+
+## Hors périmètre actuel
+
+- Serveur hébergé, API distante opérationnelle, comptes, rôles et authentification.
+- Synchronisation cloud ou réseau et collaboration multi-utilisateur simultanée.
+- Application mobile et intégration directe avec la radio TX16.
+- Affectation automatique d’un émetteur à un avion.
+- Gestion fine des consommations par longueur ou par lot.
+- Suppression/renommage avancé des inventaires enregistrés, sauf évolution spécifiée ultérieurement.
