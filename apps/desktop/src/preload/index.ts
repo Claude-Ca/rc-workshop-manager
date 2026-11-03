@@ -1,15 +1,17 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { Aircraft, ComponentCategory, ComponentReference, InventorySnapshot, Project, StockItem, StockLot } from "@rc-workshop/core";
 
-export type InventorySummary = { id: string; name: string; createdAt: string; lastUsedAt?: string; active: boolean; lastUsed: boolean };
+export type InventorySummary = { id: string; name: string; createdAt: string; lastUsedAt?: string; active: boolean; lastUsed: boolean; primary: boolean };
 export type InventoryList = { items: InventorySummary[]; activeId: string; lastUsedId: string };
 
 export interface DesktopApi {
   exportDatabase(): Promise<boolean>;
   exportInventoryCsv(categories: ComponentCategory[] | "all"): Promise<boolean>;
   resetInventory(): Promise<InventorySnapshot>;
+  compactDatabase(): Promise<{ beforeBytes: number; afterBytes: number; reclaimedBytes: number }>;
   getInventories(): Promise<InventoryList>;
   openInventory(id: string): Promise<InventoryList>;
+  deleteInventory(id: string): Promise<InventoryList>;
   createInventory(name: string): Promise<InventoryList>;
   importInventory(): Promise<InventoryList>;
   getSnapshot(): Promise<InventorySnapshot>;
@@ -34,8 +36,10 @@ const api: DesktopApi = {
   exportDatabase: () => ipcRenderer.invoke("export:database"),
   exportInventoryCsv: (categories) => ipcRenderer.invoke("export:csv", categories),
   resetInventory: () => ipcRenderer.invoke("inventory:reset"),
+  compactDatabase: () => ipcRenderer.invoke("inventory:compact"),
   getInventories: () => ipcRenderer.invoke("inventories:list"),
   openInventory: (id) => ipcRenderer.invoke("inventories:open", id),
+  deleteInventory: (id) => ipcRenderer.invoke("inventories:delete", id),
   createInventory: (name) => ipcRenderer.invoke("inventories:create", name),
   importInventory: () => ipcRenderer.invoke("inventories:import"),
   getSnapshot: () => ipcRenderer.invoke("inventory:snapshot"),

@@ -20,6 +20,9 @@
 | DEC-013 | Export | Copie SQLite complète et export CSV de tout ou partie des catégories intégrés par PR #10 |
 | DEC-014 | Administration | Réinitialisation de l’inventaire actif après confirmation UI et sauvegarde préalable intégrées par PR #10 |
 | DEC-015 | Frontière desktop | Renderer via API typée/preload/IPC ; accès aux chemins et fichiers réservé au processus principal |
+| DEC-016 | Cycle de vie des inventaires | Suppression autorisée uniquement pour un inventaire secondaire fermé ; le premier inventaire du registre est le principal et ne peut pas être supprimé |
+| DEC-017 | Maintenance SQLite | Compactage manuel de la base active depuis Administration, avec checkpoint WAL puis `VACUUM` |
+| DEC-018 | Corbeille des mouvements | Mise à la corbeille, restauration sans effet sur le stock et vidange définitive reportées à une évolution additive du modèle SQLite ; aucune suppression de mouvement dans le lot courant |
 
 ## Historique
 

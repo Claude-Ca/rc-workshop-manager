@@ -46,6 +46,12 @@ Le repository SQLite expose une sauvegarde vers un fichier de destination et une
 
 Le registre `inventories.json` n’est pas stocké dans les fichiers SQLite exportés. Une sauvegarde SQLite représente donc un inventaire métier, pas une sauvegarde complète du registre multi-inventaires de l’installation.
 
+La suppression d’un inventaire secondaire est gérée dans le processus principal Electron : l’inventaire principal (première entrée du registre) et l’inventaire actif sont protégés. Le fichier et ses éventuels fichiers WAL/SHM sont déplacés temporairement avant la mise à jour du registre, puis supprimés. Le renderer ne manipule jamais directement les chemins.
+
+La maintenance SQLite expose un compactage de la base active. Le repository effectue d’abord un checkpoint/truncate du WAL, puis `VACUUM` ; l’interface compare la taille du fichier avant et après l’opération.
+
+La table `stock_movements` ne contient actuellement aucun attribut d’archivage ou de corbeille. La mise à l’écart restaurable des mouvements ne peut donc pas être implémentée sans évolution additive du schéma et du modèle métier. Aucune suppression des mouvements n’est ajoutée dans ce lot.
+
 ## Limites et points à valider
 
 - Les inventaires sont indépendants au niveau des fichiers SQLite ; il n’existe ni synchronisation ni partage réseau.

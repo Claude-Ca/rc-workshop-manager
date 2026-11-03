@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import { basename, extname, join, resolve } from "node:path";
+import { basename, extname, join, resolve, sep } from "node:path";
 import { copyFile, mkdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { COMPONENT_CATEGORIES, InventoryService, type Aircraft, type ComponentCategory, type ComponentReference, type InventorySnapshot, type Project, type StockItem, type StockLot } from "@rc-workshop/core";
@@ -8,7 +8,7 @@ import { SqliteInventoryRepository, validateInventoryDatabase } from "@rc-worksh
 let mainWindow: BrowserWindow | null = null;
 type InventoryEntry = { id: string; name: string; path: string; createdAt: string; lastUsedAt?: string };
 type InventoryRegistry = { entries: InventoryEntry[]; activeId: string; lastUsedId: string };
-type InventorySummary = { id: string; name: string; createdAt: string; lastUsedAt?: string; active: boolean; lastUsed: boolean };
+type InventorySummary = { id: string; name: string; createdAt: string; lastUsedAt?: string; active: boolean; lastUsed: boolean; primary: boolean };
 
 let repository: SqliteInventoryRepository;
 let inventory: InventoryService;
@@ -17,9 +17,9 @@ const registryPath = () => join(app.getPath("userData"), "inventories.json");
 const inventoryDirectory = () => join(app.getPath("userData"), "inventories");
 
 function summaries(): InventorySummary[] {
-  return registry.entries.map(({ id, name, createdAt, lastUsedAt }) => ({
+  return registry.entries.map(({ id, name, createdAt, lastUsedAt }, index) => ({
     id, name, createdAt, ...(lastUsedAt ? { lastUsedAt } : {}),
-    active: id === registry.activeId, lastUsed: id === registry.lastUsedId,
+    active: id === registry.activeId, lastUsed: id === registry.lastUsedId, primary: index === 0,
   }));
 }
 
@@ -154,6 +154,14 @@ function inventoryManagerHandlers(): void {
     await repository.backupTo(filePath);
     return true;
   });
+  ipcMain.handle("inventory:compact", async () => {
+    const entry = registry.entries.find((candidate) => candidate.id === registry.activeId);
+    if (!entry) throw new Error("Aucune base n’est ouverte.");
+    const beforeBytes = (await stat(entry.path)).size;
+    repository.compact();
+    const afterBytes = (await stat(entry.path)).size;
+    return { beforeBytes, afterBytes, reclaimedBytes: Math.max(0, beforeBytes - afterBytes) };
+  });
   ipcMain.handle("export:csv", async (_event, categories: unknown) => {
     const entry = registry.entries.find((candidate) => candidate.id === registry.activeId);
     if (!entry) throw new Error("Aucune base n’est ouverte.");
@@ -179,6 +187,54 @@ function inventoryManagerHandlers(): void {
   });
   ipcMain.handle("inventories:list", () => ({ items: summaries(), activeId: registry.activeId, lastUsedId: registry.lastUsedId }));
   ipcMain.handle("inventories:open", async (_event, id: string) => ({ items: await activateInventory(id), activeId: registry.activeId, lastUsedId: registry.lastUsedId }));
+  ipcMain.handle("inventories:delete", async (_event, id: string) => {
+    const index = registry.entries.findIndex((candidate) => candidate.id === id);
+    if (index < 0) throw new Error("Cette base n’existe plus dans la liste.");
+    const entry = registry.entries[index];
+    if (!entry) throw new Error("Cette base n’existe plus dans la liste.");
+    if (index === 0) throw new Error("L’inventaire principal ne peut pas être supprimé.");
+    if (id === registry.activeId) throw new Error("Impossible de supprimer l’inventaire actuellement ouvert.");
+
+    const managedDirectory = resolve(inventoryDirectory());
+    const managedPrefix = managedDirectory.endsWith(sep) ? managedDirectory : managedDirectory + sep;
+    const databasePath = resolve(entry.path);
+    if (!databasePath.startsWith(managedPrefix)) {
+      throw new Error("La suppression est limitée aux bases secondaires gérées par l’application.");
+    }
+    await stat(databasePath);
+
+    const tombstone = databasePath + ".deleting-" + randomUUID();
+    const movedFiles: Array<{ original: string; temporary: string }> = [];
+    const moveIfPresent = async (original: string, temporary: string) => {
+      try {
+        await rename(original, temporary);
+        movedFiles.push({ original, temporary });
+      } catch (error) {
+        if ((error as { code?: string }).code !== "ENOENT") throw error;
+      }
+    };
+
+    const previousEntries = registry.entries;
+    const previousLastUsedId = registry.lastUsedId;
+    try {
+      await moveIfPresent(databasePath, tombstone);
+      await moveIfPresent(databasePath + "-wal", tombstone + "-wal");
+      await moveIfPresent(databasePath + "-shm", tombstone + "-shm");
+      registry.entries = registry.entries.filter((candidate) => candidate.id !== id);
+      if (registry.lastUsedId === id) registry.lastUsedId = registry.activeId;
+      await saveRegistry();
+    } catch (error) {
+      registry.entries = previousEntries;
+      registry.lastUsedId = previousLastUsedId;
+      for (const file of movedFiles.reverse()) {
+        await rename(file.temporary, file.original).catch(() => undefined);
+      }
+      throw error;
+    }
+
+    await Promise.all(movedFiles.map((file) => unlink(file.temporary).catch(() => undefined)));
+    return { items: summaries(), activeId: registry.activeId, lastUsedId: registry.lastUsedId };
+  });
   ipcMain.handle("inventories:create", async (_event, rawName: string) => {
     const name = String(rawName ?? "").trim();
     if (!name) throw new Error("Donne un nom à la base.");
