@@ -191,6 +191,7 @@ function inventoryManagerHandlers(): void {
     const index = registry.entries.findIndex((candidate) => candidate.id === id);
     if (index < 0) throw new Error("Cette base n’existe plus dans la liste.");
     const entry = registry.entries[index];
+    if (!entry) throw new Error("Cette base n’existe plus dans la liste.");
     if (index === 0) throw new Error("L’inventaire principal ne peut pas être supprimé.");
     if (id === registry.activeId) throw new Error("Impossible de supprimer l’inventaire actuellement ouvert.");
 
