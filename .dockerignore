@@ -1,0 +1,17 @@
+.git
+.github
+.vscode
+.idea
+node_modules
+**/node_modules
+dist
+out
+release
+coverage
+.vite
+*.log
+.env
+.env.*
+*.db
+*.db-shm
+*.db-wal
