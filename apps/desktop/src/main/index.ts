@@ -210,7 +210,6 @@ function inventoryManagerHandlers(): void {
       imported.close();
     } catch (error) {
       await unlink(path).catch(() => undefined);
-      const message = error instanceof Error ? error.message : String(error);
       throw new Error("Import impossible. Le fichier sélectionné n’est pas compatible avec RC Workshop ou semble endommagé. Choisissez une sauvegarde d’inventaire RC Workshop valide, puis réessayez. Votre fichier d’origine n’a pas été modifié et aucune base n’a été ajoutée.");
     }
     registry.entries.push({ id, name, path, createdAt: new Date().toISOString() });
