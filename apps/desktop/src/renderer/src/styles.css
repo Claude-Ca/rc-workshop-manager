@@ -17,6 +17,7 @@
 .inventory-manager-list{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px}
 .inventory-manager-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border-bottom:1px solid var(--line)}
 .inventory-manager-row:last-child{border:0}
+.inventory-manager-actions{display:flex;align-items:center;gap:7px;flex:none}
 .inventory-manager-row>div{display:grid;gap:4px}
 .inventory-create{display:flex;align-items:end;gap:9px}
 .inventory-create label{display:grid;gap:7px;flex:1;font-size:11px;color:#afbdcd}
