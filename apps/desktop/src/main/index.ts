@@ -1,9 +1,9 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import { basename, extname, join, resolve } from "node:path";
-import { copyFile, mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { COMPONENT_CATEGORIES, InventoryService, type Aircraft, type ComponentCategory, type ComponentReference, type InventorySnapshot, type Project, type StockItem, type StockLot } from "@rc-workshop/core";
-import { SqliteInventoryRepository } from "@rc-workshop/infrastructure";
+import { SqliteInventoryRepository, validateInventoryDatabase } from "@rc-workshop/infrastructure";
 
 let mainWindow: BrowserWindow | null = null;
 type InventoryEntry = { id: string; name: string; path: string; createdAt: string; lastUsedAt?: string };
@@ -205,11 +205,13 @@ function inventoryManagerHandlers(): void {
     const importedName = basename(sourcePath, extname(sourcePath)).trim() || "Base importée";
     const name = registry.entries.some((entry) => entry.name.toLocaleLowerCase() === importedName.toLocaleLowerCase()) ? importedName + " (importée)" : importedName;
     try {
+      validateInventoryDatabase(path);
       const imported = new SqliteInventoryRepository(path);
       imported.close();
     } catch (error) {
+      await unlink(path).catch(() => undefined);
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error("Impossible d’ouvrir ce fichier comme base RC Workshop : " + message);
+      throw new Error("Import refusé. Le fichier source n’a pas été modifié et aucune base n’a été ajoutée. " + message);
     }
     registry.entries.push({ id, name, path, createdAt: new Date().toISOString() });
     await saveRegistry();
