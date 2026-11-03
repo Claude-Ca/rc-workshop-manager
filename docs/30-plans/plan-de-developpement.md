@@ -29,7 +29,7 @@ La CI associée aux dernières PR est annoncée verte pour les tests, le typeche
 
 1. **Préparation sûre** : sauvegarder le répertoire de données existant ; utiliser d’abord des bases de test, pas l’inventaire réel.
 2. **Inventaires** : créer deux bases, saisir des données distinctes, basculer entre elles, fermer/redémarrer et vérifier la reprise du dernier inventaire.
-3. **Import** : importer une copie d’une base de test ; vérifier que le fichier source n’est pas modifié et que les données importées sont cohérentes.
+3. **Import** : importer une copie d’une base de test ; vérifier que le fichier source n’est pas modifié et que les données importées sont cohérentes. Vérifier aussi le refus d’un fichier vide, non SQLite ou de structure incompatible, sans entrée orpheline dans le registre.
 4. **Catalogue et stock** : références, archivage/restauration, exemplaires, fournitures/outils et ajustements de quantités.
 5. **Radio et flotte** : émetteurs/récepteurs, bind, affectations, aperçu avion, projets et mouvements.
 6. **Exports** : ouvrir la sauvegarde SQLite exportée dans une copie de test ; vérifier le CSV dans un tableur et ses filtres.

@@ -7,7 +7,7 @@
 
 Une installation peut gérer plusieurs inventaires locaux indépendants. Chaque inventaire métier est un fichier SQLite distinct. Le registre des inventaires est conservé séparément dans `inventories.json`, sous le répertoire utilisateur de l’application. Il contient notamment l’identifiant applicatif, le nom, le chemin géré par l’application, la date de création, la dernière utilisation, l’identifiant actif et l’identifiant du dernier inventaire utilisé.
 
-Les chemins et opérations de fichiers restent dans le processus principal Electron. À l’import, le fichier sélectionné est copié dans le répertoire applicatif avant ouverture. Le renderer passe par l’API desktop typée et IPC ; il ne doit pas accéder directement à SQLite ou au système de fichiers.
+Les chemins et opérations de fichiers restent dans le processus principal Electron. À l’import, le fichier sélectionné est copié dans le répertoire applicatif avant ouverture. La copie est contrôlée en lecture seule (intégrité SQLite, tables métier attendues et colonnes de base) avant que le repository ne l’ouvre en écriture et applique ses migrations additives. Une copie incompatible est supprimée et n’est pas inscrite au registre ; le fichier source reste intact. Le renderer passe par l’API desktop typée et IPC ; il ne doit pas accéder directement à SQLite ou au système de fichiers.
 
 ## Entités métier SQLite
 
