@@ -27,7 +27,7 @@ Les données sont persistées dans des fichiers SQLite locaux. Un registre appli
 - Isoler les données de chaque inventaire : références, exemplaires, lots, avions, projets et mouvements.
 - Afficher le nom de l’inventaire actif dans l’interface.
 
-La suppression d’un inventaire enregistré et la gestion avancée de son cycle de vie ne sont pas documentées comme fonctionnalités disponibles.
+La suppression d’un inventaire secondaire est disponible depuis Administration : l’inventaire principal et l’inventaire actuellement ouvert sont protégés. La suppression retire l’entrée du registre et le fichier SQLite géré par l’application.
 
 ### 2. Catalogue et catégories
 
@@ -58,7 +58,7 @@ Les projets ont les statuts planned, active, completed ou cancelled. Un exemplai
 
 ### 6. Historique et protection des données
 
-Les mouvements datés conservent les événements de stock et d’affectation. L’archivage des références, la suppression des exemplaires et les ajustements de quantité doivent préserver les traces déjà enregistrées.
+Les mouvements datés conservent les événements de stock et d’affectation. L’archivage des références, la suppression des exemplaires et les ajustements de quantité doivent préserver les traces déjà enregistrées. La corbeille des mouvements (mise à l’écart, restauration et suppression définitive) n’est pas encore disponible : elle nécessite une évolution additive du modèle SQLite et sera traitée dans un lot distinct.
 
 Les migrations de schéma SQLite sont additives. Les données utilisateur ne doivent pas être supprimées silencieusement lors d’une mise à jour.
 
@@ -67,7 +67,9 @@ Les migrations de schéma SQLite sont additives. Les données utilisateur ne doi
 Depuis l’inventaire actif, l’utilisateur peut :
 - exporter une copie SQLite complète via le mécanisme de sauvegarde SQLite ;
 - exporter un CSV de l’inventaire complet ou de catégories sélectionnées ;
-- demander la réinitialisation de l’inventaire actif après confirmation explicite.
+- demander la réinitialisation de l’inventaire actif après confirmation explicite ;
+- supprimer un inventaire secondaire fermé, à l’exclusion de l’inventaire principal et de l’inventaire actif ;
+- compacter manuellement la base active pour récupérer l’espace inutilisé dans le fichier SQLite.
 
 La réinitialisation crée d’abord une sauvegarde SQLite dans le répertoire local de sauvegarde, puis vide les données métier de l’inventaire actif. Les autres fichiers d’inventaire ne doivent pas être affectés.
 
