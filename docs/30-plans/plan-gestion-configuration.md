@@ -1,8 +1,9 @@
 # Plan de gestion de configuration (PGC)
 
 **Identifiant :** PGC-RCWM-001  
-**Version :** 1.0  
-**Statut :** proposition soumise à validation du propriétaire  
+**Version du document :** 1.1  
+**Dernière mise à jour :** 2026-11-04  
+**Statut :** En revue  
 **Périmètre :** code, données de référence, documentation, tests et versions livrables de RC Workshop Manager.
 
 ## 1. Objet
@@ -99,6 +100,44 @@ Les preuves attendues sont les résultats CI liés au commit ou à la PR, les te
 ## 7. Documentation et décisions
 
 Les documents sont stockés sous docs/ et indexés par les README de leur domaine. Toute évolution qui modifie une exigence, une règle métier, une interface ou l'architecture met à jour les documents concernés.
+
+### 7.1 Identification des documents
+
+Chaque document de référence porte un identifiant stable, unique dans le projet. La convention est :
+
+`<DOMAINE>-RCWM-<NUMÉRO>`
+
+Le code domaine identifie la famille documentaire ; le numéro est séquentiel et n'est jamais réattribué, même si un document est retiré ou archivé.
+
+Codes utilisés :
+- `PGC` : plans de gestion de configuration ;
+- `GOV` : gouvernance et règles de projet ;
+- `FON` : besoins, spécifications et exigences fonctionnelles ;
+- `TEC` : architecture, conception et documents techniques ;
+- `PLN` : plans de développement, de validation et de livraison ;
+- `MAN` : manuels et guides utilisateur ou développeur.
+
+Un document conserve son identifiant lors de ses révisions. Un changement de titre ou de chemin ne justifie pas à lui seul un nouvel identifiant. Un nouvel identifiant est attribué à un document qui porte un contenu ou un objectif documentaire distinct. Les identifiants d'exigences (`REQ-...`) et de décisions (`DEC-...`) restent des références internes à leurs registres et ne remplacent pas l'identifiant du document qui les contient.
+
+### 7.2 En-tête documentaire
+
+Tout document de référence comporte les trois métadonnées obligatoires, présentées de manière homogène :
+- **Identifiant** ;
+- **Version du document** ;
+- **Dernière mise à jour** (date ISO `AAAA-MM-JJ`).
+
+Les métadonnées complémentaires sont ajoutées selon le contexte :
+- **Statut** : Brouillon, En revue, Validé, À compléter ou Obsolète ;
+- **Environnement de référence** : version, branche, plateforme ou configuration sur laquelle le contenu s'appuie, lorsque cette information est utile ;
+- **Périmètre** : domaine couvert et limites du document.
+
+Les métadonnées non pertinentes sont omises plutôt que renseignées artificiellement. Les documents purement informatifs ou les index README peuvent utiliser un en-tête allégé s'ils ne constituent pas une référence normative.
+
+La version du document est indépendante de la version logicielle. La numérotation commence à `1.0` lors de la première édition identifiée ; une évolution de contenu ou une révision éditoriale incrémente le niveau mineur (`1.1`, `1.2`, etc.). Un changement majeur de structure ou d'objet documentaire incrémente le niveau majeur (`2.0`). La date de dernière mise à jour correspond à la dernière modification substantielle du contenu ou des métadonnées de référence.
+
+Les documents portent un statut explicite lorsqu'ils sont soumis à validation ou qu'il est nécessaire de distinguer leur maturité. Seul le propriétaire peut déclarer une proposition Validée.
+
+### 7.3 Décisions
 
 Les décisions structurantes sont inscrites dans le registre des décisions avec contexte, options, décision, statut et date. Une décision proposée ne devient normative qu'après validation explicite du propriétaire.
 
