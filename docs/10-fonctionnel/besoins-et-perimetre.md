@@ -100,7 +100,8 @@ Une fiche d'exemplaire peut contenir un code inventaire, un numéro de série fa
 
 Les fournitures et consommables font l'objet d'une gestion quantitative volontairement simple :
 - une référence de fourniture ;
-- un état de stock binaire : en stock ou rupture ;
+- une quantité en stock et une unité (pièce, mètre, gramme, etc.) ;
+- une quantité nulle indique une rupture de stock ;
 - pas d'identification individuelle des unités ;
 - pas d'affectation à un modèle ;
 - pas de gestion détaillée des lots ou de la consommation.
