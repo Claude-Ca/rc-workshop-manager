@@ -35,7 +35,7 @@ L'application est desktop Windows, locale et utilisable hors ligne. Les données
 
 - **Référence catalogue** : description d'un type de matériel (marque, modèle, caractéristiques).
 - **Exemplaire individuel** : objet physique identifié et suivi séparément.
-- **Stock simple** : présence ou absence d'une fourniture/consommable, sans suivi individuel des unités.
+- **Stock quantitatif** : quantité disponible d'une fourniture/consommable, avec son unité, sans suivi individuel des unités physiques.
 - **Modèle** : avion, planeur ou autre aéronef relevant de l'aéromodélisme.
 - **Affectation** : relation indiquant qu'un équipement est installé sur un modèle.
 - **Compatibilité** : relation indiquant qu'un équipement peut être utilisé avec un ou plusieurs modèles, sans être installé ni réservé à ceux-ci.
@@ -98,7 +98,7 @@ Une fiche d'exemplaire peut contenir un code inventaire, un numéro de série fa
 
 ### 4.4 Fournitures et consommables
 
-Les fournitures et consommables font l'objet d'une gestion volontairement simple :
+Les fournitures et consommables font l'objet d'une gestion quantitative volontairement simple :
 - une référence de fourniture ;
 - un état de stock binaire : en stock ou rupture ;
 - pas d'identification individuelle des unités ;
