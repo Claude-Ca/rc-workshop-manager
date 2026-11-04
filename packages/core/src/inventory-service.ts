@@ -111,7 +111,10 @@ export class InventoryService {
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId && !entry.archived);
     if (!reference) throw new InventoryError("Référence catalogue introuvable ou archivée.");
     if (reference.category === "supplies" || reference.trackingMode !== "individual") throw new InventoryError("Cette référence est gérée en quantité, pas par exemplaire.");
-    if (reference.category === "battery" && (item.aircraftId || item.projectId)) throw new InventoryError("Une batterie est compatible avec des avions, mais ne peut pas leur être affectée.");
+    if (reference.category === "battery") {
+      if (item.aircraftId || item.projectId) throw new InventoryError("Une batterie est compatible avec des avions, mais ne peut pas leur être affectée.");
+      if ((item.compatibleAircraftIds ?? []).some((id) => !snapshot.aircraft.some((aircraft) => aircraft.id === id))) throw new InventoryError("Un avion sélectionné pour la compatibilité n’existe plus.");
+    } else if (item.compatibleAircraftIds?.length) throw new InventoryError("Seules les batteries peuvent définir des compatibilités avion.");
     if (reference.category === "tool" && !["available", "borrowed", "repair"].includes(item.status)) throw new InventoryError("Statut d’outil invalide.");
     const prefix = reference.category === "radio" && reference.radioType === "transmitter" ? "TX" : reference.category === "receiver" || reference.category === "radio" ? "RX" : reference.category === "motor" && reference.motorizationKind === "propeller" ? "PROP" : reference.category === "motor" ? "MOT" : reference.category === "esc" ? "ESC" : reference.category === "servo" ? "SER" : reference.category === "battery" ? "BAT" : reference.category === "tool" ? "TOOL" : "DIV";
     let sequence = 1;
@@ -225,6 +228,7 @@ export class InventoryService {
     if (!item) throw new InventoryError("Outil introuvable.");
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId);
     if (reference?.category !== "tool") throw new InventoryError("Seul un outil peut recevoir ce statut.");
+    if (!["available", "borrowed", "repair"].includes(status)) throw new InventoryError("Statut d’outil invalide.");
     if (item.status === "installed" || item.status === "reserved") throw new InventoryError("Un outil affecté ne peut pas changer de statut.");
     if (item.status === status) return;
     this.repository.saveItem({ ...item, status });
