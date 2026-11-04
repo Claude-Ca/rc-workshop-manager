@@ -251,7 +251,7 @@ export class InventoryService {
     if (!item) throw new InventoryError("Exemplaire introuvable.");
     if (item.status !== "available") throw new InventoryError("Seul un exemplaire disponible peut être affecté.");
     const itemReference = snapshot.references.find((entry) => entry.id === item.referenceId);
-    if (itemReference?.category === "supplies" || itemReference?.category === "tool") throw new InventoryError("Les fournitures et outils ne peuvent pas être affectés.");
+    if (itemReference?.category === "supplies" || itemReference?.category === "tool" || itemReference?.category === "battery") throw new InventoryError("Les fournitures, outils et batteries ne peuvent pas être affectés.");
     if (itemReference?.category === "radio" && itemReference.radioType === "transmitter") throw new InventoryError("A transmitter cannot be assigned.");
     if (target.kind === "aircraft" && !snapshot.aircraft.some((entry) => entry.id === target.id)) throw new InventoryError("Avion introuvable.");
     if (target.kind === "project" && !snapshot.projects.some((entry) => entry.id === target.id)) throw new InventoryError("Projet introuvable.");
