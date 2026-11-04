@@ -1,7 +1,7 @@
 # Plan de gestion de configuration (PGC)
 
 **Identifiant :** PGC-RCWM-001  
-**Version du document :** 1.1  
+**Version du document :** 1.2  
 **Dernière mise à jour :** 2026-11-04  
 **Statut :** En revue  
 **Périmètre :** code, données de référence, documentation, tests et versions livrables de RC Workshop Manager.
@@ -167,7 +167,11 @@ Toute dérogation importante est expliquée dans la PR ou le registre des décis
 
 ## 11. Références associées
 
-- [Règles de gestion de configuration](../00-gouvernance/regles-gestion-configuration.md)
+- [Politique documentaire](../00-gouvernance/politique-documentaire.md)
 - [Registre des décisions](../00-gouvernance/registre-decisions.md)
 - [Besoins et périmètre fonctionnel](../10-fonctionnel/besoins-et-perimetre.md)
+- [Exigences fonctionnelles](../10-fonctionnel/exigences-fonctionnelles.md)
+- [Architecture cible](../20-technique/architecture-cible.md)
+- [Modèle de données](../20-technique/modele-donnees.md)
+- [Décision d'architecture ADR-0002](../architecture/ADR-0002-independent-inventories-and-api-boundary.md)
 - [Plan de développement](plan-de-developpement.md)
