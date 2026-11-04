@@ -118,8 +118,8 @@ describe("InventoryService", () => {
     service.createReference(reference("SUP-1", "supplies", "quantity"));
     service.createReference(reference("TOOL-1", "tool", "individual"));
     service.createReference(reference("SERVO-1", "servo", "individual"));
-    expect(() => service.createReference(reference("TOOL-BAD", "tool", "quantity"))).toThrow(/outils et servos/);
-    expect(() => service.createReference(reference("SERVO-BAD", "servo", "quantity"))).toThrow(/outils et servos/);
+    expect(() => service.createReference(reference("TOOL-BAD", "tool", "quantity"))).toThrow(/suivie individuellement/);
+    expect(() => service.createReference(reference("SERVO-BAD", "servo", "quantity"))).toThrow(/suivie individuellement/);
     service.addLot({ id: "LOT-1", referenceId: "SUP-1", quantity: 25, unit: "vis" });
     service.addItem({ id: "TOOL-ITEM", referenceId: "TOOL-1", inventoryCode: "", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
     service.addItem({ id: "SERVO-ITEM", referenceId: "SERVO-1", inventoryCode: "", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
