@@ -132,6 +132,8 @@ export class SqliteInventoryRepository implements InventoryRepository {
     }
     this.db.exec("UPDATE component_references SET category='radio', radio_type='receiver' WHERE category='receiver'");
     this.db.exec("UPDATE component_references SET category='supplies' WHERE category IN ('connector','control','structure','material','construction')");
+    // Safely normalize legacy supply references without physical items to quantitative tracking.
+    this.db.exec("UPDATE component_references SET tracking_mode='quantity' WHERE category='supplies' AND tracking_mode<>'quantity' AND NOT EXISTS (SELECT 1 FROM stock_items WHERE stock_items.reference_id=component_references.id)");
     const aircraftColumns = this.db.prepare("PRAGMA table_info(aircraft)").all() as Row[];
     if (!aircraftColumns.some((column) => column.name === "uaf_registration")) this.db.exec("ALTER TABLE aircraft ADD COLUMN uaf_registration TEXT");
     // Convert legacy quantity-tracked tools into individual physical items.
