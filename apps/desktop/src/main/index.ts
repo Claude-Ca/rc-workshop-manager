@@ -352,6 +352,10 @@ function registerHandlers(): void {
     inventory.assignItem(itemId, target, randomUUID(), new Date().toISOString());
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:set-tool-status", (_event, itemId: string, status: "available" | "borrowed" | "repair") => {
+    inventory.setToolStatus(itemId, status, randomUUID(), new Date().toISOString());
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventory:set-receiver-binding", (_event, receiverItemId: string, transmitterItemId: string | null) => {
     inventory.setReceiverBinding(receiverItemId, transmitterItemId);
     return inventory.getSnapshot();
