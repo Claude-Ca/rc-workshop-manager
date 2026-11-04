@@ -4,6 +4,7 @@
 **Version du document :** 1.0  
 **Dernière mise à jour :** 2026-11-04  
 **Statut :** En revue  
+**Statut de la décision :** acceptée pour le prochain incrément d'implémentation  
 **Périmètre :** décision d'architecture relative aux inventaires locaux indépendants et à la frontière API  
 **Référence de décision :** ADR-0002
 
