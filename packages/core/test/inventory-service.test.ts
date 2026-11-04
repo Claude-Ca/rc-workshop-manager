@@ -127,6 +127,13 @@ describe("InventoryService", () => {
     expect(repository.snapshot.items.map((item) => item.inventoryCode)).toEqual(["TOOL-001", "SER-001"]);
   });
 
+  it("requires motors, ESCs, servos, batteries and tools to be individually tracked", () => {
+    const service = new InventoryService(new MemoryRepository());
+    for (const category of ["motor", "esc", "servo", "battery", "tool"] as const) {
+      expect(() => service.createReference(reference("BAD-" + category, category, "quantity"))).toThrow(/suivie individuellement/);
+    }
+  });
+
   it("manages tool availability, borrowing and repair as individual states", () => {
     const repository = new MemoryRepository();
     const service = new InventoryService(repository);
