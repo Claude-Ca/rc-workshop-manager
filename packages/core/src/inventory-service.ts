@@ -111,6 +111,8 @@ export class InventoryService {
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId && !entry.archived);
     if (!reference) throw new InventoryError("Référence catalogue introuvable ou archivée.");
     if (reference.category === "supplies" || reference.trackingMode !== "individual") throw new InventoryError("Cette référence est gérée en quantité, pas par exemplaire.");
+    if (reference.category === "battery" && (item.aircraftId || item.projectId)) throw new InventoryError("Une batterie est compatible avec des avions, mais ne peut pas leur être affectée.");
+    if (reference.category === "tool" && !["available", "borrowed", "repair"].includes(item.status)) throw new InventoryError("Statut d’outil invalide.");
     const prefix = reference.category === "radio" && reference.radioType === "transmitter" ? "TX" : reference.category === "receiver" || reference.category === "radio" ? "RX" : reference.category === "motor" && reference.motorizationKind === "propeller" ? "PROP" : reference.category === "motor" ? "MOT" : reference.category === "esc" ? "ESC" : reference.category === "servo" ? "SER" : reference.category === "battery" ? "BAT" : reference.category === "tool" ? "TOOL" : "DIV";
     let sequence = 1;
     let inventoryCode = prefix + "-" + String(sequence).padStart(3, "0");
