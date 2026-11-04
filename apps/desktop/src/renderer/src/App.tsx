@@ -28,7 +28,7 @@ const emptySnapshot: InventorySnapshot = { references: [], items: [], lots: [], 
 
 function isAssignableReference(reference: ComponentReference): boolean {
   return reference.category === "motor" || reference.category === "propeller" || reference.category === "esc" || reference.category === "servo" ||
-    reference.category === "receiver" || (reference.category === "radio" && reference.radioType === "receiver");
+    reference.category === "receiver" || (reference.category === "radio" && (reference.radioType ?? "receiver") === "receiver");
 }
 
 function formatBytes(bytes: number): string {
