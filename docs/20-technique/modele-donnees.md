@@ -40,7 +40,7 @@ Les catégories principales exposées par le catalogue sont `motor`, `esc`, `rad
 - Les batteries sont suivies individuellement ; leurs compatibilités avion sont stockées séparément de toute affectation. Une batterie ne peut pas être affectée à un avion ou à un projet.
 - Les mouvements sont append-only dans le flux métier courant ; les suppressions/ajustements ne doivent pas effacer les événements antérieurs.
 - Une référence dépendante est archivée pour préserver l’historique.
-- Les migrations de schéma sont additives et doivent préserver les bases existantes. La colonne `stock_items.compatible_aircraft_ids_json` est ajoutée de façon additive ; les anciennes bases sans cette colonne restent importables et leurs exemplaires n’ont initialement aucune compatibilité enregistrée.
+- Les migrations de schéma sont additives et doivent préserver les bases existantes. La colonne `stock_items.compatible_aircraft_ids_json` est ajoutée de façon additive ; les anciennes bases sans cette colonne restent importables et leurs exemplaires n’ont initialement aucune compatibilité enregistrée. Les anciens outils suivis par quantité sont convertis à l’ouverture en exemplaires individuels : le nombre d’outils est conservé et l’unité d’origine est reportée dans les notes de chaque exemplaire généré.
 
 ## Sauvegarde, import et remise à zéro
 
