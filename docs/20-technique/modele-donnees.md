@@ -16,7 +16,7 @@ Les chemins et opérations de fichiers restent dans le processus principal Elect
 
 ## Entités métier SQLite
 
-- `ComponentReference` / table `component_references` : référence catalogue, catégorie, marque/modèle/description, mode de suivi, propriétés radio et motorisation typées, attributs, chemin de photo, archivage et date de création.
+- `ComponentReference` / table `component_references` : référence catalogue, catégorie, marque/modèle/description, mode de suivi, propriétés radio, motorisation et batterie typées (connecteur, taux de décharge, dimensions et poids facultatifs), attributs, chemin de photo, archivage et date de création.
 - `StockItem` / table `stock_items` : exemplaire physique, code inventaire unique, numéro de série, état, emplacement, avion/projet éventuel, nom TX16, identifiant de l’émetteur lié et compatibilités avion éventuelles (notamment pour les batteries).
 - `StockLot` / table `stock_lots` : quantité entière non négative, unité et emplacement, rattachés à une référence.
 - `Aircraft` / table `aircraft` : nom, constructeur, modèle, notes et immatriculation UAF facultatifs.
@@ -37,10 +37,10 @@ Les catégories principales exposées par le catalogue sont `motor`, `esc`, `rad
 - Un exemplaire peut être installé sur un avion ou réservé à un projet ; une seule affectation active est permise par les règles du service métier.
 - Les fournitures sont suivies par quantité et unité ; les quantités de lot sont entières et non négatives.
 - Les outils et servos sont suivis individuellement. Un outil possède le statut Disponible, Prêté ou En réparation.
-- Les batteries sont suivies individuellement ; leurs compatibilités avion sont stockées séparément de toute affectation. Une batterie ne peut pas être affectée à un avion ou à un projet.
+- Les batteries sont suivies individuellement ; leurs compatibilités avion sont stockées séparément de toute affectation. Leurs caractéristiques facultatives (connecteur, taux de décharge en C, dimensions en mm et poids en g) sont portées par la référence catalogue. Une batterie ne peut pas être affectée à un avion ou à un projet.
 - Les mouvements sont append-only dans le flux métier courant ; les suppressions/ajustements ne doivent pas effacer les événements antérieurs.
 - Une référence dépendante est archivée pour préserver l’historique.
-- Les migrations de schéma sont additives et doivent préserver les bases existantes. La colonne `stock_items.compatible_aircraft_ids_json` est ajoutée de façon additive ; les anciennes bases sans cette colonne restent importables et leurs exemplaires n’ont initialement aucune compatibilité enregistrée. Les anciens outils suivis par quantité sont convertis à l’ouverture en exemplaires individuels : le nombre d’outils est conservé et l’unité d’origine est reportée dans les notes de chaque exemplaire généré.
+- Les migrations de schéma sont additives et doivent préserver les bases existantes. Les colonnes `component_references.battery_connector`, `battery_discharge_rate_c`, `battery_dimensions_mm` et `battery_weight_g` sont ajoutées de façon additive ; les batteries déjà enregistrées restent valides sans ces caractéristiques. La colonne `stock_items.compatible_aircraft_ids_json` est ajoutée de façon additive ; les anciennes bases sans cette colonne restent importables et leurs exemplaires n’ont initialement aucune compatibilité enregistrée. Les anciens outils suivis par quantité sont convertis à l’ouverture en exemplaires individuels : le nombre d’outils est conservé et l’unité d’origine est reportée dans les notes de chaque exemplaire généré.
 
 ## Sauvegarde, import et remise à zéro
 
