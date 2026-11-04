@@ -1,7 +1,11 @@
 # Architecture decision: independent local inventories and future hosted API
 
-Status: accepted for the next implementation increment  
-Date: 2026-11-02
+**Identifiant :** TEC-RCWM-003  
+**Version du document :** 1.0  
+**Dernière mise à jour :** 2026-11-04  
+**Statut :** En revue  
+**Périmètre :** décision d'architecture relative aux inventaires locaux indépendants et à la frontière API  
+**Référence de décision :** ADR-0002
 
 ## Context
 
