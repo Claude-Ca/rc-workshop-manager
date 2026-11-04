@@ -129,6 +129,43 @@ export class SqliteInventoryRepository implements InventoryRepository {
     this.db.exec("UPDATE component_references SET category='supplies' WHERE category IN ('connector','control','structure','material','construction')");
     const aircraftColumns = this.db.prepare("PRAGMA table_info(aircraft)").all() as Row[];
     if (!aircraftColumns.some((column) => column.name === "uaf_registration")) this.db.exec("ALTER TABLE aircraft ADD COLUMN uaf_registration TEXT");
+    // Convert legacy quantity-tracked tools into individual physical items.
+    // Preserve the count and original unit in each generated item's notes.
+    this.db.transaction(() => {
+      const legacyTools = this.db.prepare("SELECT id FROM component_references WHERE category = 'tool' AND tracking_mode = 'quantity'").all() as Row[];
+      const findCode = this.db.prepare("SELECT id FROM stock_items WHERE inventory_code = ?");
+      const insertItem = this.db.prepare(`INSERT INTO stock_items
+        (id,reference_id,inventory_code,status,notes,created_at)
+        VALUES (@id,@referenceId,@inventoryCode,'available',@notes,@createdAt)`);
+      const lotsForReference = this.db.prepare("SELECT id,quantity,unit FROM stock_lots WHERE reference_id = ?");
+      const deleteLots = this.db.prepare("DELETE FROM stock_lots WHERE reference_id = ?");
+      const updateTracking = this.db.prepare("UPDATE component_references SET tracking_mode = 'individual' WHERE id = ?");
+      for (const entry of legacyTools) {
+        const referenceId = String(entry.id);
+        const lots = lotsForReference.all(referenceId) as Row[];
+        let sequence = 1;
+        for (const lot of lots) {
+          const quantity = Math.max(0, Math.floor(Number(lot.quantity) || 0));
+          for (let index = 1; index <= quantity; index += 1) {
+            let inventoryCode = "TOOL-" + String(sequence).padStart(3, "0");
+            while (findCode.get(inventoryCode)) {
+              sequence += 1;
+              inventoryCode = "TOOL-" + String(sequence).padStart(3, "0");
+            }
+            insertItem.run({
+              id: "MIG-TOOL-" + String(lot.id) + "-" + String(index),
+              referenceId,
+              inventoryCode,
+              notes: "Converti depuis un stock quantitatif (unité d’origine : " + String(lot.unit) + ").",
+              createdAt: new Date().toISOString(),
+            });
+            sequence += 1;
+          }
+        }
+        deleteLots.run(referenceId);
+        updateTracking.run(referenceId);
+      }
+    })();
   }
 
   getSnapshot(): InventorySnapshot {
