@@ -17,7 +17,7 @@ Les chemins et opérations de fichiers restent dans le processus principal Elect
 ## Entités métier SQLite
 
 - `ComponentReference` / table `component_references` : référence catalogue, catégorie, marque/modèle/description, mode de suivi, propriétés radio et motorisation typées, attributs, chemin de photo, archivage et date de création.
-- `StockItem` / table `stock_items` : exemplaire physique, code inventaire unique, numéro de série, état, emplacement, avion/projet éventuel, nom TX16 et identifiant de l’émetteur lié.
+- `StockItem` / table `stock_items` : exemplaire physique, code inventaire unique, numéro de série, état, emplacement, avion/projet éventuel, nom TX16, identifiant de l’émetteur lié et compatibilités avion éventuelles (notamment pour les batteries).
 - `StockLot` / table `stock_lots` : quantité entière non négative, unité et emplacement, rattachés à une référence.
 - `Aircraft` / table `aircraft` : nom, constructeur, modèle, notes et immatriculation UAF facultatifs.
 - `Project` / table `projects` : nom, statut et notes.
@@ -35,10 +35,12 @@ Les catégories principales exposées par le catalogue sont `motor`, `esc`, `rad
 - Les exemplaires ont un code inventaire unique ; les noms TX16 des récepteurs sont uniques sans distinction de casse.
 - Un récepteur peut être lié à un émetteur ; les émetteurs ne sont pas affectés directement aux avions dans ce périmètre.
 - Un exemplaire peut être installé sur un avion ou réservé à un projet ; une seule affectation active est permise par les règles du service métier.
-- Fournitures et outils sont suivis par quantités ; les quantités de lot sont entières et non négatives.
+- Les fournitures sont suivies par quantité et unité ; les quantités de lot sont entières et non négatives.
+- Les outils et servos sont suivis individuellement. Un outil possède le statut Disponible, Prêté ou En réparation.
+- Les batteries sont suivies individuellement ; leurs compatibilités avion sont stockées séparément de toute affectation. Une batterie ne peut pas être affectée à un avion ou à un projet.
 - Les mouvements sont append-only dans le flux métier courant ; les suppressions/ajustements ne doivent pas effacer les événements antérieurs.
 - Une référence dépendante est archivée pour préserver l’historique.
-- Les migrations de schéma sont additives et doivent préserver les bases existantes.
+- Les migrations de schéma sont additives et doivent préserver les bases existantes. La colonne `stock_items.compatible_aircraft_ids_json` est ajoutée de façon additive ; les anciennes bases sans cette colonne restent importables et leurs exemplaires n’ont initialement aucune compatibilité enregistrée. Les anciens outils suivis par quantité sont convertis à l’ouverture en exemplaires individuels : le nombre d’outils est conservé et l’unité d’origine est reportée dans les notes de chaque exemplaire généré.
 
 ## Sauvegarde, import et remise à zéro
 

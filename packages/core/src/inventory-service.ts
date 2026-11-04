@@ -22,7 +22,8 @@ export class InventoryService {
     const snapshot = this.repository.getSnapshot();
     if (!reference.id.trim() || !reference.name.trim()) throw new InventoryError("Identifiant et désignation obligatoires.");
     if (snapshot.references.some((entry) => entry.id === reference.id)) throw new InventoryError("Cette référence existe déjà.");
-    if ((reference.category === "supplies" || reference.category === "tool") && reference.trackingMode !== "quantity") throw new InventoryError("Les fournitures et outils doivent être gérés par quantité.");
+    if (reference.category === "supplies" && reference.trackingMode !== "quantity") throw new InventoryError("Les fournitures doivent être gérées par quantité.");
+    if (["motor", "esc", "radio", "battery", "tool", "servo"].includes(reference.category) && reference.trackingMode !== "individual") throw new InventoryError("Cette catégorie doit être suivie individuellement.");
     if ((reference.category === "receiver" || (reference.category === "radio" && (reference.radioType ?? "receiver") === "receiver")) && reference.trackingMode !== "individual") {
       throw new InventoryError("Un récepteur doit être suivi individuellement.");
     }
@@ -54,7 +55,8 @@ export class InventoryService {
     if (!existing) throw new InventoryError("Référence catalogue introuvable.");
     if (existing.archived) throw new InventoryError("Une référence archivée ne peut pas être modifiée.");
     if (!reference.name.trim()) throw new InventoryError("La désignation est obligatoire.");
-    if ((reference.category === "supplies" || reference.category === "tool") && reference.trackingMode !== "quantity") throw new InventoryError("Les fournitures et outils doivent être gérés par quantité.");
+    if (reference.category === "supplies" && reference.trackingMode !== "quantity") throw new InventoryError("Les fournitures doivent être gérées par quantité.");
+    if (["motor", "esc", "radio", "battery", "tool", "servo"].includes(reference.category) && reference.trackingMode !== "individual") throw new InventoryError("Cette catégorie doit être suivie individuellement.");
     const hasStock = snapshot.items.some((item) => item.referenceId === reference.id) || snapshot.lots.some((lot) => lot.referenceId === reference.id);
     const hasHistory = snapshot.movements.some((movement) => movement.referenceId === reference.id);
     if ((hasStock || hasHistory) && reference.category !== existing.category) throw new InventoryError("La catégorie ne peut pas être modifiée après utilisation de cette référence.");
@@ -108,8 +110,13 @@ export class InventoryService {
     const snapshot = this.repository.getSnapshot();
     const reference = snapshot.references.find((entry) => entry.id === item.referenceId && !entry.archived);
     if (!reference) throw new InventoryError("Référence catalogue introuvable ou archivée.");
-    if (reference.category === "supplies" || reference.category === "tool" || reference.trackingMode !== "individual") throw new InventoryError("Cette référence est gérée en quantité, pas par exemplaire.");
-    const prefix = reference.category === "radio" && reference.radioType === "transmitter" ? "TX" : reference.category === "receiver" || reference.category === "radio" ? "RX" : reference.category === "motor" && reference.motorizationKind === "propeller" ? "PROP" : reference.category === "motor" ? "MOT" : reference.category === "esc" ? "ESC" : reference.category === "servo" ? "SER" : reference.category === "battery" ? "BAT" : "DIV";
+    if (reference.category === "supplies" || reference.trackingMode !== "individual") throw new InventoryError("Cette référence est gérée en quantité, pas par exemplaire.");
+    if (reference.category === "battery") {
+      if (item.aircraftId || item.projectId) throw new InventoryError("Une batterie est compatible avec des avions, mais ne peut pas leur être affectée.");
+      if ((item.compatibleAircraftIds ?? []).some((id) => !snapshot.aircraft.some((aircraft) => aircraft.id === id))) throw new InventoryError("Un avion sélectionné pour la compatibilité n’existe plus.");
+    } else if (item.compatibleAircraftIds?.length) throw new InventoryError("Seules les batteries peuvent définir des compatibilités avion.");
+    if (reference.category === "tool" && !["available", "borrowed", "repair"].includes(item.status)) throw new InventoryError("Statut d’outil invalide.");
+    const prefix = reference.category === "radio" && reference.radioType === "transmitter" ? "TX" : reference.category === "receiver" || reference.category === "radio" ? "RX" : reference.category === "motor" && reference.motorizationKind === "propeller" ? "PROP" : reference.category === "motor" ? "MOT" : reference.category === "esc" ? "ESC" : reference.category === "servo" ? "SER" : reference.category === "battery" ? "BAT" : reference.category === "tool" ? "TOOL" : "DIV";
     let sequence = 1;
     let inventoryCode = prefix + "-" + String(sequence).padStart(3, "0");
     const usedCodes = new Set(snapshot.items.map((entry) => entry.inventoryCode.toLowerCase()));
@@ -138,6 +145,12 @@ export class InventoryService {
     const reference = snapshot.references.find((entry) => entry.id === existing.referenceId);
     if (!reference) throw new InventoryError("Référence catalogue introuvable.");
     const updated: StockItem = { ...existing };
+    if (reference.category === "battery") {
+      const compatibleIds = [...new Set(input.compatibleAircraftIds ?? [])];
+      if (compatibleIds.some((id) => !snapshot.aircraft.some((aircraft) => aircraft.id === id))) throw new InventoryError("Un avion sélectionné pour la compatibilité n'existe plus.");
+      if (compatibleIds.length) updated.compatibleAircraftIds = compatibleIds; else delete updated.compatibleAircraftIds;
+      if (existing.aircraftId || existing.projectId) throw new InventoryError("Une batterie ne peut pas être affectée à un avion ou à un projet.");
+    } else delete updated.compatibleAircraftIds;
     if (input.serialNumber?.trim()) updated.serialNumber = input.serialNumber.trim(); else delete updated.serialNumber;
     if (input.locationId?.trim()) updated.locationId = input.locationId.trim(); else delete updated.locationId;
     if (input.notes?.trim()) updated.notes = input.notes.trim(); else delete updated.notes;
@@ -162,7 +175,7 @@ export class InventoryService {
   setStockGroupQuantity(referenceId: string, quantity: number, unit: string, newLotId: string, movementId: string, occurredAt: string): void {
     const snapshot = this.repository.getSnapshot();
     const reference = snapshot.references.find((entry) => entry.id === referenceId && !entry.archived);
-    if (!reference || (reference.category !== "supplies" && reference.category !== "tool") || reference.trackingMode !== "quantity") throw new InventoryError("Fourniture ou outil introuvable.");
+    if (!reference || reference.category !== "supplies" || reference.trackingMode !== "quantity") throw new InventoryError("Fourniture introuvable.");
     if (!Number.isInteger(quantity) || quantity < 0) throw new InventoryError("La quantité doit être un entier positif ou nul.");
     if (!unit.trim()) throw new InventoryError("L’unité de stock est obligatoire.");
     const existingLots = snapshot.lots.filter((lot) => lot.referenceId === referenceId);
@@ -209,6 +222,19 @@ export class InventoryService {
     this.repository.saveProject(project);
   }
 
+  setToolStatus(itemId: string, status: "available" | "borrowed" | "repair", movementId: string, occurredAt: string): void {
+    const snapshot = this.repository.getSnapshot();
+    const item = snapshot.items.find((entry) => entry.id === itemId);
+    if (!item) throw new InventoryError("Outil introuvable.");
+    const reference = snapshot.references.find((entry) => entry.id === item.referenceId);
+    if (reference?.category !== "tool") throw new InventoryError("Seul un outil peut recevoir ce statut.");
+    if (!["available", "borrowed", "repair"].includes(status)) throw new InventoryError("Statut d’outil invalide.");
+    if (item.status === "installed" || item.status === "reserved") throw new InventoryError("Un outil affecté ne peut pas changer de statut.");
+    if (item.status === status) return;
+    this.repository.saveItem({ ...item, status });
+    this.repository.appendMovement({ id: movementId, type: status === "repair" ? "repair" : "adjusted", referenceId: item.referenceId, itemId, notes: "Statut outil : " + status, occurredAt });
+  }
+
   setReceiverBinding(receiverItemId: string, transmitterItemId: string | null): void {
     const snapshot = this.repository.getSnapshot();
     const receiver = snapshot.items.find((entry) => entry.id === receiverItemId);
@@ -231,7 +257,7 @@ export class InventoryService {
     if (!item) throw new InventoryError("Exemplaire introuvable.");
     if (item.status !== "available") throw new InventoryError("Seul un exemplaire disponible peut être affecté.");
     const itemReference = snapshot.references.find((entry) => entry.id === item.referenceId);
-    if (itemReference?.category === "supplies" || itemReference?.category === "tool") throw new InventoryError("Les fournitures et outils ne peuvent pas être affectés.");
+    if (itemReference?.category === "supplies" || itemReference?.category === "tool" || itemReference?.category === "battery") throw new InventoryError("Les fournitures, outils et batteries ne peuvent pas être affectés.");
     if (itemReference?.category === "radio" && itemReference.radioType === "transmitter") throw new InventoryError("A transmitter cannot be assigned.");
     if (target.kind === "aircraft" && !snapshot.aircraft.some((entry) => entry.id === target.id)) throw new InventoryError("Avion introuvable.");
     if (target.kind === "project" && !snapshot.projects.some((entry) => entry.id === target.id)) throw new InventoryError("Projet introuvable.");

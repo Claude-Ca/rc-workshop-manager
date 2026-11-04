@@ -112,6 +112,53 @@ describe("InventoryService", () => {
     expect(repository.snapshot.items.map((item) => item.inventoryCode)).toEqual(["RX-001", "RX-002", "MOT-001"]);
   });
 
+  it("keeps supplies quantitative while tools and servos are individually tracked", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    service.createReference(reference("SUP-1", "supplies", "quantity"));
+    service.createReference(reference("TOOL-1", "tool", "individual"));
+    service.createReference(reference("SERVO-1", "servo", "individual"));
+    expect(() => service.createReference(reference("TOOL-BAD", "tool", "quantity"))).toThrow(/suivie individuellement/);
+    expect(() => service.createReference(reference("SERVO-BAD", "servo", "quantity"))).toThrow(/suivie individuellement/);
+    service.addLot({ id: "LOT-1", referenceId: "SUP-1", quantity: 25, unit: "vis" });
+    service.addItem({ id: "TOOL-ITEM", referenceId: "TOOL-1", inventoryCode: "", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
+    service.addItem({ id: "SERVO-ITEM", referenceId: "SERVO-1", inventoryCode: "", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
+    expect(repository.snapshot.lots[0]?.quantity).toBe(25);
+    expect(repository.snapshot.items.map((item) => item.inventoryCode)).toEqual(["TOOL-001", "SER-001"]);
+  });
+
+  it("requires motors, ESCs, servos, batteries and tools to be individually tracked", () => {
+    const service = new InventoryService(new MemoryRepository());
+    for (const category of ["motor", "esc", "servo", "battery", "tool"] as const) {
+      expect(() => service.createReference(reference("BAD-" + category, category, "quantity"))).toThrow(/suivie individuellement/);
+    }
+  });
+
+  it("manages tool availability, borrowing and repair as individual states", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    service.createReference(reference("TOOL-1", "tool", "individual"));
+    service.addItem({ id: "TOOL-ITEM", referenceId: "TOOL-1", inventoryCode: "", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
+    service.setToolStatus("TOOL-ITEM", "borrowed", "MOV-1", "2026-11-01T13:00:00.000Z");
+    expect(repository.snapshot.items[0]?.status).toBe("borrowed");
+    service.setToolStatus("TOOL-ITEM", "repair", "MOV-2", "2026-11-01T14:00:00.000Z");
+    expect(repository.snapshot.items[0]?.status).toBe("repair");
+    service.setToolStatus("TOOL-ITEM", "available", "MOV-3", "2026-11-01T15:00:00.000Z");
+    expect(repository.snapshot.items[0]?.status).toBe("available");
+  });
+
+  it("stores battery compatibility without assigning the battery", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    service.createReference(reference("BAT-1", "battery", "individual"));
+    service.addAircraft({ id: "AIR-1", name: "Tucano" });
+    service.addAircraft({ id: "AIR-2", name: "Carbon-Z" });
+    service.addItem({ id: "BAT-ITEM", referenceId: "BAT-1", inventoryCode: "", status: "available", createdAt: "2026-11-01T12:00:00.000Z" });
+    service.updateItem({ ...repository.snapshot.items[0]!, compatibleAircraftIds: ["AIR-1", "AIR-2"] });
+    expect(repository.snapshot.items[0]?.compatibleAircraftIds).toEqual(["AIR-1", "AIR-2"]);
+    expect(() => service.assignItem("BAT-ITEM", { kind: "aircraft", id: "AIR-1" }, "MOV-1", "2026-11-01T16:00:00.000Z")).toThrow(/batteries ne peuvent pas être affectés/);
+  });
+
   it("binds a receiver to zero or one transmitter and rejects invalid targets", () => {
     const repository = new MemoryRepository();
     const service = new InventoryService(repository);

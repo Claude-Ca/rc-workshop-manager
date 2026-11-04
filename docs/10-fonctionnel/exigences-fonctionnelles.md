@@ -46,7 +46,7 @@ Priorités :
 
 | ID | Exigence | Priorité | Critère d'acceptation |
 |---|---|---|---|
-| REQ-STK-001 | Les fournitures et consommables sont gérés par référence avec un état binaire : en stock ou rupture. | Fondamentale | L'utilisateur peut déclarer une référence disponible ou en rupture sans créer d'exemplaires individuels. |
+| REQ-STK-001 | Les fournitures et consommables sont gérés par référence avec une quantité en stock et une unité, sans suivi individuel. | Fondamentale | L'utilisateur peut saisir ou ajuster une quantité (pièces, mètres, grammes, etc.) ; une quantité nulle correspond à une rupture. |
 | REQ-STK-002 | Les fournitures et consommables ne sont pas affectés aux modèles. | Fondamentale | Aucune affectation individuelle à un avion n'est requise pour ces catégories. |
 | REQ-STK-003 | Les hélices sont gérées comme des équipements individuels et non comme des consommables. | Fondamentale | Une hélice peut être identifiée, placée en stock ou affectée à un modèle. |
 

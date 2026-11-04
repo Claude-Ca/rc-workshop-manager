@@ -30,6 +30,7 @@ export interface DesktopApi {
   assignItem(itemId: string, target: { kind: "aircraft"; id: string } | { kind: "project"; id: string }): Promise<InventorySnapshot>;
   releaseItem(itemId: string): Promise<InventorySnapshot>;
   setReceiverBinding(receiverItemId: string, transmitterItemId: string | null): Promise<InventorySnapshot>;
+  setToolStatus(itemId: string, status: "available" | "borrowed" | "repair"): Promise<InventorySnapshot>;
 }
 
 const api: DesktopApi = {
@@ -58,6 +59,7 @@ const api: DesktopApi = {
   assignItem: (itemId, target) => ipcRenderer.invoke("inventory:assign-item", itemId, target),
   releaseItem: (itemId) => ipcRenderer.invoke("inventory:release-item", itemId),
   setReceiverBinding: (receiverItemId, transmitterItemId) => ipcRenderer.invoke("inventory:set-receiver-binding", receiverItemId, transmitterItemId),
+  setToolStatus: (itemId, status) => ipcRenderer.invoke("inventory:set-tool-status", itemId, status),
 };
 
 contextBridge.exposeInMainWorld("rcWorkshop", api);

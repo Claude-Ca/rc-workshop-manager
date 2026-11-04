@@ -94,7 +94,7 @@ function buildInventoryCsv(snapshot: InventorySnapshot, categories: unknown): st
     "Type", "Catégorie", "Référence", "Marque", "Modèle", "Suivi", "Type radio", "Canaux RX/TX",
     "Protocoles", "Firmware", "Motorisation", "Type moteur", "Tension", "Cylindrée", "Hélice DxP",
     "Attributs", "Code inventaire", "N° série", "Statut", "Quantité", "Unité", "Emplacement",
-    "Avion", "Projet", "Nom TX16", "Bind", "Notes", "Créé le",
+    "Avion", "Projet", "Avions compatibles", "Nom TX16", "Bind", "Notes", "Créé le",
   ];
   const rows: string[][] = [columns];
   const aircraftNames = new Map(snapshot.aircraft.map((entry) => [entry.id, entry.name]));
@@ -122,7 +122,7 @@ function buildInventoryCsv(snapshot: InventorySnapshot, categories: unknown): st
     for (const item of referenceItems) {
       appendRow("Exemplaire", [item.inventoryCode, item.serialNumber ?? "", item.status, "", "",
         item.locationId ?? "", item.aircraftId ? aircraftNames.get(item.aircraftId) ?? item.aircraftId : "",
-        item.projectId ? projectNames.get(item.projectId) ?? item.projectId : "", item.tx16Name ?? "",
+        item.projectId ? projectNames.get(item.projectId) ?? item.projectId : "", (item.compatibleAircraftIds ?? []).map((id) => aircraftNames.get(id) ?? id).join(", "), item.tx16Name ?? "",
         item.boundTransmitterId ? itemNames.get(item.boundTransmitterId) ?? item.boundTransmitterId : "",
         item.notes ?? "", item.createdAt]);
     }
@@ -350,6 +350,10 @@ function registerHandlers(): void {
   });
   ipcMain.handle("inventory:assign-item", (_event, itemId: string, target: { kind: "aircraft"; id: string } | { kind: "project"; id: string }) => {
     inventory.assignItem(itemId, target, randomUUID(), new Date().toISOString());
+    return inventory.getSnapshot();
+  });
+  ipcMain.handle("inventory:set-tool-status", (_event, itemId: string, status: "available" | "borrowed" | "repair") => {
+    inventory.setToolStatus(itemId, status, randomUUID(), new Date().toISOString());
     return inventory.getSnapshot();
   });
   ipcMain.handle("inventory:set-receiver-binding", (_event, receiverItemId: string, transmitterItemId: string | null) => {

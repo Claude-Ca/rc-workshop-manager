@@ -98,7 +98,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
       CREATE TABLE IF NOT EXISTS stock_items (
         id TEXT PRIMARY KEY, reference_id TEXT NOT NULL REFERENCES component_references(id),
         inventory_code TEXT NOT NULL COLLATE NOCASE UNIQUE, serial_number TEXT,
-        status TEXT NOT NULL, location_id TEXT, aircraft_id TEXT REFERENCES aircraft(id),
+        status TEXT NOT NULL, location_id TEXT, compatible_aircraft_ids_json TEXT, aircraft_id TEXT REFERENCES aircraft(id),
         project_id TEXT REFERENCES projects(id), tx16_name TEXT COLLATE NOCASE UNIQUE, bound_transmitter_id TEXT,
         notes TEXT, created_at TEXT NOT NULL
       );
@@ -121,6 +121,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
     if (!referenceColumns.some((column) => column.name === "firmware_version")) this.db.exec("ALTER TABLE component_references ADD COLUMN firmware_version TEXT");
     const stockColumns = this.db.prepare("PRAGMA table_info(stock_items)").all() as Row[];
     if (!stockColumns.some((column) => column.name === "bound_transmitter_id")) this.db.exec("ALTER TABLE stock_items ADD COLUMN bound_transmitter_id TEXT");
+    if (!stockColumns.some((column) => column.name === "compatible_aircraft_ids_json")) this.db.exec("ALTER TABLE stock_items ADD COLUMN compatible_aircraft_ids_json TEXT");
     for (const [column, type] of [["motorization_kind", "TEXT"], ["motor_type", "TEXT"], ["motor_voltage", "TEXT"], ["motor_displacement", "TEXT"], ["propeller_diameter", "TEXT"], ["propeller_pitch", "TEXT"]]) {
       if (!referenceColumns.some((entry) => entry.name === column)) this.db.exec("ALTER TABLE component_references ADD COLUMN " + column + " " + type);
     }
@@ -128,6 +129,43 @@ export class SqliteInventoryRepository implements InventoryRepository {
     this.db.exec("UPDATE component_references SET category='supplies' WHERE category IN ('connector','control','structure','material','construction')");
     const aircraftColumns = this.db.prepare("PRAGMA table_info(aircraft)").all() as Row[];
     if (!aircraftColumns.some((column) => column.name === "uaf_registration")) this.db.exec("ALTER TABLE aircraft ADD COLUMN uaf_registration TEXT");
+    // Convert legacy quantity-tracked tools into individual physical items.
+    // Preserve the count and original unit in each generated item's notes.
+    this.db.transaction(() => {
+      const legacyTools = this.db.prepare("SELECT id FROM component_references WHERE category = 'tool' AND tracking_mode = 'quantity'").all() as Row[];
+      const findCode = this.db.prepare("SELECT id FROM stock_items WHERE inventory_code = ?");
+      const insertItem = this.db.prepare(`INSERT INTO stock_items
+        (id,reference_id,inventory_code,status,notes,created_at)
+        VALUES (@id,@referenceId,@inventoryCode,'available',@notes,@createdAt)`);
+      const lotsForReference = this.db.prepare("SELECT id,quantity,unit FROM stock_lots WHERE reference_id = ?");
+      const deleteLots = this.db.prepare("DELETE FROM stock_lots WHERE reference_id = ?");
+      const updateTracking = this.db.prepare("UPDATE component_references SET tracking_mode = 'individual' WHERE id = ?");
+      for (const entry of legacyTools) {
+        const referenceId = String(entry.id);
+        const lots = lotsForReference.all(referenceId) as Row[];
+        let sequence = 1;
+        for (const lot of lots) {
+          const quantity = Math.max(0, Math.floor(Number(lot.quantity) || 0));
+          for (let index = 1; index <= quantity; index += 1) {
+            let inventoryCode = "TOOL-" + String(sequence).padStart(3, "0");
+            while (findCode.get(inventoryCode)) {
+              sequence += 1;
+              inventoryCode = "TOOL-" + String(sequence).padStart(3, "0");
+            }
+            insertItem.run({
+              id: "MIG-TOOL-" + String(lot.id) + "-" + String(index),
+              referenceId,
+              inventoryCode,
+              notes: "Converti depuis un stock quantitatif (unité d’origine : " + String(lot.unit) + ").",
+              createdAt: new Date().toISOString(),
+            });
+            sequence += 1;
+          }
+        }
+        deleteLots.run(referenceId);
+        updateTracking.run(referenceId);
+      }
+    })();
   }
 
   getSnapshot(): InventorySnapshot {
@@ -162,6 +200,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.project_id ? { projectId: String(row.project_id) } : {}),
       ...(row.tx16_name ? { tx16Name: String(row.tx16_name) } : {}),
       ...(row.bound_transmitter_id ? { boundTransmitterId: String(row.bound_transmitter_id) } : {}),
+      ...(row.compatible_aircraft_ids_json ? { compatibleAircraftIds: JSON.parse(String(row.compatible_aircraft_ids_json)) as string[] } : {}),
       ...(row.notes ? { notes: String(row.notes) } : {}),
     }));
     const lots = (this.db.prepare("SELECT * FROM stock_lots").all() as Row[]).map((row): StockLot => ({
@@ -214,13 +253,13 @@ export class SqliteInventoryRepository implements InventoryRepository {
 
   saveItem(value: StockItem): void {
     this.db.prepare(`INSERT INTO stock_items
-      (id,reference_id,inventory_code,serial_number,status,location_id,aircraft_id,project_id,tx16_name,notes,created_at,bound_transmitter_id)
-      VALUES (@id,@referenceId,@inventoryCode,@serialNumber,@status,@locationId,@aircraftId,@projectId,@tx16Name,@notes,@createdAt,@boundTransmitterId)
+      (id,reference_id,inventory_code,serial_number,status,location_id,compatible_aircraft_ids_json,aircraft_id,project_id,tx16_name,notes,created_at,bound_transmitter_id)
+      VALUES (@id,@referenceId,@inventoryCode,@serialNumber,@status,@locationId,@compatibleAircraftIds,@aircraftId,@projectId,@tx16Name,@notes,@createdAt,@boundTransmitterId)
       ON CONFLICT(id) DO UPDATE SET inventory_code=excluded.inventory_code,serial_number=excluded.serial_number,
       status=excluded.status,location_id=excluded.location_id,aircraft_id=excluded.aircraft_id,
-      project_id=excluded.project_id,tx16_name=excluded.tx16_name,notes=excluded.notes,bound_transmitter_id=excluded.bound_transmitter_id`)
+      project_id=excluded.project_id,tx16_name=excluded.tx16_name,notes=excluded.notes,bound_transmitter_id=excluded.bound_transmitter_id,compatible_aircraft_ids_json=excluded.compatible_aircraft_ids_json`)
       .run({ id:value.id,referenceId:value.referenceId,inventoryCode:value.inventoryCode,serialNumber:value.serialNumber??null,
-        status:value.status,locationId:value.locationId??null,aircraftId:value.aircraftId??null,projectId:value.projectId??null,
+        status:value.status,locationId:value.locationId??null,compatibleAircraftIds:value.compatibleAircraftIds?.length?JSON.stringify(value.compatibleAircraftIds):null,aircraftId:value.aircraftId??null,projectId:value.projectId??null,
         tx16Name:value.tx16Name??null,notes:value.notes??null,createdAt:value.createdAt,boundTransmitterId:value.boundTransmitterId??null });
   }
 

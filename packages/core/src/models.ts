@@ -4,7 +4,7 @@ export const COMPONENT_CATEGORIES = [
 
 export type ComponentCategory = (typeof COMPONENT_CATEGORIES)[number] | "propeller" | "receiver" | "connector" | "control" | "structure" | "material" | "construction";
 export type TrackingMode = "individual" | "quantity";
-export type ItemStatus = "available" | "installed" | "reserved" | "repair" | "retired";
+export type ItemStatus = "available" | "installed" | "reserved" | "borrowed" | "repair" | "retired";
 
 export interface ComponentReference {
   id: string;
@@ -44,6 +44,8 @@ export interface StockItem {
   projectId?: string;
   tx16Name?: string;
   boundTransmitterId?: string;
+  /** Aircraft for which an individual battery is compatible; never an assignment. */
+  compatibleAircraftIds?: string[];
   notes?: string;
   createdAt: string;
 }
