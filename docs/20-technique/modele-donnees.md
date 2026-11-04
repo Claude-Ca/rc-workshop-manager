@@ -1,6 +1,11 @@
 # Modèle de données — état de l’implémentation
 
-**Statut :** décrit le code intégré dans `develop` au 2026-11-03  
+**Identifiant :** TEC-RCWM-002  
+**Version du document :** 1.0  
+**Dernière mise à jour :** 2026-11-04  
+**Statut :** En revue  
+**Environnement de référence :** branche `develop`, état décrit au 2026-11-03  
+**Périmètre :** structure SQLite, entités persistées et frontières de persistance  
 **Références :** PR #9 et PR #10
 
 ## Séparation des données
