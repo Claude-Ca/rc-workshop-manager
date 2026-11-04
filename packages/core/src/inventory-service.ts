@@ -23,7 +23,7 @@ export class InventoryService {
     if (!reference.id.trim() || !reference.name.trim()) throw new InventoryError("Identifiant et désignation obligatoires.");
     if (snapshot.references.some((entry) => entry.id === reference.id)) throw new InventoryError("Cette référence existe déjà.");
     if (reference.category === "supplies" && reference.trackingMode !== "quantity") throw new InventoryError("Les fournitures doivent être gérées par quantité.");
-    if ((reference.category === "tool" || reference.category === "servo") && reference.trackingMode !== "individual") throw new InventoryError("Les outils et servos doivent être suivis individuellement.");
+    if (["motor", "esc", "radio", "battery", "tool", "servo"].includes(reference.category) && reference.trackingMode !== "individual") throw new InventoryError("Cette catégorie doit être suivie individuellement.");
     if ((reference.category === "receiver" || (reference.category === "radio" && (reference.radioType ?? "receiver") === "receiver")) && reference.trackingMode !== "individual") {
       throw new InventoryError("Un récepteur doit être suivi individuellement.");
     }
@@ -56,7 +56,7 @@ export class InventoryService {
     if (existing.archived) throw new InventoryError("Une référence archivée ne peut pas être modifiée.");
     if (!reference.name.trim()) throw new InventoryError("La désignation est obligatoire.");
     if (reference.category === "supplies" && reference.trackingMode !== "quantity") throw new InventoryError("Les fournitures doivent être gérées par quantité.");
-    if ((reference.category === "tool" || reference.category === "servo") && reference.trackingMode !== "individual") throw new InventoryError("Les outils et servos doivent être suivis individuellement.");
+    if (["motor", "esc", "radio", "battery", "tool", "servo"].includes(reference.category) && reference.trackingMode !== "individual") throw new InventoryError("Cette catégorie doit être suivie individuellement.");
     const hasStock = snapshot.items.some((item) => item.referenceId === reference.id) || snapshot.lots.some((lot) => lot.referenceId === reference.id);
     const hasHistory = snapshot.movements.some((movement) => movement.referenceId === reference.id);
     if ((hasStock || hasHistory) && reference.category !== existing.category) throw new InventoryError("La catégorie ne peut pas être modifiée après utilisation de cette référence.");
