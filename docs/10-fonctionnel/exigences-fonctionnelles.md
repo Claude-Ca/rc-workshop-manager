@@ -1,8 +1,12 @@
 # Exigences fonctionnelles — V1
 
-**Statut :** exigences issues du cadrage du 2026-11-04 ; revue propriétaire attendue  
-**Périmètre :** version gratuite V1 de RC Workshop Manager  
-**Référence :** `docs/10-fonctionnel/besoins-et-perimetre.md`
+**Identifiant :** FON-RCWM-002  
+**Version du document :** 1.0  
+**Dernière mise à jour :** 2026-11-04  
+**Statut :** En revue  
+**Environnement de référence :** application desktop Windows, fonctionnement local et hors ligne  
+**Périmètre :** exigences fonctionnelles de la version gratuite V1 de RC Workshop Manager  
+**Document associé :** [Besoins et périmètre fonctionnel](besoins-et-perimetre.md)
 
 Ce document transforme les décisions de cadrage en exigences identifiées et vérifiables. Les exigences décrivent le comportement attendu, pas nécessairement l'état actuel du code.
 
