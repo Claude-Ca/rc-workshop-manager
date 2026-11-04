@@ -1,8 +1,11 @@
 # Plan de développement
 
-**Version de travail :** 0.3.0  
-**Branche de référence :** `develop`  
-**Dernière mise à jour :** 2026-11-04
+**Identifiant :** PLN-RCWM-001  
+**Version du document :** 1.0  
+**Dernière mise à jour :** 2026-11-04  
+**Statut :** En revue  
+**Environnement de référence :** dépôt GitHub `Claude-Ca/rc-workshop-manager`, branche `develop` (commit de référence : `b4d3317`)  
+**Périmètre :** lots de développement, validation fonctionnelle et préparation de la première livraison
 
 ## État de référence
 
