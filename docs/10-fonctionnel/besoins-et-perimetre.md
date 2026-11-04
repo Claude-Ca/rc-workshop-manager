@@ -1,8 +1,11 @@
 # Besoins et périmètre fonctionnel
 
-**Statut :** cadrage fonctionnel V1 consolidé ; validation propriétaire de la présente révision en attente  
-**Branche de référence :** `develop`  
-**Dernière revue :** 2026-11-04
+**Identifiant :** FON-RCWM-001  
+**Version du document :** 1.0  
+**Dernière mise à jour :** 2026-11-04  
+**Statut :** En revue  
+**Environnement de référence :** application desktop Windows, fonctionnement local et hors ligne  
+**Périmètre :** positionnement produit et besoins fonctionnels de la V1 aéromodélisme
 
 ## 1. Positionnement et objectif
 
