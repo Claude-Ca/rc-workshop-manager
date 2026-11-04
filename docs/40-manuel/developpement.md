@@ -1,7 +1,11 @@
 # Guide développeur
 
-**Statut :** première version — à compléter après validation sur Windows  
-**Environnement de référence :** Windows 10/11, Node.js 22 et pnpm 12.15.0
+**Identifiant :** MAN-RCWM-001  
+**Version du document :** 1.0  
+**Dernière mise à jour :** 2026-11-04  
+**Statut :** En revue  
+**Environnement de référence :** Windows 10/11, Node.js 22 et pnpm 12.15.0  
+**Périmètre :** installation de l'environnement et commandes de développement
 
 ## Prérequis
 
@@ -106,6 +110,8 @@ Le packaging Windows est prévu via electron-builder. La compilation et l'instal
 - Les migrations SQLite sont appliquées à l’ouverture en préservant les données existantes. Il reste recommandé de conserver une sauvegarde avant une mise à jour importante.
 
 ## Gestion de configuration et contribution
+
+Le processus détaillé de gestion de configuration (branches, commits, Pull Requests, contrôles et versions) est défini dans le [PGC](../30-plans/plan-gestion-configuration.md).
 
 - Travailler sur une branche dédiée à une évolution ou une correction ; éviter les développements directement sur `main` ou `develop`.
 - Synchroniser la branche de travail avec `develop` avant de commencer et avant de soumettre une pull request.

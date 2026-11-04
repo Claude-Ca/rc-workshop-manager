@@ -1,7 +1,10 @@
 # Registre des décisions
 
-**Statut :** décisions de cadrage et d’implémentation  
-**Dernière mise à jour :** 2026-11-03
+**Identifiant :** GOV-RCWM-002  
+**Version du document :** 1.0  
+**Dernière mise à jour :** 2026-11-04  
+**Statut :** En revue  
+**Périmètre :** décisions structurantes de cadrage et d'implémentation
 
 | ID | Sujet | Décision |
 |---|---|---|

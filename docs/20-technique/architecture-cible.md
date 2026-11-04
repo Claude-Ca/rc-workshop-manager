@@ -1,6 +1,11 @@
 # Architecture cible
 
-**Statut :** choix de cadrage ; implémentation progressive
+**Identifiant :** TEC-RCWM-001  
+**Version du document :** 1.0  
+**Dernière mise à jour :** 2026-11-04  
+**Statut :** En revue  
+**Environnement de référence :** application desktop Windows, architecture locale  
+**Périmètre :** principes et découpage architectural cible
 
 ## Principes
 
