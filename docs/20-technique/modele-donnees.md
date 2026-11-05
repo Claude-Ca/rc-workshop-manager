@@ -26,9 +26,9 @@ Les chemins et opérations de fichiers restent dans le processus principal Elect
 
 Le snapshot d’un inventaire regroupe références, exemplaires, lots, avions, projets, mouvements et événements de journal de bord.
 
-### Récupération sélective des équipements
+### Transition d'état et devenir des équipements
 
-La méthode métier `releaseAircraftItems` vérifie que chaque exemplaire sélectionné est encore affecté à l'aéronef ciblé. Le dépôt SQLite applique dans une transaction unique le retour au statut `available`, la suppression de la relation `aircraft_id` et l'insertion du mouvement `released` pour chaque exemplaire. Le mouvement conserve l'identifiant de l'aéronef d'origine. Une erreur annule l'ensemble du lot.
+La méthode métier `updateAircraft` détecte le passage vers `out-of-service` ou `retired`. Si des exemplaires sont encore installés, elle exige une décision explicite pour chacun : `available` (retour inventaire) ou `retired` (HS / rebuté). Le dépôt SQLite enregistre dans une transaction unique la fiche aéronef, le statut de chaque exemplaire, la suppression de `aircraft_id` et le mouvement `released` ou `retired`. Le mouvement conserve l'identifiant de l'aéronef d'origine. Toute erreur annule la transition complète. L'aperçu de l'aéronef reste une vue de consultation.
 
 ### Journal de bord des aéronefs
 
