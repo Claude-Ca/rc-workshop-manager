@@ -1,8 +1,8 @@
 # Registre des décisions
 
 **Identifiant :** GOV-RCWM-002  
-**Version du document :** 1.0  
-**Dernière mise à jour :** 2026-11-04  
+**Version du document :** 1.1  
+**Dernière mise à jour :** 2026-11-05  
 **Statut :** En revue  
 **Périmètre :** décisions structurantes de cadrage et d'implémentation
 
@@ -26,10 +26,17 @@
 | DEC-016 | Cycle de vie des inventaires | Suppression autorisée uniquement pour un inventaire secondaire fermé ; le premier inventaire du registre est le principal et ne peut pas être supprimé |
 | DEC-017 | Maintenance SQLite | Compactage manuel de la base active depuis Administration, avec checkpoint WAL puis `VACUUM` |
 | DEC-018 | Corbeille des mouvements | Mise à la corbeille, restauration sans effet sur le stock et vidange définitive reportées à une évolution additive du modèle SQLite ; aucune suppression de mouvement dans le lot courant |
+| DEC-019 | Type d'aéronef | Type distinct de la propulsion ; valeurs V1 : Avion, Planeur, Motoplaneur, Hélicoptère, Multirotor et Autre. « Jet » relève de la propulsion, pas du type |
+| DEC-020 | États de l'aéronef | Type, état opérationnel et cycle de vie sont trois dimensions indépendantes |
+| DEC-021 | Favoris de flotte | Maximum de quatre aéronefs favoris par inventaire, affichés sur la vue d'ensemble |
+| DEC-022 | Journal de bord | Journal facultatif, chronologique et indépendant des mouvements de stock ; un événement ne modifie pas automatiquement l'état opérationnel |
+| DEC-023 | Récupération d'équipements | Récupération sélective des équipements affectés ; les batteries restent hors affectation et sont exclues de ce parcours |
+| DEC-024 | Vente et retrait | Chaque équipement affecté reçoit une destination explicite ; clôture atomique, historisée et définitive en V1, sans suppression des identités physiques |
 
 ## Historique
 
 - DEC-011 précise le mode de suivi des fournitures et de l’outillage.
 - DEC-012 à DEC-015 enregistrent les décisions livrées dans le lot multi-inventaires et administration (PR #10).
+- DEC-019 à DEC-024 formalisent les décisions fonctionnelles validées pour les évolutions de la flotte et du cycle de vie des aéronefs.
 - L’architecture réseau, la synchronisation, les comptes et la collaboration multi-utilisateur restent hors périmètre actuel.
 - Les documents fonctionnels et le plan de développement sont la référence pour distinguer fonctionnalités intégrées et recette propriétaire encore à effectuer.
