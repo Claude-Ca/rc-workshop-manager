@@ -344,6 +344,10 @@ function registerHandlers(): void {
     inventory.updateAircraft(input);
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:set-aircraft-favorite", (_event, aircraftId: string, favorite: boolean) => {
+    inventory.setAircraftFavorite(aircraftId, favorite);
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventory:add-project", (_event, input: Project) => {
     inventory.addProject(input);
     return inventory.getSnapshot();

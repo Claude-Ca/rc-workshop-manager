@@ -78,3 +78,26 @@
 .toolbar .search-box{flex:1 1 260px;min-width:180px}
 .toolbar .new-component-menu>.primary{height:42px;padding:0 14px}
 @media(max-width:1120px){.toolbar{flex-wrap:wrap}.toolbar .search-box{flex-basis:220px}}
+
+
+/* Aircraft classification and favorites */
+.favorites-heading { margin-top: 28px; }
+.favorite-aircraft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 14px 0 30px; }
+.favorite-aircraft-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.favorite-aircraft-main { display: flex; align-items: center; gap: 12px; min-width: 0; text-align: left; background: transparent; border: 0; color: inherit; cursor: pointer; }
+.favorite-aircraft-main > span:last-child { display: grid; gap: 4px; min-width: 0; }
+.favorite-aircraft-main strong, .favorite-aircraft-main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.favorite-aircraft-main small { color: var(--muted); font-size: 12px; }
+.aircraft-card-title { display: flex; align-items: center; justify-content: space-between; }
+.favorite-toggle { border: 0; background: transparent; color: var(--muted); font-size: 23px; cursor: pointer; padding: 2px 6px; }
+.favorite-toggle.active { color: #d69a22; }
+.favorite-toggle:disabled { opacity: .35; cursor: not-allowed; }
+.aircraft-state-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.state-pill { display: inline-flex; align-items: center; border: 1px solid #40536a; border-radius: 999px; padding: 5px 10px; background: #293b4c; color: #e4edf7; font-size: 11px; font-weight: 600; line-height: 1.25; }
+.state-pill.flight-ready { background: #1f4939; border-color: #34765a; color: #b9f0d2; }
+.state-pill.parts, .state-pill.out-of-service { background: #542f32; border-color: #8e4d51; color: #ffd7d9; }
+.state-pill.maintenance { background: #514126; border-color: #8a6a32; color: #ffe3a6; }
+.state-pill.lifecycle { background: #303b4b; border-color: #53647a; color: #e0e8f2; }
+
+.aircraft-photo { width: 48px; height: 48px; flex: 0 0 48px; object-fit: cover; border-radius: 10px; background: var(--surface); }
+.aircraft-preview-photo { display: block; max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; margin: 0 auto 12px; }

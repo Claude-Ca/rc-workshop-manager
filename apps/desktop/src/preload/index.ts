@@ -26,6 +26,7 @@ export interface DesktopApi {
   setStockGroupQuantity(referenceId: string, quantity: number, unit: string): Promise<InventorySnapshot>;
   addAircraft(input: Aircraft): Promise<InventorySnapshot>;
   updateAircraft(input: Aircraft): Promise<InventorySnapshot>;
+  setAircraftFavorite(aircraftId: string, favorite: boolean): Promise<InventorySnapshot>;
   addProject(input: Project): Promise<InventorySnapshot>;
   assignItem(itemId: string, target: { kind: "aircraft"; id: string } | { kind: "project"; id: string }): Promise<InventorySnapshot>;
   releaseItem(itemId: string): Promise<InventorySnapshot>;
@@ -55,6 +56,7 @@ const api: DesktopApi = {
   setStockGroupQuantity: (referenceId, quantity, unit) => ipcRenderer.invoke("inventory:set-stock-group-quantity", referenceId, quantity, unit),
   addAircraft: (input) => ipcRenderer.invoke("inventory:add-aircraft", input),
   updateAircraft: (input) => ipcRenderer.invoke("inventory:update-aircraft", input),
+  setAircraftFavorite: (aircraftId, favorite) => ipcRenderer.invoke("inventory:set-aircraft-favorite", aircraftId, favorite),
   addProject: (input) => ipcRenderer.invoke("inventory:add-project", input),
   assignItem: (itemId, target) => ipcRenderer.invoke("inventory:assign-item", itemId, target),
   releaseItem: (itemId) => ipcRenderer.invoke("inventory:release-item", itemId),

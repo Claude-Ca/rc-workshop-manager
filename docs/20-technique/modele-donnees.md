@@ -1,7 +1,7 @@
 # Modèle de données — état de l’implémentation
 
 **Identifiant :** TEC-RCWM-002  
-**Version du document :** 1.0  
+**Version du document :** 1.1  
 **Dernière mise à jour :** 2026-11-04  
 **Statut :** En revue  
 **Environnement de référence :** branche `develop`, état décrit au 2026-11-03  
@@ -19,11 +19,15 @@ Les chemins et opérations de fichiers restent dans le processus principal Elect
 - `ComponentReference` / table `component_references` : référence catalogue, catégorie, marque/modèle/description, mode de suivi, propriétés radio, motorisation et batterie typées (connecteur, taux de décharge, dimensions et poids facultatifs), attributs, chemin de photo, archivage et date de création.
 - `StockItem` / table `stock_items` : exemplaire physique, code inventaire unique, numéro de série, état, emplacement, avion/projet éventuel, nom TX16, identifiant de l’émetteur lié et compatibilités avion éventuelles (notamment pour les batteries).
 - `StockLot` / table `stock_lots` : quantité entière non négative, unité et emplacement, rattachés à une référence.
-- `Aircraft` / table `aircraft` : nom, constructeur, modèle, notes et immatriculation UAF facultatifs.
+- `Aircraft` / table `aircraft` : nom, constructeur, modèle, notes, immatriculation UAF et chemin/URL de photo facultatifs ; type d'aéronef, état opérationnel, cycle de vie et indicateur de favori.
 - `Project` / table `projects` : nom, statut et notes.
 - `StockMovement` / table `stock_movements` : événement daté lié à une référence et, selon le cas, à un exemplaire, un lot, un avion ou un projet.
 
 Le snapshot d’un inventaire regroupe références, exemplaires, lots, avions, projets et mouvements.
+
+### Classification des aéronefs
+
+La table `aircraft` porte les attributs `aircraft_type` (défaut `other`), `operational_state` (défaut `flight-ready`), `lifecycle_state` (défaut `active`), `favorite` (défaut `0`) et `photo_path` (facultatif). La migration ajoute ces colonnes sans réécrire les aéronefs existants. Les valeurs par défaut garantissent la compatibilité des anciennes bases ; les favoris sont limités à quatre par inventaire par le service métier.
 
 ## Catégories et compatibilité
 

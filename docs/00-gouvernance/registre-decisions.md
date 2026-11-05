@@ -1,7 +1,7 @@
 # Registre des décisions
 
 **Identifiant :** GOV-RCWM-002  
-**Version du document :** 1.1  
+**Version du document :** 1.2  
 **Dernière mise à jour :** 2026-11-05  
 **Statut :** En revue  
 **Périmètre :** décisions structurantes de cadrage et d'implémentation
@@ -38,5 +38,6 @@
 - DEC-011 précise le mode de suivi des fournitures et de l’outillage.
 - DEC-012 à DEC-015 enregistrent les décisions livrées dans le lot multi-inventaires et administration (PR #10).
 - DEC-019 à DEC-024 formalisent les décisions fonctionnelles validées pour les évolutions de la flotte et du cycle de vie des aéronefs.
+- Le lot B implémente les dimensions de classification et les favoris définis par DEC-019 à DEC-021 ; les autres décisions restent à réaliser dans les lots suivants.
 - L’architecture réseau, la synchronisation, les comptes et la collaboration multi-utilisateur restent hors périmètre actuel.
 - Les documents fonctionnels et le plan de développement sont la référence pour distinguer fonctionnalités intégrées et recette propriétaire encore à effectuer.

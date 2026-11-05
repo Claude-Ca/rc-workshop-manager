@@ -10,9 +10,9 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 
 ## État de référence
 
-- PR #16 — `feat: improve inventory overview and battery specifications` — fusionnée dans `develop` le 2026-11-05 par squash.
-- Commit de fusion : `618858ed73f062d94d803e5e2d58e140c37a3f13`.
-- CI de la PR #16 : workflow CI terminé avec succès.
+- PR #16 — caractéristiques de batterie et vue inventaire — fusionnée dans `develop`.
+- PR #17 — documentation du cycle de vie de la flotte — fusionnée dans `develop`.
+- PR #18 — ergonomie de l'inventaire et création des avions — fusionnée dans `develop` (commit `f0b4df5`).
 - Les caractéristiques facultatives de batterie (connecteur, taux de décharge, dimensions, poids) sont portées par la référence catalogue ; les compatibilités restent portées par les exemplaires et ne sont pas des affectations.
 
 ## Lots à réaliser
@@ -24,6 +24,12 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 | C — Journal de bord | `feature/aircraft-logbook` | Événements facultatifs, ajout/modification et chronologie | B recommandé | Moyenne |
 | D — Récupération des équipements | `feature/aircraft-equipment-recovery` | Récupération sélective, désaffectation, remise à disposition et mouvements | Affectations existantes | Haute |
 | E — Vente et retrait | `feature/aircraft-retirement-and-sale` | Clôture, destination individuelle de chaque équipement, transaction atomique et historique | D | Haute |
+
+## État d'avancement des lots
+
+- Lot A — Ergonomie : implémenté par PR #18, fusionné dans `develop`.
+- Lot B — Typologie, états et favoris : implémentation proposée par la PR du présent lot ; en attente de revue et de recette propriétaire.
+- Lots C, D et E : à réaliser.
 
 ## Stratégie de réalisation
 
