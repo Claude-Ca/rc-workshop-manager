@@ -43,6 +43,40 @@ describe("aircraft classification and favorites", () => {
     expect(repository.snapshot.aircraft.filter((entry) => entry.favorite)).toHaveLength(4);
     expect(repository.snapshot.aircraft.find((entry) => entry.id === "A5")?.favorite).toBe(true);
   });
+  it("recovers only selected equipment from one aircraft and records each release", () => {
+    const repository = new MemoryRepository(); const service = new InventoryService(repository);
+    repository.snapshot.aircraft = [aircraft("A1"), aircraft("A2")];
+    repository.snapshot.references = [
+      { id: "MOTOR", name: "Moteur", category: "motor", trackingMode: "individual", attributes: {}, archived: false, createdAt: "2026-01-01" },
+      { id: "SERVO", name: "Servo", category: "servo", trackingMode: "individual", attributes: {}, archived: false, createdAt: "2026-01-01" },
+    ];
+    repository.snapshot.items = [
+      { id: "I1", referenceId: "MOTOR", inventoryCode: "MOT-001", status: "installed", aircraftId: "A1", createdAt: "2026-01-01" },
+      { id: "I2", referenceId: "SERVO", inventoryCode: "SER-001", status: "installed", aircraftId: "A1", createdAt: "2026-01-01" },
+      { id: "I3", referenceId: "SERVO", inventoryCode: "SER-002", status: "installed", aircraftId: "A2", createdAt: "2026-01-01" },
+    ];
+    service.releaseAircraftItems("A1", ["I1"], "MOV-REC", "2026-11-05T12:00:00.000Z");
+    expect(repository.snapshot.items.find((item) => item.id === "I1")).toMatchObject({ status: "available" });
+    expect(repository.snapshot.items.find((item) => item.id === "I1")?.aircraftId).toBeUndefined();
+    expect(repository.snapshot.items.find((item) => item.id === "I2")).toMatchObject({ status: "installed", aircraftId: "A1" });
+    expect(repository.snapshot.items.find((item) => item.id === "I3")).toMatchObject({ status: "installed", aircraftId: "A2" });
+    expect(repository.snapshot.movements).toEqual([expect.objectContaining({ id: "MOV-REC-0", type: "released", itemId: "I1", aircraftId: "A1" })]);
+  });
+
+  it("rejects empty, duplicate, or foreign equipment selections without partial changes", () => {
+    const repository = new MemoryRepository(); const service = new InventoryService(repository);
+    repository.snapshot.aircraft = [aircraft("A1"), aircraft("A2")];
+    repository.snapshot.items = [
+      { id: "I1", referenceId: "R1", inventoryCode: "MOT-001", status: "installed", aircraftId: "A1", createdAt: "2026-01-01" },
+      { id: "I2", referenceId: "R1", inventoryCode: "MOT-002", status: "installed", aircraftId: "A2", createdAt: "2026-01-01" },
+    ];
+    expect(() => service.releaseAircraftItems("A1", [], "MOV", "2026-11-05T12:00:00.000Z")).toThrow(/au moins un/);
+    expect(() => service.releaseAircraftItems("A1", ["I1", "I1"], "MOV", "2026-11-05T12:00:00.000Z")).toThrow(/double/);
+    expect(() => service.releaseAircraftItems("A1", ["I1", "I2"], "MOV", "2026-11-05T12:00:00.000Z")).toThrow(/plus affecté/);
+    expect(repository.snapshot.items.every((item) => item.status === "installed")).toBe(true);
+    expect(repository.snapshot.movements).toHaveLength(0);
+  });
+
   it("keeps type, operational state and lifecycle independent", () => {
     const repository = new MemoryRepository(); const service = new InventoryService(repository);
     service.addAircraft(aircraft("A1"));
