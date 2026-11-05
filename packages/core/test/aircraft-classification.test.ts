@@ -33,6 +33,13 @@ describe("aircraft classification and favorites", () => {
     new InventoryService(repository).addAircraft({ id: "A1", name: "Cub" } as Aircraft);
     expect(repository.snapshot.aircraft[0]).toMatchObject({ aircraftType: "other", operationalState: "flight-ready", lifecycleState: "active", favorite: false });
   });
+  it("creates only active aircraft and prevents closed aircraft from returning to favorites", () => {
+    const repository = new MemoryRepository(); const service = new InventoryService(repository);
+    expect(() => service.addAircraft({ ...aircraft("A0"), lifecycleState:"sold" })).toThrow(/doit être actif/);
+    service.addAircraft(aircraft("A1"));
+    service.closeAircraft("A1","retired",[],"CLOSE","2026-11-06T14:00:00.000Z");
+    expect(() => service.setAircraftFavorite("A1",true)).toThrow(/clôturé/);
+  });
   it("allows four favorites and rejects a fifth without changing existing favorites", () => {
     const repository = new MemoryRepository(); const service = new InventoryService(repository);
     for (let i = 1; i <= 4; i += 1) service.addAircraft(aircraft("A" + i, true));

@@ -208,6 +208,7 @@ export class InventoryService {
     if (!["airplane", "glider", "motor-glider", "helicopter", "multirotor", "other"].includes(normalized.aircraftType!)) throw new InventoryError("Type d'aéronef invalide.");
     if (!["flight-ready", "maintenance", "parts", "out-of-service"].includes(normalized.operationalState!)) throw new InventoryError("État opérationnel invalide.");
     if (!["active", "sold", "retired"].includes(normalized.lifecycleState!)) throw new InventoryError("Cycle de vie invalide.");
+    if (normalized.lifecycleState !== "active") throw new InventoryError("Un nouvel aéronef doit être actif. La vente et le retrait passent par l'action de clôture.");
     if (normalized.favorite && this.repository.getSnapshot().aircraft.filter((entry) => entry.favorite).length >= 4) {
       throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
     }
