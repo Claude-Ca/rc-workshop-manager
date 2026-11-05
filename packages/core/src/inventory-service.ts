@@ -322,6 +322,36 @@ export class InventoryService {
     });
   }
 
+  releaseAircraftItems(aircraftId: string, itemIds: string[], movementIdPrefix: string, occurredAt: string): void {
+    const snapshot = this.repository.getSnapshot();
+    if (!snapshot.aircraft.some((aircraft) => aircraft.id === aircraftId)) throw new InventoryError("Aéronef introuvable.");
+    if (!Array.isArray(itemIds) || itemIds.length === 0) throw new InventoryError("Sélectionne au moins un équipement à récupérer.");
+    if (new Set(itemIds).size !== itemIds.length) throw new InventoryError("La sélection contient un équipement en double.");
+    if (!movementIdPrefix.trim()) throw new InventoryError("Identifiant de mouvement obligatoire.");
+    const entries = itemIds.map((itemId, index) => {
+      const item = snapshot.items.find((entry) => entry.id === itemId);
+      if (!item || item.status !== "installed" || item.aircraftId !== aircraftId) {
+        throw new InventoryError("Un équipement sélectionné n'est plus affecté à cet aéronef. Actualise la fiche avant de recommencer.");
+      }
+      const updated: StockItem = { ...item, status: "available" };
+      delete updated.aircraftId;
+      delete updated.projectId;
+      const movement: StockMovement = {
+        id: movementIdPrefix + "-" + index, type: "released", referenceId: item.referenceId,
+        itemId: item.id, aircraftId, notes: "Récupération depuis l'aéronef", occurredAt,
+      };
+      return { item: updated, movement };
+    });
+    if (this.repository.releaseAircraftItems) {
+      this.repository.releaseAircraftItems(entries);
+    } else {
+      for (const entry of entries) {
+        this.repository.saveItem(entry.item);
+        this.repository.appendMovement(entry.movement);
+      }
+    }
+  }
+
   releaseItem(itemId: string, movementId: string, occurredAt: string): void {
     const item = this.repository.getSnapshot().items.find((entry) => entry.id === itemId);
     if (!item) throw new InventoryError("Exemplaire introuvable.");
