@@ -348,6 +348,14 @@ function registerHandlers(): void {
     inventory.setAircraftFavorite(aircraftId, favorite);
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:save-aircraft-logbook-event", (_event, input: import("@rc-workshop/core").AircraftLogbookEvent) => {
+    inventory.saveAircraftLogbookEvent(input);
+    return inventory.getSnapshot();
+  });
+  ipcMain.handle("inventory:delete-aircraft-logbook-event", (_event, eventId: string) => {
+    inventory.deleteAircraftLogbookEvent(eventId);
+    return inventory.getSnapshot();
+  });
   ipcMain.handle("inventory:add-project", (_event, input: Project) => {
     inventory.addProject(input);
     return inventory.getSnapshot();

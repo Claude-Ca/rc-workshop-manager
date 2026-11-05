@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { InventoryError, InventoryService } from "../src/index.js";
 import type { InventoryRepository } from "../src/repository.js";
-import type { InventorySnapshot, ComponentReference, StockItem, StockLot, Aircraft, Project, StockMovement } from "../src/models.js";
+import type { InventorySnapshot, ComponentReference, StockItem, StockLot, Aircraft, Project, StockMovement, AircraftLogbookEvent } from "../src/models.js";
 
 class MemoryRepository implements InventoryRepository {
-  snapshot: InventorySnapshot = { references: [], items: [], lots: [], aircraft: [], projects: [], movements: [] };
+  snapshot: InventorySnapshot = { logbookEvents: [], references: [], items: [], lots: [], aircraft: [], projects: [], movements: [] };
   getSnapshot() { return structuredClone(this.snapshot); }
   saveReference(value: ComponentReference) { this.snapshot.references = [...this.snapshot.references.filter(x => x.id !== value.id), value]; }
   deleteReference(referenceId: string) { this.snapshot.references = this.snapshot.references.filter(x => x.id !== referenceId); }
@@ -13,7 +13,9 @@ class MemoryRepository implements InventoryRepository {
   saveLot(value: StockLot) { this.snapshot.lots = [...this.snapshot.lots.filter(x => x.id !== value.id), value]; }
   deleteLot(lotId: string) { this.snapshot.lots = this.snapshot.lots.filter(x => x.id !== lotId); }
   saveAircraft(value: Aircraft) { this.snapshot.aircraft = [...this.snapshot.aircraft.filter(x => x.id !== value.id), value]; }
-  deleteAircraft(aircraftId: string) { this.snapshot.aircraft = this.snapshot.aircraft.filter(x => x.id !== aircraftId); }
+  deleteAircraft(aircraftId: string) { this.snapshot.aircraft = this.snapshot.aircraft.filter(x => x.id !== aircraftId); this.snapshot.logbookEvents = this.snapshot.logbookEvents.filter(x => x.aircraftId !== aircraftId); }
+  saveLogbookEvent(value: AircraftLogbookEvent) { this.snapshot.logbookEvents = [...this.snapshot.logbookEvents.filter(x => x.id !== value.id), value]; }
+  deleteLogbookEvent(eventId: string) { this.snapshot.logbookEvents = this.snapshot.logbookEvents.filter(x => x.id !== eventId); }
   saveProject(value: Project) { this.snapshot.projects.push(value); }
   appendMovement(value: StockMovement) { this.snapshot.movements.push(value); }
 }
@@ -26,6 +28,31 @@ const reference = (id: string, category: ComponentReference["category"], trackin
 });
 
 describe("InventoryService", () => {
+  it("creates and updates optional aircraft logbook events without changing stock or aircraft state", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    repository.snapshot.aircraft = [{ id: "AIR-LOG", name: "Planeur", operationalState: "flight-ready", lifecycleState: "active" }];
+    const event = { id: "LOG-1", aircraftId: "AIR-LOG", type: "flight" as const, date: "2026-11-05", flightCount: 2, comment: "Vol de réglage" };
+    service.saveAircraftLogbookEvent(event);
+    expect(repository.snapshot.logbookEvents).toEqual([event]);
+    service.saveAircraftLogbookEvent({ ...event, comment: "Vol validé", flightCount: 3 });
+    expect(repository.snapshot.logbookEvents).toHaveLength(1);
+    expect(repository.snapshot.logbookEvents[0]).toMatchObject({ comment: "Vol validé", flightCount: 3 });
+    expect(repository.snapshot.aircraft[0]?.operationalState).toBe("flight-ready");
+    expect(repository.snapshot.movements).toHaveLength(0);
+  });
+
+  it("rejects invalid logbook dates, event types, flight counts and unknown aircraft", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    repository.snapshot.aircraft = [{ id: "AIR-LOG", name: "Planeur" }];
+    const valid = { id: "LOG-1", aircraftId: "AIR-LOG", type: "flight" as const, date: "2026-11-05" };
+    expect(() => service.saveAircraftLogbookEvent({ ...valid, date: "2026-02-31" })).toThrow(/date/);
+    expect(() => service.saveAircraftLogbookEvent({ ...valid, type: "unknown" as never })).toThrow(/Type d'événement/);
+    expect(() => service.saveAircraftLogbookEvent({ ...valid, flightCount: -1 })).toThrow(/nombre de vols/);
+    expect(() => service.saveAircraftLogbookEvent({ ...valid, aircraftId: "MISSING" })).toThrow(/Aéronef introuvable/);
+  });
+
   it("requires receiver references to be individually tracked", () => {
     const service = new InventoryService(new MemoryRepository());
     expect(() => service.createReference(reference("REF-1", "receiver", "quantity"))).toThrow(InventoryError);

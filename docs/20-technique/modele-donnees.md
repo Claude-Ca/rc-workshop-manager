@@ -1,7 +1,7 @@
 # Modèle de données — état de l’implémentation
 
 **Identifiant :** TEC-RCWM-002  
-**Version du document :** 1.1  
+**Version du document :** 1.2  
 **Dernière mise à jour :** 2026-11-04  
 **Statut :** En revue  
 **Environnement de référence :** branche `develop`, état décrit au 2026-11-03  
@@ -22,8 +22,13 @@ Les chemins et opérations de fichiers restent dans le processus principal Elect
 - `Aircraft` / table `aircraft` : nom, constructeur, modèle, notes, immatriculation UAF et chemin/URL de photo facultatifs ; type d'aéronef, état opérationnel, cycle de vie et indicateur de favori.
 - `Project` / table `projects` : nom, statut et notes.
 - `StockMovement` / table `stock_movements` : événement daté lié à une référence et, selon le cas, à un exemplaire, un lot, un avion ou un projet.
+- `AircraftLogbookEvent` / table `aircraft_logbook` : événement facultatif rattaché à un aéronef (type, date, commentaire et nombre de vols facultatifs).
 
-Le snapshot d’un inventaire regroupe références, exemplaires, lots, avions, projets et mouvements.
+Le snapshot d’un inventaire regroupe références, exemplaires, lots, avions, projets, mouvements et événements de journal de bord.
+
+### Journal de bord des aéronefs
+
+La table `aircraft_logbook` stocke séparément les événements de chaque aéronef. La migration crée cette table de façon additive. Les événements sont lus par date croissante ; la modification met à jour l'événement existant. La suppression d'un événement ou la modification du journal ne génère aucun mouvement de stock et ne modifie aucun état de l'aéronef.
 
 ### Classification des aéronefs
 

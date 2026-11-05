@@ -1,7 +1,7 @@
 # Évolution de la flotte et cycle de vie des aéronefs
 
 **Identifiant :** FON-RCWM-003  
-**Version :** 1.1  
+**Version :** 1.2  
 **Date :** 2026-11-05  
 **Statut :** Validé pour réalisation  
 **Périmètre :** évolutions fonctionnelles de la flotte, de l'inventaire et du cycle de vie des aéronefs V1
@@ -106,7 +106,7 @@ Types d'événements V1 :
 - Vente
 - Retrait définitif
 
-Chaque événement possède un type et une date obligatoires. Le commentaire et le nombre de vols sont facultatifs. Les événements sont présentés chronologiquement.
+Chaque événement possède un type et une date obligatoires. Le commentaire et le nombre de vols sont facultatifs. Les événements sont présentés chronologiquement et peuvent être corrigés sans créer de doublon. Les six types proposés sont : mise en service / premier vol, vol, maintenance, incident / crash, vente et retrait définitif.
 
 Le journal est indépendant des mouvements de stock : renseigner une maintenance dans le journal ne génère pas automatiquement un mouvement d'inventaire. Un événement de crash ne change pas automatiquement l'état opérationnel. Un appareil sans événement reste pleinement utilisable.
 
