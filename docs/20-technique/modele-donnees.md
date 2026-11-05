@@ -1,7 +1,7 @@
 # Modèle de données — état de l’implémentation
 
 **Identifiant :** TEC-RCWM-002  
-**Version du document :** 1.2  
+**Version du document :** 1.3  
 **Dernière mise à jour :** 2026-11-04  
 **Statut :** En revue  
 **Environnement de référence :** branche `develop`, état décrit au 2026-11-03  
@@ -25,6 +25,10 @@ Les chemins et opérations de fichiers restent dans le processus principal Elect
 - `AircraftLogbookEvent` / table `aircraft_logbook` : événement facultatif rattaché à un aéronef (type, date, commentaire et nombre de vols facultatifs).
 
 Le snapshot d’un inventaire regroupe références, exemplaires, lots, avions, projets, mouvements et événements de journal de bord.
+
+### Récupération sélective des équipements
+
+La méthode métier `releaseAircraftItems` vérifie que chaque exemplaire sélectionné est encore affecté à l'aéronef ciblé. Le dépôt SQLite applique dans une transaction unique le retour au statut `available`, la suppression de la relation `aircraft_id` et l'insertion du mouvement `released` pour chaque exemplaire. Le mouvement conserve l'identifiant de l'aéronef d'origine. Une erreur annule l'ensemble du lot.
 
 ### Journal de bord des aéronefs
 
