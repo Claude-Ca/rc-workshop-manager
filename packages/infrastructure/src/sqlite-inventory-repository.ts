@@ -91,7 +91,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
         archived INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS aircraft (
-        id TEXT PRIMARY KEY, name TEXT NOT NULL, manufacturer TEXT, model TEXT, notes TEXT, uaf_registration TEXT
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, manufacturer TEXT, model TEXT, notes TEXT, uaf_registration TEXT, photo_path TEXT
       );
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL, notes TEXT
@@ -136,6 +136,11 @@ export class SqliteInventoryRepository implements InventoryRepository {
     this.db.exec("UPDATE component_references SET tracking_mode='quantity' WHERE category='supplies' AND tracking_mode<>'quantity' AND NOT EXISTS (SELECT 1 FROM stock_items WHERE stock_items.reference_id=component_references.id)");
     const aircraftColumns = this.db.prepare("PRAGMA table_info(aircraft)").all() as Row[];
     if (!aircraftColumns.some((column) => column.name === "uaf_registration")) this.db.exec("ALTER TABLE aircraft ADD COLUMN uaf_registration TEXT");
+    if (!aircraftColumns.some((column) => column.name === "aircraft_type")) this.db.exec("ALTER TABLE aircraft ADD COLUMN aircraft_type TEXT NOT NULL DEFAULT 'other'");
+    if (!aircraftColumns.some((column) => column.name === "operational_state")) this.db.exec("ALTER TABLE aircraft ADD COLUMN operational_state TEXT NOT NULL DEFAULT 'flight-ready'");
+    if (!aircraftColumns.some((column) => column.name === "lifecycle_state")) this.db.exec("ALTER TABLE aircraft ADD COLUMN lifecycle_state TEXT NOT NULL DEFAULT 'active'");
+    if (!aircraftColumns.some((column) => column.name === "favorite")) this.db.exec("ALTER TABLE aircraft ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0");
+    if (!aircraftColumns.some((column) => column.name === "photo_path")) this.db.exec("ALTER TABLE aircraft ADD COLUMN photo_path TEXT");
     // Convert legacy quantity-tracked tools into individual physical items.
     // Preserve the count and original unit in each generated item's notes.
     this.db.transaction(() => {
@@ -224,6 +229,11 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.model ? { model: String(row.model) } : {}),
       ...(row.notes ? { notes: String(row.notes) } : {}),
       ...(row.uaf_registration ? { uafRegistration: String(row.uaf_registration) } : {}),
+      ...(row.photo_path ? { photoPath: String(row.photo_path) } : {}),
+      aircraftType: (row.aircraft_type ?? "other") as NonNullable<Aircraft["aircraftType"]>,
+      operationalState: (row.operational_state ?? "flight-ready") as NonNullable<Aircraft["operationalState"]>,
+      lifecycleState: (row.lifecycle_state ?? "active") as NonNullable<Aircraft["lifecycleState"]>,
+      favorite: Number(row.favorite ?? 0) === 1,
     }));
     const projects = (this.db.prepare("SELECT * FROM projects ORDER BY name").all() as Row[]).map((row): Project => ({
       id: String(row.id), name: String(row.name), status: row.status as Project["status"],
@@ -292,9 +302,14 @@ export class SqliteInventoryRepository implements InventoryRepository {
   }
 
   saveAircraft(value: Aircraft): void {
-    this.db.prepare(`INSERT INTO aircraft (id,name,manufacturer,model,notes,uaf_registration) VALUES (@id,@name,@manufacturer,@model,@notes,@uafRegistration)
-      ON CONFLICT(id) DO UPDATE SET name=excluded.name,manufacturer=excluded.manufacturer,model=excluded.model,notes=excluded.notes,uaf_registration=excluded.uaf_registration`)
-      .run({ id:value.id,name:value.name,manufacturer:value.manufacturer??null,model:value.model??null,notes:value.notes??null,uafRegistration:value.uafRegistration??null });
+    this.db.prepare(`INSERT INTO aircraft (id,name,manufacturer,model,notes,uaf_registration,photo_path,aircraft_type,operational_state,lifecycle_state,favorite)
+      VALUES (@id,@name,@manufacturer,@model,@notes,@uafRegistration,@photoPath,@aircraftType,@operationalState,@lifecycleState,@favorite)
+      ON CONFLICT(id) DO UPDATE SET name=excluded.name,manufacturer=excluded.manufacturer,model=excluded.model,notes=excluded.notes,
+      uaf_registration=excluded.uaf_registration,photo_path=excluded.photo_path,aircraft_type=excluded.aircraft_type,operational_state=excluded.operational_state,
+      lifecycle_state=excluded.lifecycle_state,favorite=excluded.favorite`)
+      .run({ id:value.id,name:value.name,manufacturer:value.manufacturer??null,model:value.model??null,notes:value.notes??null,
+        uafRegistration:value.uafRegistration??null,photoPath:value.photoPath??null,aircraftType:value.aircraftType??"other",
+        operationalState:value.operationalState??"flight-ready",lifecycleState:value.lifecycleState??"active",favorite:value.favorite?1:0 });
   }
 
   deleteAircraft(aircraftId: string): void {

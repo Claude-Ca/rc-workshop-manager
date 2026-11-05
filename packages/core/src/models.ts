@@ -62,6 +62,10 @@ export interface StockLot {
   locationId?: string;
 }
 
+export type AircraftType = "airplane" | "glider" | "motor-glider" | "helicopter" | "multirotor" | "other";
+export type AircraftOperationalState = "flight-ready" | "maintenance" | "parts" | "out-of-service";
+export type AircraftLifecycleState = "active" | "sold" | "retired";
+
 export interface Aircraft {
   id: string;
   name: string;
@@ -69,6 +73,11 @@ export interface Aircraft {
   model?: string;
   notes?: string;
   uafRegistration?: string;
+  photoPath?: string;
+  aircraftType?: AircraftType;
+  operationalState?: AircraftOperationalState;
+  lifecycleState?: AircraftLifecycleState;
+  favorite?: boolean;
 }
 
 export interface Project {

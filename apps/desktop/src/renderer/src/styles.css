@@ -78,3 +78,25 @@
 .toolbar .search-box{flex:1 1 260px;min-width:180px}
 .toolbar .new-component-menu>.primary{height:42px;padding:0 14px}
 @media(max-width:1120px){.toolbar{flex-wrap:wrap}.toolbar .search-box{flex-basis:220px}}
+
+
+/* Aircraft classification and favorites */
+.favorites-heading { margin-top: 28px; }
+.favorite-aircraft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 14px 0 30px; }
+.favorite-aircraft-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.favorite-aircraft-main { display: flex; align-items: center; gap: 12px; min-width: 0; text-align: left; background: transparent; border: 0; color: inherit; cursor: pointer; }
+.favorite-aircraft-main > span:last-child { display: grid; gap: 4px; min-width: 0; }
+.favorite-aircraft-main strong, .favorite-aircraft-main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.favorite-aircraft-main small { color: var(--muted); font-size: 12px; }
+.aircraft-card-title { display: flex; align-items: center; justify-content: space-between; }
+.favorite-toggle { border: 0; background: transparent; color: var(--muted); font-size: 23px; cursor: pointer; padding: 2px 6px; }
+.favorite-toggle.active { color: #d69a22; }
+.favorite-toggle:disabled { opacity: .35; cursor: not-allowed; }
+.aircraft-state-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.state-pill { display: inline-flex; border-radius: 999px; padding: 4px 9px; background: var(--surface-alt, #f1f3f5); color: var(--text); font-size: 11px; }
+.state-pill.parts, .state-pill.out-of-service { background: #fff0ed; color: #a33a27; }
+.state-pill.maintenance { background: #fff5df; color: #8a5b00; }
+.state-pill.lifecycle { opacity: .8; }
+
+.aircraft-photo { width: 48px; height: 48px; flex: 0 0 48px; object-fit: cover; border-radius: 10px; background: var(--surface); }
+.aircraft-preview-photo { display: block; max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; margin: 0 auto 12px; }

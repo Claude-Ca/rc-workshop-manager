@@ -1,7 +1,7 @@
 # Évolution de la flotte et cycle de vie des aéronefs
 
 **Identifiant :** FON-RCWM-003  
-**Version :** 1.0  
+**Version :** 1.1  
 **Date :** 2026-11-05  
 **Statut :** Validé pour réalisation  
 **Périmètre :** évolutions fonctionnelles de la flotte, de l'inventaire et du cycle de vie des aéronefs V1
@@ -39,6 +39,11 @@ Valeurs V1 :
 - **Hors service** : non utilisable, sans que cela implique à lui seul une clôture du cycle de vie.
 
 Un incident ou un crash est un événement du journal. Il ne déclenche pas automatiquement un changement d'état.
+- **En maintenance** : immobilisé temporairement pour intervention.
+- **Pour pièces** : conservé principalement pour récupérer ses équipements.
+- **Hors service** : non utilisable, sans que cela implique à lui seul une clôture du cycle de vie.
+
+Un incident ou un crash est un événement du journal. Il ne déclenche pas automatiquement un changement d'état.
 
 ## 4. Cycle de vie
 
@@ -56,6 +61,7 @@ La vente et le retrait constituent des opérations de clôture. En V1, une clôt
 - La vue d'ensemble présente les favoris au-dessus de la section « Explorer le stock ».
 - Une carte présente au minimum la photo, le nom et l'état opérationnel.
 - La limite de quatre est contrôlée dans l'interface et dans la logique métier.
+- Le retrait d'un favori est toujours possible ; l'ajout d'un cinquième est refusé sans modifier les autres favoris.
 
 ## 6. Ergonomie de l'inventaire et de la flotte
 

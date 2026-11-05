@@ -202,19 +202,48 @@ export class InventoryService {
 
   addAircraft(aircraft: Aircraft): void {
     if (!aircraft.id.trim() || !aircraft.name.trim()) throw new InventoryError("Identifiant et nom d'avion obligatoires.");
-    this.repository.saveAircraft(aircraft);
+    const normalized: Aircraft = { ...aircraft, name: aircraft.name.trim(),
+      aircraftType: aircraft.aircraftType ?? "other", operationalState: aircraft.operationalState ?? "flight-ready",
+      lifecycleState: aircraft.lifecycleState ?? "active", favorite: aircraft.favorite ?? false };
+    if (!["airplane", "glider", "motor-glider", "helicopter", "multirotor", "other"].includes(normalized.aircraftType!)) throw new InventoryError("Type d'aéronef invalide.");
+    if (!["flight-ready", "maintenance", "parts", "out-of-service"].includes(normalized.operationalState!)) throw new InventoryError("État opérationnel invalide.");
+    if (!["active", "sold", "retired"].includes(normalized.lifecycleState!)) throw new InventoryError("Cycle de vie invalide.");
+    if (normalized.favorite && this.repository.getSnapshot().aircraft.filter((entry) => entry.favorite).length >= 4) {
+      throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
+    }
+    this.repository.saveAircraft(normalized);
   }
 
   updateAircraft(aircraft: Aircraft): void {
     const snapshot = this.repository.getSnapshot();
     if (!snapshot.aircraft.some((entry) => entry.id === aircraft.id)) throw new InventoryError("Avion introuvable.");
     if (!aircraft.name.trim()) throw new InventoryError("Le nom de l'avion est obligatoire.");
-    const updated: Aircraft = { ...aircraft, name: aircraft.name.trim() };
+    const updated: Aircraft = { ...aircraft, name: aircraft.name.trim(),
+      aircraftType: aircraft.aircraftType ?? "other", operationalState: aircraft.operationalState ?? "flight-ready",
+      lifecycleState: aircraft.lifecycleState ?? "active", favorite: aircraft.favorite ?? false };
+    if (!["airplane", "glider", "motor-glider", "helicopter", "multirotor", "other"].includes(updated.aircraftType!)) throw new InventoryError("Type d'aéronef invalide.");
+    if (!["flight-ready", "maintenance", "parts", "out-of-service"].includes(updated.operationalState!)) throw new InventoryError("État opérationnel invalide.");
+    if (!["active", "sold", "retired"].includes(updated.lifecycleState!)) throw new InventoryError("Cycle de vie invalide.");
+    if (updated.favorite && !snapshot.aircraft.find((entry) => entry.id === aircraft.id)?.favorite &&
+      snapshot.aircraft.filter((entry) => entry.favorite).length >= 4) {
+      throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
+    }
     if (aircraft.manufacturer?.trim()) updated.manufacturer = aircraft.manufacturer.trim(); else delete updated.manufacturer;
     if (aircraft.model?.trim()) updated.model = aircraft.model.trim(); else delete updated.model;
     if (aircraft.notes?.trim()) updated.notes = aircraft.notes.trim(); else delete updated.notes;
     if (aircraft.uafRegistration?.trim()) updated.uafRegistration = aircraft.uafRegistration.trim(); else delete updated.uafRegistration;
+    if (aircraft.photoPath?.trim()) updated.photoPath = aircraft.photoPath.trim(); else delete updated.photoPath;
     this.repository.saveAircraft(updated);
+  }
+
+  setAircraftFavorite(aircraftId: string, favorite: boolean): void {
+    const snapshot = this.repository.getSnapshot();
+    const aircraft = snapshot.aircraft.find((entry) => entry.id === aircraftId);
+    if (!aircraft) throw new InventoryError("Aéronef introuvable.");
+    if (favorite && !aircraft.favorite && snapshot.aircraft.filter((entry) => entry.favorite).length >= 4) {
+      throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
+    }
+    this.repository.saveAircraft({ ...aircraft, favorite });
   }
 
   addProject(project: Project): void {
