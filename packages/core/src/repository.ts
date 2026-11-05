@@ -12,6 +12,7 @@ export interface InventoryRepository {
   saveLot(lot: StockLot): void;
   deleteLot(lotId: string): void;
   saveAircraft(aircraft: Aircraft): void;
+  saveAircraftTransition?(aircraft: Aircraft, entries: Array<{ item: StockItem; movement: StockMovement }>): void;
   deleteAircraft(aircraftId: string): void;
   saveLogbookEvent(event: import("./models.js").AircraftLogbookEvent): void;
   deleteLogbookEvent(eventId: string): void;
