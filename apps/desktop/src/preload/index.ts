@@ -25,7 +25,8 @@ export interface DesktopApi {
   addLot(input: StockLot): Promise<InventorySnapshot>;
   setStockGroupQuantity(referenceId: string, quantity: number, unit: string): Promise<InventorySnapshot>;
   addAircraft(input: Aircraft): Promise<InventorySnapshot>;
-  updateAircraft(input: Aircraft, dispositions?: AircraftEquipmentDisposition[]): Promise<InventorySnapshot>;
+  updateAircraft(input: Aircraft): Promise<InventorySnapshot>;
+  closeAircraft(aircraftId: string, lifecycleState: "sold" | "retired", dispositions: AircraftEquipmentDisposition[]): Promise<InventorySnapshot>;
   setAircraftFavorite(aircraftId: string, favorite: boolean): Promise<InventorySnapshot>;
   saveAircraftLogbookEvent(input: AircraftLogbookEvent): Promise<InventorySnapshot>;
   deleteAircraftLogbookEvent(eventId: string): Promise<InventorySnapshot>;
@@ -58,7 +59,8 @@ const api: DesktopApi = {
   addLot: (input) => ipcRenderer.invoke("inventory:add-lot", input),
   setStockGroupQuantity: (referenceId, quantity, unit) => ipcRenderer.invoke("inventory:set-stock-group-quantity", referenceId, quantity, unit),
   addAircraft: (input) => ipcRenderer.invoke("inventory:add-aircraft", input),
-  updateAircraft: (input, dispositions) => ipcRenderer.invoke("inventory:update-aircraft", input, dispositions),
+  updateAircraft: (input) => ipcRenderer.invoke("inventory:update-aircraft", input),
+  closeAircraft: (aircraftId, lifecycleState, dispositions) => ipcRenderer.invoke("inventory:close-aircraft", aircraftId, lifecycleState, dispositions),
   setAircraftFavorite: (aircraftId, favorite) => ipcRenderer.invoke("inventory:set-aircraft-favorite", aircraftId, favorite),
   saveAircraftLogbookEvent: (input) => ipcRenderer.invoke("inventory:save-aircraft-logbook-event", input),
   deleteAircraftLogbookEvent: (eventId) => ipcRenderer.invoke("inventory:delete-aircraft-logbook-event", eventId),

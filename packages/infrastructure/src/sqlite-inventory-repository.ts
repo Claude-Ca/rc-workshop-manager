@@ -321,9 +321,13 @@ export class SqliteInventoryRepository implements InventoryRepository {
         operationalState:value.operationalState??"flight-ready",lifecycleState:value.lifecycleState??"active",favorite:value.favorite?1:0 });
   }
 
-  saveAircraftTransition(aircraft: Aircraft, entries: Array<{ item: StockItem; movement: StockMovement }>): void {
-    const transition = this.db.transaction(() => { this.saveAircraft(aircraft); for (const entry of entries) { this.saveItem(entry.item); this.appendMovement(entry.movement); } });
-    transition();
+  saveAircraftClosure(aircraft: Aircraft, entries: Array<{ item: StockItem; movement: StockMovement }>, event: AircraftLogbookEvent): void {
+    const close = this.db.transaction(() => {
+      this.saveAircraft(aircraft);
+      for (const entry of entries) { this.saveItem(entry.item); this.appendMovement(entry.movement); }
+      this.saveLogbookEvent(event);
+    });
+    close();
   }
 
   deleteAircraft(aircraftId: string): void {

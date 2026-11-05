@@ -66,7 +66,8 @@ export type AircraftType = "airplane" | "glider" | "motor-glider" | "helicopter"
 export type AircraftOperationalState = "flight-ready" | "maintenance" | "parts" | "out-of-service";
 export type AircraftLifecycleState = "active" | "sold" | "retired";
 
-export type AircraftEquipmentDisposition = { itemId: string; status: "available" | "retired" };
+export type AircraftClosureDestination = "inventory" | "sold-with-aircraft" | "sold-separately" | "scrapped";
+export interface AircraftEquipmentDisposition { itemId: string; destination: AircraftClosureDestination; }
 
 export interface Aircraft {
   id: string;
@@ -91,7 +92,7 @@ export interface Project {
 
 export type MovementType =
   | "stock-in" | "installed" | "reserved" | "released"
-  | "transferred" | "adjusted" | "consumed" | "repair" | "retired" | "deleted";
+  | "transferred" | "adjusted" | "consumed" | "repair" | "sold" | "retired" | "deleted";
 
 export interface StockMovement {
   id: string;

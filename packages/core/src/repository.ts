@@ -1,8 +1,4 @@
-import type {
-  Aircraft, ComponentReference, InventorySnapshot, Project, StockItem,
-  StockLot, StockMovement,
-} from "./models.js";
-
+import type { Aircraft, AircraftLogbookEvent, ComponentReference, InventorySnapshot, Project, StockItem, StockLot, StockMovement } from "./models.js";
 export interface InventoryRepository {
   getSnapshot(): InventorySnapshot;
   saveReference(reference: ComponentReference): void;
@@ -12,12 +8,11 @@ export interface InventoryRepository {
   saveLot(lot: StockLot): void;
   deleteLot(lotId: string): void;
   saveAircraft(aircraft: Aircraft): void;
-  saveAircraftTransition?(aircraft: Aircraft, entries: Array<{ item: StockItem; movement: StockMovement }>): void;
   deleteAircraft(aircraftId: string): void;
-  saveLogbookEvent(event: import("./models.js").AircraftLogbookEvent): void;
+  saveLogbookEvent(event: AircraftLogbookEvent): void;
   deleteLogbookEvent(eventId: string): void;
   saveProject(project: Project): void;
   appendMovement(movement: StockMovement): void;
-  /** Persist a batch of equipment releases and their movements atomically when supported. */
+  saveAircraftClosure(aircraft: Aircraft, entries: Array<{ item: StockItem; movement: StockMovement }>, event: AircraftLogbookEvent): void;
   releaseAircraftItems?(entries: Array<{ item: StockItem; movement: StockMovement }>): void;
 }
