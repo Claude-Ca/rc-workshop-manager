@@ -34,7 +34,9 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - Lot C — Journal de bord : implémenté par PR #20, fusionné dans `develop`.
 - Lot D — Récupération des équipements : en cours sur `feature/aircraft-equipment-recovery`.
 - Lot E — Vente et retrait : à réaliser.
-- Amélioration cosmétique ajoutée au lot D : le nombre d'exemplaires disponibles s'affiche en vert lorsqu'il est supérieur à zéro.
+- Lot D : le traitement des équipements est déclenché depuis le changement d'état vers « Hors service » ou « Retiré », et non depuis l'aperçu.
+- Lot D : la disponibilité seule est colorée en vert ; le nombre total d'exemplaires conserve la couleur normale.
+- Lot D : le statut local SQLite est regroupé en haut à droite ; le pied de page est réservé à la version et au lien vers le code source.
 
 ## Stratégie de réalisation
 
@@ -52,8 +54,8 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - Ne pas confondre état opérationnel et cycle de vie.
 - Les batteries ne sont jamais des équipements affectés à un aéronef ; leur compatibilité reste une relation distincte.
 - Le journal de bord ne génère pas automatiquement de mouvement de stock.
+- Un changement vers « Hors service » ou « Retiré » doit traiter tous les équipements encore affectés, sans suppression physique implicite.
 - Une récupération partielle ne doit modifier que les équipements sélectionnés.
-- Une clôture doit traiter tous les équipements encore affectés, sans suppression implicite.
 - La clôture doit être transactionnelle et conserver les références ainsi que les identités des exemplaires.
 - Les données des inventaires restent strictement isolées ; les favoris sont donc limités par inventaire.
 
