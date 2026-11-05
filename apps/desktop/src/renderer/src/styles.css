@@ -115,15 +115,6 @@
 .logbook-form .form-row { align-items: start; }
 
 .stock-availability-positive { color: #64d99a !important; font-weight: 700; }
-.equipment-recovery { display: grid; gap: 10px; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-top: 10px; }
-.recovery-item-list { display: grid; gap: 6px; }
-.recovery-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
-.recovery-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: #6eaff1; flex: 0 0 16px; }
-.recovery-item > span { display: grid; gap: 3px; min-width: 0; }
-.recovery-item strong { overflow-wrap: anywhere; }
-.recovery-item small { color: var(--muted); font-size: 11px; }
-.recovery-confirmation { display: grid; gap: 8px; padding: 12px; border: 1px solid #52769a; border-radius: 8px; background: var(--surface-alt); }
-.recovery-confirmation p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 
 .app-footer { display:flex; align-items:center; justify-content:center; gap:14px; padding:18px 24px 22px; margin-top:auto; border-top:1px solid var(--line); color:#78889b; font-size:10px; }
 .app-footer a { color:#8fbef0; text-decoration:none; }
