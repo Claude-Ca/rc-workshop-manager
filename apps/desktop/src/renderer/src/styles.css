@@ -65,3 +65,16 @@
 .form-grid fieldset legend{padding:0 5px;color:#c5d3e2;font-size:11px}
 .form-grid fieldset .checkbox-row{display:flex;align-items:center;gap:10px;width:100%;min-height:26px;margin:0;color:#dce5ef;font-size:12px;line-height:1.35}
 .form-grid fieldset .checkbox-row input[type="checkbox"]{width:16px;height:16px;min-width:16px;flex:0 0 16px;margin:0;padding:0;accent-color:#6eaff1}
+
+
+/* Lot A — category shortcuts and page-local creation actions. */
+.category-card{padding:0;overflow:hidden}
+.category-card-main{position:relative;display:grid;gap:8px;width:100%;min-height:154px;padding:16px 48px 16px 16px;border:0;background:transparent;color:inherit;text-align:left}
+.category-card-main:hover{background:#202c3b}
+.category-card-main .card-arrow{display:none}
+.category-add{position:absolute;top:12px;right:12px;width:30px;height:30px;display:grid;place-items:center;border:1px solid #52769a;border-radius:8px;background:#293d52;color:#b9d8f6;font-size:19px;line-height:1}
+.category-add:hover{background:#365575;color:#fff}
+.category-add:disabled{opacity:.5;cursor:default}
+.toolbar .search-box{flex:1 1 260px;min-width:180px}
+.toolbar .new-component-menu>.primary{height:42px;padding:0 14px}
+@media(max-width:1120px){.toolbar{flex-wrap:wrap}.toolbar .search-box{flex-basis:220px}}
