@@ -17,4 +17,6 @@ export interface InventoryRepository {
   deleteLogbookEvent(eventId: string): void;
   saveProject(project: Project): void;
   appendMovement(movement: StockMovement): void;
+  /** Persist a batch of equipment releases and their movements atomically when supported. */
+  releaseAircraftItems?(entries: Array<{ item: StockItem; movement: StockMovement }>): void;
 }
