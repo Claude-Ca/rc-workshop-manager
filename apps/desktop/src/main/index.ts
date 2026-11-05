@@ -376,6 +376,10 @@ function registerHandlers(): void {
     inventory.releaseItem(itemId, randomUUID(), new Date().toISOString());
     return inventory.getSnapshot();
   });
+  ipcMain.handle("inventory:release-aircraft-items", (_event, aircraftId: string, itemIds: string[]) => {
+    inventory.releaseAircraftItems(aircraftId, itemIds, randomUUID(), new Date().toISOString());
+    return inventory.getSnapshot();
+  });
 }
 
 app.whenReady().then(async () => {
