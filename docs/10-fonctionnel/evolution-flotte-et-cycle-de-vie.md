@@ -1,7 +1,7 @@
 # Évolution de la flotte et cycle de vie des aéronefs
 
 **Identifiant :** FON-RCWM-003  
-**Version :** 1.2  
+**Version :** 1.3  
 **Date :** 2026-11-05  
 **Statut :** Validé pour réalisation  
 **Périmètre :** évolutions fonctionnelles de la flotte, de l'inventaire et du cycle de vie des aéronefs V1
@@ -92,7 +92,7 @@ Pour chaque équipement sélectionné :
 2. enregistrer un mouvement d'historique ;
 3. rendre l'exemplaire disponible dans l'inventaire, sous réserve de son état.
 
-Les éléments non sélectionnés restent affectés. Une confirmation récapitule l'opération ; une annulation ne modifie aucune donnée. L'identité physique de chaque exemplaire est conservée.
+Les éléments non sélectionnés restent affectés. Une confirmation récapitule le nombre d'exemplaires retenus ; une annulation ne modifie aucune donnée. L'identité physique de chaque exemplaire est conservée. Tous les exemplaires sélectionnés sont désaffectés et remis disponibles dans l'inventaire au cours d'une transaction unique ; en cas d'erreur, aucune récupération partielle n'est conservée. Les batteries sont exclues : leur compatibilité n'est pas une affectation.
 
 ## 8. Journal de bord
 
