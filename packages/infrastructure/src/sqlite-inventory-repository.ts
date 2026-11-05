@@ -343,6 +343,16 @@ export class SqliteInventoryRepository implements InventoryRepository {
       .run({ id:value.id,name:value.name,status:value.status,notes:value.notes??null });
   }
 
+  releaseAircraftItems(entries: Array<{ item: StockItem; movement: StockMovement }>): void {
+    const release = this.db.transaction(() => {
+      for (const entry of entries) {
+        this.saveItem(entry.item);
+        this.appendMovement(entry.movement);
+      }
+    });
+    release();
+  }
+
   appendMovement(value: StockMovement): void {
     this.db.prepare(`INSERT INTO stock_movements
       (id,type,reference_id,item_id,lot_id,quantity,from_location_id,to_location_id,aircraft_id,project_id,notes,occurred_at)
