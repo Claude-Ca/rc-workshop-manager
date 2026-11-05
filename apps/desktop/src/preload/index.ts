@@ -32,6 +32,7 @@ export interface DesktopApi {
   addProject(input: Project): Promise<InventorySnapshot>;
   assignItem(itemId: string, target: { kind: "aircraft"; id: string } | { kind: "project"; id: string }): Promise<InventorySnapshot>;
   releaseItem(itemId: string): Promise<InventorySnapshot>;
+  releaseAircraftItems(aircraftId: string, itemIds: string[]): Promise<InventorySnapshot>;
   setReceiverBinding(receiverItemId: string, transmitterItemId: string | null): Promise<InventorySnapshot>;
   setToolStatus(itemId: string, status: "available" | "borrowed" | "repair"): Promise<InventorySnapshot>;
 }
@@ -64,6 +65,7 @@ const api: DesktopApi = {
   addProject: (input) => ipcRenderer.invoke("inventory:add-project", input),
   assignItem: (itemId, target) => ipcRenderer.invoke("inventory:assign-item", itemId, target),
   releaseItem: (itemId) => ipcRenderer.invoke("inventory:release-item", itemId),
+  releaseAircraftItems: (aircraftId, itemIds) => ipcRenderer.invoke("inventory:release-aircraft-items", aircraftId, itemIds),
   setReceiverBinding: (receiverItemId, transmitterItemId) => ipcRenderer.invoke("inventory:set-receiver-binding", receiverItemId, transmitterItemId),
   setToolStatus: (itemId, status) => ipcRenderer.invoke("inventory:set-tool-status", itemId, status),
 };
