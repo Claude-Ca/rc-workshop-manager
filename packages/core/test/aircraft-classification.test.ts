@@ -142,8 +142,9 @@ describe("aircraft classification and favorites", () => {
     const repository = new MemoryRepository(); const service = new InventoryService(repository);
     repository.snapshot.aircraft = [aircraft("A1")];
     repository.snapshot.items = [{id:"I1",referenceId:"R1",inventoryCode:"MOT-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01"}];
-    expect(() => service.closeAircraft("A1","sold",[],"C1","2026-11-06T13:00:00.000Z")).toThrow(/chaque équipement/);
+    expect(() => service.closeAircraft("A1","sold",[],"C1","2026-11-06T13:00:00.000Z")).toThrow(/Chaque équipement/);
     expect(() => service.closeAircraft("A1","sold",[{itemId:"I1",destination:"inventory"},{itemId:"I1",destination:"scrapped"}],"C2","2026-11-06T13:00:00.000Z")).toThrow(/incomplètes ou invalides/);
+    expect(() => service.closeAircraft("A1","sold",[{itemId:"FOREIGN",destination:"inventory"}],"C2B","2026-11-06T13:00:00.000Z")).toThrow(/incomplètes ou invalides/);
     expect(() => service.closeAircraft("A1","retired",[{itemId:"I1",destination:"sold-with-aircraft"}],"C3","2026-11-06T13:00:00.000Z")).toThrow(/aéronef retiré/);
     expect(repository.snapshot.aircraft[0]?.lifecycleState).toBe("active");
     expect(repository.snapshot.movements).toHaveLength(0);
