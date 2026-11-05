@@ -81,18 +81,15 @@ La vente et le retrait constituent des opérations de clôture. En V1, une clôt
 
 ## 7. Récupération sélective des équipements
 
-Depuis la fiche d'un aéronef, l'action « Récupérer des équipements » présente les équipements actuellement affectés à cet appareil et permet de sélectionner ceux à récupérer.
+La récupération des équipements n'est pas une action manuelle depuis l'aperçu de la fiche. Elle est proposée automatiquement lors d'un changement de l'état opérationnel vers **Hors service** ou du cycle de vie vers **Retiré**, dès lors que des équipements restent affectés.
 
-Équipements concernés : récepteur, moteur, ESC, servos, hélice et autres équipements individuels affectables.
+La fenêtre de confirmation liste tous les équipements affectés. Pour chaque exemplaire, l'utilisateur choisit :
+- **Retour dans l'inventaire** : désaffectation et retour au statut disponible.
+- **Déclarer HS / rebuté** : désaffectation et passage au statut retiré, sans suppression de l'enregistrement physique.
 
-Les batteries sont exclues : leur relation avec un aéronef est une compatibilité, pas une affectation.
+L'annulation conserve l'état de l'aéronef et toutes les affectations. La validation enregistre ensemble le nouvel état, les changements de statut des exemplaires et les mouvements d'historique dans une transaction SQLite unique. Une erreur annule l'ensemble. Les batteries sont exclues : leur relation avec un aéronef est une compatibilité, pas une affectation.
 
-Pour chaque équipement sélectionné :
-1. terminer l'affectation à l'aéronef ;
-2. enregistrer un mouvement d'historique ;
-3. rendre l'exemplaire disponible dans l'inventaire, sous réserve de son état.
-
-Les éléments non sélectionnés restent affectés. Une confirmation récapitule le nombre d'exemplaires retenus ; une annulation ne modifie aucune donnée. L'identité physique de chaque exemplaire est conservée. Tous les exemplaires sélectionnés sont désaffectés et remis disponibles dans l'inventaire au cours d'une transaction unique ; en cas d'erreur, aucune récupération partielle n'est conservée. Les batteries sont exclues : leur compatibilité n'est pas une affectation.
+La vente avec l'aéronef ou la vente séparée restent traitées dans le lot E.
 
 ## 8. Journal de bord
 
