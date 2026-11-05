@@ -278,6 +278,7 @@ function App() {
           <button className={section === "movements" ? "nav-item active" : "nav-item"} onClick={() => setSection("movements")}>↔ <span>Mouvements</span></button>
           <button className={section === "admin" || section === "reset" || section === "export" ? "nav-item active" : "nav-item"} onClick={() => setSection("admin")}>⚙ <span>Administration</span></button>
         </nav>
+        <footer className="app-footer"><span>RC Workshop Manager · v0.1.0</span><a href="https://github.com/Claude-Ca/rc-workshop-manager" target="_blank" rel="noreferrer">Code source ↗</a></footer>
       </aside>
       <main className="main">
         <header className="topbar"><div><span className="eyebrow">RC WORKSHOP MANAGER</span><h1>{section === "dashboard" ? "Vue d'ensemble" : section === "inventory" ? "Inventaire" : section === "aircraft" ? "Ma flotte" : section === "projects" ? "Mes projets" : section === "movements" ? "Historique des mouvements" : section === "export" ? "Exporter l’inventaire" : section === "admin" ? "Administration" : "Réinitialiser l’inventaire"}</h1></div><div className="top-actions"><div className="active-inventory-chip" title="Base d’inventaire actuellement ouverte"><span className="active-inventory-icon">▣</span><span><small>BASE ACTIVE</small><strong>{inventoryList?.items.find((entry) => entry.active)?.name ?? "Chargement…"}</strong></span></div><span className="local-chip"><span className="status-dot" /> Hors ligne · SQLite local</span></div></header>
@@ -328,7 +329,6 @@ function App() {
             <button className="primary" disabled={busy || (Array.isArray(exportCategories) && exportCategories.length === 0)} onClick={() => void runExport(() => window.rcWorkshop.exportInventoryCsv(exportCategories))}>Exporter le CSV</button>
           </div>
         </section>}
-        <footer className="app-footer"><span>RC Workshop Manager · v0.1.0</span><a href="https://github.com/Claude-Ca/rc-workshop-manager" target="_blank" rel="noreferrer">Code source ↗</a></footer>
       </main>
       {(stockGroupCategory || editingStockGroup) && <StockGroupModal key={editingStockGroup?.id ?? stockGroupCategory} category="supplies" reference={editingStockGroup ?? undefined} initialQuantity={editingStockGroup ? snapshot.lots.filter((lot) => lot.referenceId === editingStockGroup.id).reduce((sum, lot) => sum + lot.quantity, 0) : undefined} initialUnit={editingStockGroup ? snapshot.lots.find((lot) => lot.referenceId === editingStockGroup.id)?.unit : undefined} busy={busy} onClose={() => { setStockGroupCategory(null); setEditingStockGroup(null); }} onSubmit={(value) => handleSaveStockGroup({ ...value, category: "supplies", ...(editingStockGroup ? { referenceId: editingStockGroup.id } : {}) })} />}
       {showResetConfirmation && <ResetInventoryModal inventoryName={inventoryList?.items.find((entry) => entry.active)?.name ?? "base active"} busy={busy} error={error} onClose={() => setShowResetConfirmation(false)} onConfirm={() => void resetInventory()} />}
