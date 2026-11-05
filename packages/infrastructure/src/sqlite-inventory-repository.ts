@@ -85,6 +85,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
         id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL,
         brand TEXT, model TEXT, description TEXT, tracking_mode TEXT NOT NULL,
         receiver_channels INTEGER, receiver_protocol TEXT, radio_type TEXT, transmitter_channels INTEGER, transmitter_protocols_json TEXT, firmware_version TEXT,
+        battery_connector TEXT, battery_discharge_rate_c REAL, battery_dimensions_mm TEXT, battery_weight_g REAL,
         motorization_kind TEXT, motor_type TEXT, motor_voltage TEXT, motor_displacement TEXT, propeller_diameter TEXT, propeller_pitch TEXT,
         attributes_json TEXT NOT NULL DEFAULT '{}', photo_path TEXT,
         archived INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL
@@ -119,6 +120,10 @@ export class SqliteInventoryRepository implements InventoryRepository {
     if (!referenceColumns.some((column) => column.name === "transmitter_channels")) this.db.exec("ALTER TABLE component_references ADD COLUMN transmitter_channels INTEGER");
     if (!referenceColumns.some((column) => column.name === "transmitter_protocols_json")) this.db.exec("ALTER TABLE component_references ADD COLUMN transmitter_protocols_json TEXT");
     if (!referenceColumns.some((column) => column.name === "firmware_version")) this.db.exec("ALTER TABLE component_references ADD COLUMN firmware_version TEXT");
+    if (!referenceColumns.some((column) => column.name === "battery_connector")) this.db.exec("ALTER TABLE component_references ADD COLUMN battery_connector TEXT");
+    if (!referenceColumns.some((column) => column.name === "battery_discharge_rate_c")) this.db.exec("ALTER TABLE component_references ADD COLUMN battery_discharge_rate_c REAL");
+    if (!referenceColumns.some((column) => column.name === "battery_dimensions_mm")) this.db.exec("ALTER TABLE component_references ADD COLUMN battery_dimensions_mm TEXT");
+    if (!referenceColumns.some((column) => column.name === "battery_weight_g")) this.db.exec("ALTER TABLE component_references ADD COLUMN battery_weight_g REAL");
     const stockColumns = this.db.prepare("PRAGMA table_info(stock_items)").all() as Row[];
     if (!stockColumns.some((column) => column.name === "bound_transmitter_id")) this.db.exec("ALTER TABLE stock_items ADD COLUMN bound_transmitter_id TEXT");
     if (!stockColumns.some((column) => column.name === "compatible_aircraft_ids_json")) this.db.exec("ALTER TABLE stock_items ADD COLUMN compatible_aircraft_ids_json TEXT");
@@ -127,6 +132,8 @@ export class SqliteInventoryRepository implements InventoryRepository {
     }
     this.db.exec("UPDATE component_references SET category='radio', radio_type='receiver' WHERE category='receiver'");
     this.db.exec("UPDATE component_references SET category='supplies' WHERE category IN ('connector','control','structure','material','construction')");
+    // Safely normalize legacy supply references without physical items to quantitative tracking.
+    this.db.exec("UPDATE component_references SET tracking_mode='quantity' WHERE category='supplies' AND tracking_mode<>'quantity' AND NOT EXISTS (SELECT 1 FROM stock_items WHERE stock_items.reference_id=component_references.id)");
     const aircraftColumns = this.db.prepare("PRAGMA table_info(aircraft)").all() as Row[];
     if (!aircraftColumns.some((column) => column.name === "uaf_registration")) this.db.exec("ALTER TABLE aircraft ADD COLUMN uaf_registration TEXT");
     // Convert legacy quantity-tracked tools into individual physical items.
@@ -184,6 +191,10 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.transmitter_channels !== null && row.transmitter_channels !== undefined ? { transmitterChannels: Number(row.transmitter_channels) } : {}),
       ...(row.transmitter_protocols_json ? { transmitterProtocols: JSON.parse(String(row.transmitter_protocols_json)) as string[] } : {}),
       ...(row.firmware_version ? { firmwareVersion: String(row.firmware_version) } : {}),
+      ...(row.battery_connector ? { batteryConnector: String(row.battery_connector) } : {}),
+      ...(row.battery_discharge_rate_c !== null && row.battery_discharge_rate_c !== undefined ? { batteryDischargeRateC: Number(row.battery_discharge_rate_c) } : {}),
+      ...(row.battery_dimensions_mm ? { batteryDimensionsMm: String(row.battery_dimensions_mm) } : {}),
+      ...(row.battery_weight_g !== null && row.battery_weight_g !== undefined ? { batteryWeightG: Number(row.battery_weight_g) } : {}),
       ...(row.motorization_kind ? { motorizationKind: row.motorization_kind as "motor" | "propeller" } : {}),
       ...(row.motor_type ? { motorType: row.motor_type as "electric" | "glow" } : {}),
       ...(row.motor_voltage ? { motorVoltage: String(row.motor_voltage) } : {}),
@@ -234,16 +245,17 @@ export class SqliteInventoryRepository implements InventoryRepository {
 
   saveReference(value: ComponentReference): void {
     this.db.prepare(`INSERT INTO component_references
-      (id,name,category,brand,model,description,tracking_mode,attributes_json,photo_path,archived,created_at,receiver_channels,receiver_protocol,radio_type,transmitter_channels,transmitter_protocols_json,firmware_version,motorization_kind,motor_type,motor_voltage,motor_displacement,propeller_diameter,propeller_pitch)
-      VALUES (@id,@name,@category,@brand,@model,@description,@trackingMode,@attributes,@photoPath,@archived,@createdAt,@receiverChannels,@receiverProtocol,@radioType,@transmitterChannels,@transmitterProtocols,@firmwareVersion,@motorizationKind,@motorType,@motorVoltage,@motorDisplacement,@propellerDiameter,@propellerPitch)
+      (id,name,category,brand,model,description,tracking_mode,attributes_json,photo_path,archived,created_at,receiver_channels,receiver_protocol,radio_type,transmitter_channels,transmitter_protocols_json,firmware_version,battery_connector,battery_discharge_rate_c,battery_dimensions_mm,battery_weight_g,motorization_kind,motor_type,motor_voltage,motor_displacement,propeller_diameter,propeller_pitch)
+      VALUES (@id,@name,@category,@brand,@model,@description,@trackingMode,@attributes,@photoPath,@archived,@createdAt,@receiverChannels,@receiverProtocol,@radioType,@transmitterChannels,@transmitterProtocols,@firmwareVersion,@batteryConnector,@batteryDischargeRateC,@batteryDimensionsMm,@batteryWeightG,@motorizationKind,@motorType,@motorVoltage,@motorDisplacement,@propellerDiameter,@propellerPitch)
       ON CONFLICT(id) DO UPDATE SET name=excluded.name,category=excluded.category,brand=excluded.brand,
       model=excluded.model,description=excluded.description,tracking_mode=excluded.tracking_mode,
       attributes_json=excluded.attributes_json,photo_path=excluded.photo_path,archived=excluded.archived,
-      receiver_channels=excluded.receiver_channels,receiver_protocol=excluded.receiver_protocol,radio_type=excluded.radio_type,transmitter_channels=excluded.transmitter_channels,transmitter_protocols_json=excluded.transmitter_protocols_json,firmware_version=excluded.firmware_version,motorization_kind=excluded.motorization_kind,motor_type=excluded.motor_type,motor_voltage=excluded.motor_voltage,motor_displacement=excluded.motor_displacement,propeller_diameter=excluded.propeller_diameter,propeller_pitch=excluded.propeller_pitch`)
+      receiver_channels=excluded.receiver_channels,receiver_protocol=excluded.receiver_protocol,radio_type=excluded.radio_type,transmitter_channels=excluded.transmitter_channels,transmitter_protocols_json=excluded.transmitter_protocols_json,firmware_version=excluded.firmware_version,battery_connector=excluded.battery_connector,battery_discharge_rate_c=excluded.battery_discharge_rate_c,battery_dimensions_mm=excluded.battery_dimensions_mm,battery_weight_g=excluded.battery_weight_g,motorization_kind=excluded.motorization_kind,motor_type=excluded.motor_type,motor_voltage=excluded.motor_voltage,motor_displacement=excluded.motor_displacement,propeller_diameter=excluded.propeller_diameter,propeller_pitch=excluded.propeller_pitch`)
       .run({ id:value.id,name:value.name,category:value.category,brand:value.brand??null,model:value.model??null,
         description:value.description??null,trackingMode:value.trackingMode,attributes:JSON.stringify(value.attributes),
         photoPath:value.photoPath??null,archived:value.archived?1:0,createdAt:value.createdAt,
         receiverChannels:value.receiverChannels??null,receiverProtocol:value.receiverProtocol??null,radioType:value.radioType??null,transmitterChannels:value.transmitterChannels??null,transmitterProtocols:value.transmitterProtocols?JSON.stringify(value.transmitterProtocols):null,firmwareVersion:value.firmwareVersion??null,
+        batteryConnector:value.batteryConnector??null,batteryDischargeRateC:value.batteryDischargeRateC??null,batteryDimensionsMm:value.batteryDimensionsMm??null,batteryWeightG:value.batteryWeightG??null,
         motorizationKind:value.motorizationKind??null,motorType:value.motorType??null,motorVoltage:value.motorVoltage??null,motorDisplacement:value.motorDisplacement??null,propellerDiameter:value.propellerDiameter??null,propellerPitch:value.propellerPitch??null });
   }
 

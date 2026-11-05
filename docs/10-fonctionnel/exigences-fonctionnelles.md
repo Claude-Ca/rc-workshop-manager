@@ -41,6 +41,7 @@ Priorités :
 | REQ-AFF-002 | Les batteries sont suivies individuellement et peuvent être compatibles avec plusieurs modèles sans leur être affectées. | Fondamentale | Une batterie peut être liée comme compatible au Tucano et au Carbon-Z sans apparaître comme installée sur l'un ou l'autre. |
 | REQ-AFF-003 | La compatibilité est distincte de l'affectation et ne réserve pas un équipement. | Fondamentale | Ajouter ou retirer une compatibilité ne modifie ni le stock ni l'affectation de l'exemplaire. |
 | REQ-AFF-004 | Les batteries du club sont gérées dans l'inventaire du club, indépendamment des batteries personnelles. | Fondamentale | Aucun partage ou transfert automatique de batterie entre inventaires n'est possible ou implicite. |
+| REQ-AFF-005 | Une référence de batterie peut décrire un connecteur, un taux de décharge, des dimensions et un poids, sans rendre ces champs obligatoires. | Haute | Les quatre caractéristiques sont facultatives, modifiables et visibles sur la fiche de référence lorsqu'elles sont renseignées. |
 
 ## 4. Fournitures et consommables
 

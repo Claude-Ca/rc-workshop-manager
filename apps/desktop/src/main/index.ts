@@ -92,7 +92,7 @@ function buildInventoryCsv(snapshot: InventorySnapshot, categories: unknown): st
   const filter = validCategories.length ? new Set(validCategories) : null;
   const columns = [
     "Type", "Catégorie", "Référence", "Marque", "Modèle", "Suivi", "Type radio", "Canaux RX/TX",
-    "Protocoles", "Firmware", "Motorisation", "Type moteur", "Tension", "Cylindrée", "Hélice DxP",
+    "Protocoles", "Firmware", "Connecteur batterie", "Décharge batterie (C)", "Dimensions batterie (mm)", "Poids batterie (g)", "Motorisation", "Type moteur", "Tension", "Cylindrée", "Hélice DxP",
     "Attributs", "Code inventaire", "N° série", "Statut", "Quantité", "Unité", "Emplacement",
     "Avion", "Projet", "Avions compatibles", "Nom TX16", "Bind", "Notes", "Créé le",
   ];
@@ -107,7 +107,7 @@ function buildInventoryCsv(snapshot: InventorySnapshot, categories: unknown): st
       reference.model ?? "", reference.trackingMode, reference.radioType ?? "",
       String(reference.receiverChannels ?? reference.transmitterChannels ?? ""),
       [...(reference.transmitterProtocols ?? []), ...(reference.receiverProtocol ? [reference.receiverProtocol] : [])].join(", "),
-      reference.firmwareVersion ?? "", reference.motorizationKind ?? "", reference.motorType ?? "",
+      reference.firmwareVersion ?? "", reference.batteryConnector ?? "", String(reference.batteryDischargeRateC ?? ""), reference.batteryDimensionsMm ?? "", String(reference.batteryWeightG ?? ""), reference.motorizationKind ?? "", reference.motorType ?? "",
       reference.motorVoltage ?? "", reference.motorDisplacement ?? "",
       reference.propellerDiameter || reference.propellerPitch ? (reference.propellerDiameter ?? "") + "x" + (reference.propellerPitch ?? "") : "",
       JSON.stringify(reference.attributes) ?? "",

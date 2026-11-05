@@ -21,6 +21,10 @@ export interface ComponentReference {
   transmitterChannels?: number;
   transmitterProtocols?: string[];
   firmwareVersion?: string;
+  batteryConnector?: string;
+  batteryDischargeRateC?: number;
+  batteryDimensionsMm?: string;
+  batteryWeightG?: number;
   motorizationKind?: "motor" | "propeller";
   motorType?: "electric" | "glow";
   motorVoltage?: string;
