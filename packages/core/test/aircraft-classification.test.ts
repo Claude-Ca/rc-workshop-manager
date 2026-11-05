@@ -17,7 +17,11 @@ class MemoryRepository implements InventoryRepository {
   deleteLogbookEvent(id: string) { this.snapshot.logbookEvents = this.snapshot.logbookEvents.filter(x => x.id !== id); }
   saveProject(value: Project) { this.snapshot.projects.push(value); }
   appendMovement(value: StockMovement) { this.snapshot.movements.push(value); }
-  saveAircraftTransition(value: Aircraft, entries: Array<{ item: StockItem; movement: StockMovement }>) { this.saveAircraft(value); for (const entry of entries) { this.saveItem(entry.item); this.appendMovement(entry.movement); } }
+  saveAircraftClosure(aircraft: Aircraft, entries: Array<{ item: StockItem; movement: StockMovement }>, event: import("../src/models.js").AircraftLogbookEvent) {
+    this.saveAircraft(aircraft);
+    for (const entry of entries) { this.saveItem(entry.item); this.appendMovement(entry.movement); }
+    this.saveLogbookEvent(event);
+  }
 }
 const aircraft = (id: string, favorite = false): Aircraft => ({
   id, name: "Aéronef " + id, aircraftType: "airplane", operationalState: "flight-ready",
@@ -78,21 +82,18 @@ describe("aircraft classification and favorites", () => {
     expect(repository.snapshot.movements).toHaveLength(0);
   });
 
-  it("requires and applies a destination for every installed item when an aircraft is put out of service", () => {
+  it("does not trigger equipment recovery when the operational state becomes out of service", () => {
     const repository = new MemoryRepository(); const service = new InventoryService(repository); repository.snapshot.aircraft = [aircraft("A1")];
-    repository.snapshot.items = [{ id:"I1",referenceId:"R1",inventoryCode:"MOT-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01" },{ id:"I2",referenceId:"R2",inventoryCode:"SER-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01" }];
-    const updated = { ...aircraft("A1"), operationalState:"out-of-service" as const };
-    expect(() => service.updateAircraft(updated)).toThrow(/Chaque équipement affecté/);
-    service.updateAircraft(updated,[{itemId:"I1",status:"available"},{itemId:"I2",status:"retired"}],"MOV","2026-11-05T12:00:00.000Z");
-    expect(repository.snapshot.aircraft[0]?.operationalState).toBe("out-of-service"); expect(repository.snapshot.items.find(x=>x.id==="I1")).toMatchObject({status:"available"}); expect(repository.snapshot.items.find(x=>x.id==="I2")).toMatchObject({status:"retired"});
-    expect(repository.snapshot.items.every(x=>!x.aircraftId)).toBe(true); expect(repository.snapshot.movements.map(x=>x.type)).toEqual(["released","retired"]);
+    repository.snapshot.items = [{ id:"I1",referenceId:"R1",inventoryCode:"MOT-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01" }];
+    service.updateAircraft({ ...aircraft("A1"), operationalState:"out-of-service" });
+    expect(repository.snapshot.aircraft[0]?.operationalState).toBe("out-of-service");
+    expect(repository.snapshot.items[0]).toMatchObject({status:"installed",aircraftId:"A1"});
+    expect(repository.snapshot.movements).toHaveLength(0);
   });
-  it("requires equipment decisions when lifecycle becomes retired", () => {
-    const repository = new MemoryRepository(); const service = new InventoryService(repository); repository.snapshot.aircraft=[aircraft("A1")];
-    repository.snapshot.items=[{id:"I1",referenceId:"R1",inventoryCode:"RX-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01"}];
-    expect(()=>service.updateAircraft({...aircraft("A1"),lifecycleState:"retired"})).toThrow(/Chaque équipement affecté/);
-    service.updateAircraft({...aircraft("A1"),lifecycleState:"retired"},[{itemId:"I1",status:"available"}]);
-    expect(repository.snapshot.aircraft[0]?.lifecycleState).toBe("retired"); expect(repository.snapshot.items[0]).toMatchObject({status:"available"});
+  it("requires sale and retirement to use the dedicated closure operation", () => {
+    const repository = new MemoryRepository(); const service = new InventoryService(repository); repository.snapshot.aircraft = [aircraft("A1")];
+    expect(() => service.updateAircraft({ ...aircraft("A1"), lifecycleState:"retired" })).toThrow(/action de clôture/);
+    expect(repository.snapshot.aircraft[0]?.lifecycleState).toBe("active");
   });
   it("keeps type, operational state and lifecycle independent", () => {
     const repository = new MemoryRepository(); const service = new InventoryService(repository);
