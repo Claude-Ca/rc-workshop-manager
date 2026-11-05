@@ -93,10 +93,11 @@
 .favorite-toggle.active { color: #d69a22; }
 .favorite-toggle:disabled { opacity: .35; cursor: not-allowed; }
 .aircraft-state-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-.state-pill { display: inline-flex; border-radius: 999px; padding: 4px 9px; background: var(--surface-alt, #f1f3f5); color: var(--text); font-size: 11px; }
-.state-pill.parts, .state-pill.out-of-service { background: #fff0ed; color: #a33a27; }
-.state-pill.maintenance { background: #fff5df; color: #8a5b00; }
-.state-pill.lifecycle { opacity: .8; }
+.state-pill { display: inline-flex; align-items: center; border: 1px solid #40536a; border-radius: 999px; padding: 5px 10px; background: #293b4c; color: #e4edf7; font-size: 11px; font-weight: 600; line-height: 1.25; }
+.state-pill.flight-ready { background: #1f4939; border-color: #34765a; color: #b9f0d2; }
+.state-pill.parts, .state-pill.out-of-service { background: #542f32; border-color: #8e4d51; color: #ffd7d9; }
+.state-pill.maintenance { background: #514126; border-color: #8a6a32; color: #ffe3a6; }
+.state-pill.lifecycle { background: #303b4b; border-color: #53647a; color: #e0e8f2; }
 
 .aircraft-photo { width: 48px; height: 48px; flex: 0 0 48px; object-fit: cover; border-radius: 10px; background: var(--surface); }
 .aircraft-preview-photo { display: block; max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; margin: 0 auto 12px; }
