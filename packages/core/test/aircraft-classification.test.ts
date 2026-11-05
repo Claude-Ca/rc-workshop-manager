@@ -101,4 +101,44 @@ describe("aircraft classification and favorites", () => {
     service.updateAircraft({ ...aircraft("A1"), operationalState: "maintenance" });
     expect(repository.snapshot.aircraft[0]).toMatchObject({ aircraftType: "airplane", operationalState: "maintenance", lifecycleState: "active" });
   });
+  it("closes a sold aircraft with an explicit fate for every assigned physical item", () => {
+    const repository = new MemoryRepository(); const service = new InventoryService(repository);
+    repository.snapshot.aircraft = [{ ...aircraft("A1"), favorite: true }];
+    repository.snapshot.items = [
+      { id:"I1",referenceId:"R1",inventoryCode:"RX-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01" },
+      { id:"I2",referenceId:"R2",inventoryCode:"MOT-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01" },
+      { id:"I3",referenceId:"R3",inventoryCode:"SER-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01" },
+      { id:"BAT",referenceId:"RB",inventoryCode:"BAT-001",status:"available",createdAt:"2026-01-01" },
+    ];
+    service.closeAircraft("A1","sold",[{itemId:"I1",destination:"inventory"},{itemId:"I2",destination:"sold-with-aircraft"},{itemId:"I3",destination:"sold-separately"}],"CLOSE","2026-11-06T12:30:00.000Z");
+    expect(repository.snapshot.aircraft[0]).toMatchObject({lifecycleState:"sold",favorite:false});
+    expect(repository.snapshot.items.find(x=>x.id==="I1")).toMatchObject({status:"available"});
+    expect(repository.snapshot.items.find(x=>x.id==="I2")).toMatchObject({status:"retired"});
+    expect(repository.snapshot.items.find(x=>x.id==="I3")).toMatchObject({status:"retired"});
+    expect(repository.snapshot.items.every(x=>!x.aircraftId)).toBe(true);
+    expect(repository.snapshot.items.map(x=>x.id)).toContain("I2");
+    expect(repository.snapshot.items.find(x=>x.id==="BAT")).toMatchObject({status:"available"});
+    expect(repository.snapshot.movements.map(x=>x.type)).toEqual(["released","sold","sold"]);
+    expect(repository.snapshot.logbookEvents).toEqual([expect.objectContaining({type:"sale",aircraftId:"A1",date:"2026-11-06"})]);
+  });
+  it("closes a retired aircraft and records its retirement event", () => {
+    const repository = new MemoryRepository(); const service = new InventoryService(repository);
+    repository.snapshot.aircraft = [aircraft("A1")];
+    repository.snapshot.items = [{id:"I1",referenceId:"R1",inventoryCode:"MOT-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01"}];
+    service.closeAircraft("A1","retired",[{itemId:"I1",destination:"scrapped"}],"RETIRE","2026-11-06T13:00:00.000Z");
+    expect(repository.snapshot.aircraft[0]?.lifecycleState).toBe("retired");
+    expect(repository.snapshot.items[0]).toMatchObject({id:"I1",status:"retired"});
+    expect(repository.snapshot.movements[0]).toMatchObject({type:"retired",notes:"Clôture de l'aéronef : mis au rebut"});
+    expect(repository.snapshot.logbookEvents[0]).toMatchObject({type:"retirement"});
+  });
+  it("rejects missing, duplicate, foreign or incompatible equipment destinations", () => {
+    const repository = new MemoryRepository(); const service = new InventoryService(repository);
+    repository.snapshot.aircraft = [aircraft("A1")];
+    repository.snapshot.items = [{id:"I1",referenceId:"R1",inventoryCode:"MOT-001",status:"installed",aircraftId:"A1",createdAt:"2026-01-01"}];
+    expect(() => service.closeAircraft("A1","sold",[],"C1","2026-11-06T13:00:00.000Z")).toThrow(/chaque équipement/);
+    expect(() => service.closeAircraft("A1","sold",[{itemId:"I1",destination:"inventory"},{itemId:"I1",destination:"scrapped"}],"C2","2026-11-06T13:00:00.000Z")).toThrow(/incomplètes ou invalides/);
+    expect(() => service.closeAircraft("A1","retired",[{itemId:"I1",destination:"sold-with-aircraft"}],"C3","2026-11-06T13:00:00.000Z")).toThrow(/aéronef retiré/);
+    expect(repository.snapshot.aircraft[0]?.lifecycleState).toBe("active");
+    expect(repository.snapshot.movements).toHaveLength(0);
+  });
 });

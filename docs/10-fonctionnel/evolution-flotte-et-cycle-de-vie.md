@@ -81,15 +81,11 @@ La vente et le retrait constituent des opérations de clôture. En V1, une clôt
 
 ## 7. Récupération sélective des équipements
 
-La récupération des équipements n'est pas une action manuelle depuis l'aperçu de la fiche. Elle est proposée automatiquement lors d'un changement de l'état opérationnel vers **Hors service** ou du cycle de vie vers **Retiré**, dès lors que des équipements restent affectés.
+La récupération d'équipements reste une action volontaire et indépendante du changement d'état opérationnel ou du cycle de vie. En particulier, passer un aéronef à **Hors service** ne déclenche pas automatiquement de popup et ne modifie aucune affectation.
 
-La fenêtre de confirmation liste tous les équipements affectés. Pour chaque exemplaire, l'utilisateur choisit :
-- **Retour dans l'inventaire** : désaffectation et retour au statut disponible.
-- **Déclarer HS / rebuté** : désaffectation et passage au statut retiré, sans suppression de l'enregistrement physique.
+Depuis l'aperçu de la fiche, l'utilisateur peut récupérer sélectivement les équipements affectés. Les exemplaires choisis sont désaffectés, rendus disponibles et historisés ; les autres restent affectés. Les batteries sont exclues : leur relation avec un aéronef est une compatibilité, pas une affectation.
 
-L'annulation conserve l'état de l'aéronef et toutes les affectations. La validation enregistre ensemble le nouvel état, les changements de statut des exemplaires et les mouvements d'historique dans une transaction SQLite unique. Une erreur annule l'ensemble. Les batteries sont exclues : leur relation avec un aéronef est une compatibilité, pas une affectation.
-
-La vente avec l'aéronef ou la vente séparée restent traitées dans le lot E.
+La vente et le retrait définitif sont des opérations dédiées décrites au § 9. Elles imposent une destination pour chaque équipement encore affecté et clôturent l'aéronef de façon atomique.
 
 ## 8. Journal de bord
 
@@ -137,6 +133,7 @@ La clôture et le devenir de chaque équipement sont historisés. Les référenc
 | REQ-AIR-010 | Clôturer un aéronef avec une destination par équipement | Aucune clôture n'est possible avec une destination manquante |
 | REQ-AIR-011 | Préserver les identités et l'historique | Aucun exemplaire ou référence n'est supprimé par la clôture |
 | REQ-AIR-012 | Garantir l'atomicité de la clôture | Une erreur annule l'ensemble de la transaction |
+| REQ-AIR-013 | Séparer les changements d’état des opérations de clôture | « Hors service » ne déclenche aucune récupération ; vente/retrait passent par l’action dédiée |
 
 ## 11. Principes techniques à respecter
 

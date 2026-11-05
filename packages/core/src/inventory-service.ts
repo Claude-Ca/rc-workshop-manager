@@ -240,11 +240,14 @@ export class InventoryService {
     if ((aircraft.lifecycleState ?? "active") !== "active") throw new InventoryError("Cet aéronef est déjà clôturé.");
     if (lifecycleState !== "sold" && lifecycleState !== "retired") throw new InventoryError("Type de clôture invalide.");
     if (!movementIdPrefix.trim()) throw new InventoryError("Identifiant de clôture obligatoire.");
-    const installed = snapshot.items.filter((item) => item.status === "installed" && item.aircraftId === aircraftId);
+    const assigned = snapshot.items.filter((item) => item.aircraftId === aircraftId);
+    if (assigned.some((item) => item.status !== "installed")) throw new InventoryError("Un équipement affecté présente un état incohérent. Corrige son affectation avant de clôturer l’aéronef.");
+    const installed = assigned;
     if (!Array.isArray(dispositions) || dispositions.length !== installed.length) throw new InventoryError("Chaque équipement affecté doit recevoir une destination explicite.");
     const selected = new Map(dispositions.map((entry) => [entry.itemId, entry.destination]));
     const allowed: import("./models.js").AircraftClosureDestination[] = ["inventory", "sold-with-aircraft", "sold-separately", "scrapped"];
     if (selected.size !== installed.length || installed.some((item) => !selected.has(item.id)) || dispositions.some((entry) => !allowed.includes(entry.destination))) throw new InventoryError("Les destinations des équipements sont incomplètes ou invalides.");
+    if (lifecycleState === "retired" && dispositions.some((entry) => entry.destination === "sold-with-aircraft")) throw new InventoryError("Un équipement ne peut pas être vendu avec un aéronef retiré sans vente.");
     const labels: Record<import("./models.js").AircraftClosureDestination, string> = { inventory: "récupéré dans l'inventaire", "sold-with-aircraft": "vendu avec l'aéronef", "sold-separately": "vendu séparément", scrapped: "mis au rebut" };
     const entries = installed.map((item, index) => {
       const destination = selected.get(item.id)!;
@@ -262,6 +265,7 @@ export class InventoryService {
     const snapshot = this.repository.getSnapshot();
     const aircraft = snapshot.aircraft.find((entry) => entry.id === aircraftId);
     if (!aircraft) throw new InventoryError("Aéronef introuvable.");
+    if ((aircraft.lifecycleState ?? "active") !== "active" && favorite) throw new InventoryError("Un aéronef clôturé ne peut pas redevenir favori.");
     if (favorite && !aircraft.favorite && snapshot.aircraft.filter((entry) => entry.favorite).length >= 4) {
       throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
     }
