@@ -321,6 +321,11 @@ export class SqliteInventoryRepository implements InventoryRepository {
         operationalState:value.operationalState??"flight-ready",lifecycleState:value.lifecycleState??"active",favorite:value.favorite?1:0 });
   }
 
+  saveAircraftTransition(aircraft: Aircraft, entries: Array<{ item: StockItem; movement: StockMovement }>): void {
+    const transition = this.db.transaction(() => { this.saveAircraft(aircraft); for (const entry of entries) { this.saveItem(entry.item); this.appendMovement(entry.movement); } });
+    transition();
+  }
+
   deleteAircraft(aircraftId: string): void {
     this.db.prepare("DELETE FROM aircraft WHERE id = ?").run(aircraftId);
   }
@@ -341,6 +346,16 @@ export class SqliteInventoryRepository implements InventoryRepository {
     this.db.prepare(`INSERT INTO projects (id,name,status,notes) VALUES (@id,@name,@status,@notes)
       ON CONFLICT(id) DO UPDATE SET name=excluded.name,status=excluded.status,notes=excluded.notes`)
       .run({ id:value.id,name:value.name,status:value.status,notes:value.notes??null });
+  }
+
+  releaseAircraftItems(entries: Array<{ item: StockItem; movement: StockMovement }>): void {
+    const release = this.db.transaction(() => {
+      for (const entry of entries) {
+        this.saveItem(entry.item);
+        this.appendMovement(entry.movement);
+      }
+    });
+    release();
   }
 
   appendMovement(value: StockMovement): void {

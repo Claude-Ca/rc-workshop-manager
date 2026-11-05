@@ -113,3 +113,15 @@
 .logbook-event p { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .logbook-form { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-alt); }
 .logbook-form .form-row { align-items: start; }
+
+.stock-availability-positive { color: #64d99a !important; font-weight: 700; }
+
+.app-footer { display:flex; flex-wrap:wrap; flex-direction:row; align-items:center; justify-content:flex-start; gap:5px 8px; width:100%; box-sizing:border-box; margin-top:auto; padding:14px 9px 12px; border-top:1px solid var(--line); color:#9aa9ba; font-size:10px; line-height:1.4; text-align:left; }
+.app-footer a { color:#8fbef0; text-decoration:none; }
+.app-footer a:hover { color:#c3e2ff; text-decoration:underline; }
+.equipment-disposition-row { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(190px,230px); align-items:center; gap:12px !important; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+.equipment-disposition-row > span { display:grid; gap:4px; min-width:0; }
+.equipment-disposition-row strong { color:#e4edf7; font-size:12px; overflow-wrap:anywhere; }
+.equipment-disposition-row small { color:var(--muted); font-size:10px; }
+.equipment-disposition-row select { min-width:0; width:100%; height:36px; background:#111923; border:1px solid #344151; border-radius:7px; padding:0 9px; color:#e7edf5; font-size:11px; }
+@media(max-width:760px){.equipment-disposition-row{grid-template-columns:1fr}}

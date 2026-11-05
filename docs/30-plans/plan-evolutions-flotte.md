@@ -13,7 +13,8 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - PR #16 — caractéristiques de batterie et vue inventaire — fusionnée dans `develop`.
 - PR #17 — documentation du cycle de vie de la flotte — fusionnée dans `develop`.
 - PR #18 — ergonomie de l'inventaire et création des avions — fusionnée dans `develop`.
-- PR #19 — typologie, états, favoris et photos d'aéronefs — fusionnée dans `develop` (commit `f0bbc3b`).
+- PR #19 — typologie, états, favoris et photos d'aéronefs — fusionnée dans `develop`.
+- PR #20 — journal de bord facultatif des aéronefs — fusionnée dans `develop` (commit `7557eeb`).
 - Les caractéristiques facultatives de batterie (connecteur, taux de décharge, dimensions, poids) sont portées par la référence catalogue ; les compatibilités restent portées par les exemplaires et ne sont pas des affectations.
 
 ## Lots à réaliser
@@ -30,8 +31,12 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 
 - Lot A — Ergonomie : implémenté par PR #18, fusionné dans `develop`.
 - Lot B — Typologie, états et favoris : implémenté par PR #19, fusionné dans `develop`.
-- Lot C — Journal de bord : en cours d'implémentation sur `feature/aircraft-logbook`.
-- Lots D et E : à réaliser.
+- Lot C — Journal de bord : implémenté par PR #20, fusionné dans `develop`.
+- Lot D — Récupération des équipements : en cours sur `feature/aircraft-equipment-recovery`.
+- Lot E — Vente et retrait : à réaliser.
+- Lot D : le traitement des équipements est déclenché depuis le changement d'état vers « Hors service » ou « Retiré », et non depuis l'aperçu.
+- Lot D : la disponibilité seule est colorée en vert ; le nombre total d'exemplaires conserve la couleur normale.
+- Lot D : le statut local SQLite est regroupé en haut à droite ; le pied de page est réservé à la version et au lien vers le code source.
 
 ## Stratégie de réalisation
 
@@ -49,8 +54,8 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - Ne pas confondre état opérationnel et cycle de vie.
 - Les batteries ne sont jamais des équipements affectés à un aéronef ; leur compatibilité reste une relation distincte.
 - Le journal de bord ne génère pas automatiquement de mouvement de stock.
+- Un changement vers « Hors service » ou « Retiré » doit traiter tous les équipements encore affectés, sans suppression physique implicite.
 - Une récupération partielle ne doit modifier que les équipements sélectionnés.
-- Une clôture doit traiter tous les équipements encore affectés, sans suppression implicite.
 - La clôture doit être transactionnelle et conserver les références ainsi que les identités des exemplaires.
 - Les données des inventaires restent strictement isolées ; les favoris sont donc limités par inventaire.
 

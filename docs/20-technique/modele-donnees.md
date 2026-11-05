@@ -1,7 +1,7 @@
 # Modèle de données — état de l’implémentation
 
 **Identifiant :** TEC-RCWM-002  
-**Version du document :** 1.2  
+**Version du document :** 1.3  
 **Dernière mise à jour :** 2026-11-04  
 **Statut :** En revue  
 **Environnement de référence :** branche `develop`, état décrit au 2026-11-03  
@@ -25,6 +25,10 @@ Les chemins et opérations de fichiers restent dans le processus principal Elect
 - `AircraftLogbookEvent` / table `aircraft_logbook` : événement facultatif rattaché à un aéronef (type, date, commentaire et nombre de vols facultatifs).
 
 Le snapshot d’un inventaire regroupe références, exemplaires, lots, avions, projets, mouvements et événements de journal de bord.
+
+### Transition d'état et devenir des équipements
+
+La méthode métier `updateAircraft` détecte le passage vers `out-of-service` ou `retired`. Si des exemplaires sont encore installés, elle exige une décision explicite pour chacun : `available` (retour inventaire) ou `retired` (HS / rebuté). Le dépôt SQLite enregistre dans une transaction unique la fiche aéronef, le statut de chaque exemplaire, la suppression de `aircraft_id` et le mouvement `released` ou `retired`. Le mouvement conserve l'identifiant de l'aéronef d'origine. Toute erreur annule la transition complète. L'aperçu de l'aéronef reste une vue de consultation.
 
 ### Journal de bord des aéronefs
 

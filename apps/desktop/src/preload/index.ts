@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { Aircraft, AircraftLogbookEvent, ComponentCategory, ComponentReference, InventorySnapshot, Project, StockItem, StockLot } from "@rc-workshop/core";
+import type { Aircraft, AircraftEquipmentDisposition, AircraftLogbookEvent, ComponentCategory, ComponentReference, InventorySnapshot, Project, StockItem, StockLot } from "@rc-workshop/core";
 
 export type InventorySummary = { id: string; name: string; createdAt: string; lastUsedAt?: string; active: boolean; lastUsed: boolean; primary: boolean };
 export type InventoryList = { items: InventorySummary[]; activeId: string; lastUsedId: string };
@@ -25,13 +25,14 @@ export interface DesktopApi {
   addLot(input: StockLot): Promise<InventorySnapshot>;
   setStockGroupQuantity(referenceId: string, quantity: number, unit: string): Promise<InventorySnapshot>;
   addAircraft(input: Aircraft): Promise<InventorySnapshot>;
-  updateAircraft(input: Aircraft): Promise<InventorySnapshot>;
+  updateAircraft(input: Aircraft, dispositions?: AircraftEquipmentDisposition[]): Promise<InventorySnapshot>;
   setAircraftFavorite(aircraftId: string, favorite: boolean): Promise<InventorySnapshot>;
   saveAircraftLogbookEvent(input: AircraftLogbookEvent): Promise<InventorySnapshot>;
   deleteAircraftLogbookEvent(eventId: string): Promise<InventorySnapshot>;
   addProject(input: Project): Promise<InventorySnapshot>;
   assignItem(itemId: string, target: { kind: "aircraft"; id: string } | { kind: "project"; id: string }): Promise<InventorySnapshot>;
   releaseItem(itemId: string): Promise<InventorySnapshot>;
+  releaseAircraftItems(aircraftId: string, itemIds: string[]): Promise<InventorySnapshot>;
   setReceiverBinding(receiverItemId: string, transmitterItemId: string | null): Promise<InventorySnapshot>;
   setToolStatus(itemId: string, status: "available" | "borrowed" | "repair"): Promise<InventorySnapshot>;
 }
@@ -57,13 +58,14 @@ const api: DesktopApi = {
   addLot: (input) => ipcRenderer.invoke("inventory:add-lot", input),
   setStockGroupQuantity: (referenceId, quantity, unit) => ipcRenderer.invoke("inventory:set-stock-group-quantity", referenceId, quantity, unit),
   addAircraft: (input) => ipcRenderer.invoke("inventory:add-aircraft", input),
-  updateAircraft: (input) => ipcRenderer.invoke("inventory:update-aircraft", input),
+  updateAircraft: (input, dispositions) => ipcRenderer.invoke("inventory:update-aircraft", input, dispositions),
   setAircraftFavorite: (aircraftId, favorite) => ipcRenderer.invoke("inventory:set-aircraft-favorite", aircraftId, favorite),
   saveAircraftLogbookEvent: (input) => ipcRenderer.invoke("inventory:save-aircraft-logbook-event", input),
   deleteAircraftLogbookEvent: (eventId) => ipcRenderer.invoke("inventory:delete-aircraft-logbook-event", eventId),
   addProject: (input) => ipcRenderer.invoke("inventory:add-project", input),
   assignItem: (itemId, target) => ipcRenderer.invoke("inventory:assign-item", itemId, target),
   releaseItem: (itemId) => ipcRenderer.invoke("inventory:release-item", itemId),
+  releaseAircraftItems: (aircraftId, itemIds) => ipcRenderer.invoke("inventory:release-aircraft-items", aircraftId, itemIds),
   setReceiverBinding: (receiverItemId, transmitterItemId) => ipcRenderer.invoke("inventory:set-receiver-binding", receiverItemId, transmitterItemId),
   setToolStatus: (itemId, status) => ipcRenderer.invoke("inventory:set-tool-status", itemId, status),
 };
