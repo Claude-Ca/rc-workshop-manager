@@ -340,8 +340,8 @@ function registerHandlers(): void {
     inventory.addAircraft(input);
     return inventory.getSnapshot();
   });
-  ipcMain.handle("inventory:update-aircraft", (_event, input: Aircraft) => {
-    inventory.updateAircraft(input);
+  ipcMain.handle("inventory:update-aircraft", (_event, input: Aircraft, dispositions: import("@rc-workshop/core").AircraftEquipmentDisposition[] = []) => {
+    inventory.updateAircraft(input, dispositions, randomUUID(), new Date().toISOString());
     return inventory.getSnapshot();
   });
   ipcMain.handle("inventory:set-aircraft-favorite", (_event, aircraftId: string, favorite: boolean) => {
