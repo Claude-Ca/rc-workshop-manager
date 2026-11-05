@@ -66,6 +66,8 @@ export type AircraftType = "airplane" | "glider" | "motor-glider" | "helicopter"
 export type AircraftOperationalState = "flight-ready" | "maintenance" | "parts" | "out-of-service";
 export type AircraftLifecycleState = "active" | "sold" | "retired";
 
+export type AircraftEquipmentDisposition = { itemId: string; status: "available" | "retired" };
+
 export interface Aircraft {
   id: string;
   name: string;
