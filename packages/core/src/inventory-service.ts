@@ -214,9 +214,10 @@ export class InventoryService {
     this.repository.saveAircraft(normalized);
   }
 
-  updateAircraft(aircraft: Aircraft): void {
+  updateAircraft(aircraft: Aircraft, dispositions: import("./models.js").AircraftEquipmentDisposition[] = [], movementIdPrefix = "AIRCRAFT-STATE", occurredAt = new Date().toISOString()): void {
     const snapshot = this.repository.getSnapshot();
-    if (!snapshot.aircraft.some((entry) => entry.id === aircraft.id)) throw new InventoryError("Avion introuvable.");
+    const previous = snapshot.aircraft.find((entry) => entry.id === aircraft.id);
+    if (!previous) throw new InventoryError("Avion introuvable.");
     if (!aircraft.name.trim()) throw new InventoryError("Le nom de l'avion est obligatoire.");
     const updated: Aircraft = { ...aircraft, name: aircraft.name.trim(),
       aircraftType: aircraft.aircraftType ?? "other", operationalState: aircraft.operationalState ?? "flight-ready",
@@ -233,6 +234,23 @@ export class InventoryService {
     if (aircraft.notes?.trim()) updated.notes = aircraft.notes.trim(); else delete updated.notes;
     if (aircraft.uafRegistration?.trim()) updated.uafRegistration = aircraft.uafRegistration.trim(); else delete updated.uafRegistration;
     if (aircraft.photoPath?.trim()) updated.photoPath = aircraft.photoPath.trim(); else delete updated.photoPath;
+    const enteringOutOfService = updated.operationalState === "out-of-service" && previous.operationalState !== "out-of-service";
+    const enteringRetired = updated.lifecycleState === "retired" && previous.lifecycleState !== "retired";
+    const installed = snapshot.items.filter((item) => item.status === "installed" && item.aircraftId === aircraft.id);
+    if ((enteringOutOfService || enteringRetired) && installed.length > 0) {
+      if (!Array.isArray(dispositions) || dispositions.length !== installed.length) throw new InventoryError("Chaque équipement affecté doit avoir une destination avant ce changement d'état.");
+      const selected = new Map(dispositions.map((entry) => [entry.itemId, entry.status]));
+      if (selected.size !== installed.length || installed.some((item) => !selected.has(item.id))) throw new InventoryError("La sélection des destinations ne correspond plus aux équipements affectés.");
+      if (dispositions.some((entry) => !["available", "retired"].includes(entry.status))) throw new InventoryError("Destination d'équipement invalide.");
+      const entries = installed.map((item, index) => {
+        const status = selected.get(item.id)!;
+        const released: StockItem = { ...item, status }; delete released.aircraftId; delete released.projectId;
+        const movement: StockMovement = { id: movementIdPrefix + "-" + index, type: status === "available" ? "released" : "retired", referenceId: item.referenceId, itemId: item.id, aircraftId: aircraft.id, notes: status === "available" ? "Retour à l'inventaire lors du changement d'état de l'aéronef" : "Équipement déclaré HS lors du changement d'état de l'aéronef", occurredAt };
+        return { item: released, movement };
+      });
+      if (!this.repository.saveAircraftTransition) throw new InventoryError("Le dépôt ne prend pas en charge les transitions atomiques d'aéronef.");
+      this.repository.saveAircraftTransition(updated, entries); return;
+    }
     this.repository.saveAircraft(updated);
   }
 
