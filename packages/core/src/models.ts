@@ -4,7 +4,7 @@ export const COMPONENT_CATEGORIES = [
 
 export type ComponentCategory = (typeof COMPONENT_CATEGORIES)[number] | "propeller" | "receiver" | "connector" | "control" | "structure" | "material" | "construction";
 export type TrackingMode = "individual" | "quantity";
-export type ItemStatus = "available" | "installed" | "reserved" | "borrowed" | "repair" | "retired";
+export type ItemStatus = "available" | "installed" | "reserved" | "borrowed" | "repair" | "sold" | "retired";
 
 export interface ComponentReference {
   id: string;

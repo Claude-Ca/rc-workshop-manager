@@ -251,7 +251,7 @@ export class InventoryService {
     const labels: Record<import("./models.js").AircraftClosureDestination, string> = { inventory: "récupéré dans l'inventaire", "sold-with-aircraft": "vendu avec l'aéronef", "sold-separately": "vendu séparément", scrapped: "mis au rebut" };
     const entries = installed.map((item, index) => {
       const destination = selected.get(item.id)!;
-      const updatedItem: StockItem = { ...item, status: destination === "inventory" ? "available" : "retired" };
+      const updatedItem: StockItem = { ...item, status: destination === "inventory" ? "available" : destination === "scrapped" ? "retired" : "sold" };
       delete updatedItem.aircraftId; delete updatedItem.projectId;
       const movement: StockMovement = { id: movementIdPrefix + "-" + index, type: destination === "inventory" ? "released" : destination === "scrapped" ? "retired" : "sold", referenceId: item.referenceId, itemId: item.id, aircraftId, notes: "Clôture de l'aéronef : " + labels[destination], occurredAt };
       return { item: updatedItem, movement };

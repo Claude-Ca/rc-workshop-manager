@@ -113,8 +113,8 @@ describe("aircraft classification and favorites", () => {
     service.closeAircraft("A1","sold",[{itemId:"I1",destination:"inventory"},{itemId:"I2",destination:"sold-with-aircraft"},{itemId:"I3",destination:"sold-separately"}],"CLOSE","2026-11-06T12:30:00.000Z");
     expect(repository.snapshot.aircraft[0]).toMatchObject({lifecycleState:"sold",favorite:false});
     expect(repository.snapshot.items.find(x=>x.id==="I1")).toMatchObject({status:"available"});
-    expect(repository.snapshot.items.find(x=>x.id==="I2")).toMatchObject({status:"retired"});
-    expect(repository.snapshot.items.find(x=>x.id==="I3")).toMatchObject({status:"retired"});
+    expect(repository.snapshot.items.find(x=>x.id==="I2")).toMatchObject({status:"sold"});
+    expect(repository.snapshot.items.find(x=>x.id==="I3")).toMatchObject({status:"sold"});
     expect(repository.snapshot.items.every(x=>!x.aircraftId)).toBe(true);
     expect(repository.snapshot.items.map(x=>x.id)).toContain("I2");
     expect(repository.snapshot.items.find(x=>x.id==="BAT")).toMatchObject({status:"available"});
