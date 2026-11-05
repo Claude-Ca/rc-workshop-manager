@@ -1,5 +1,5 @@
 import type {
-  Aircraft, ComponentReference, InventorySnapshot, Project, StockItem, StockLot,
+  Aircraft, AircraftLogbookEvent, ComponentReference, InventorySnapshot, Project, StockItem, StockLot,
   StockMovement, ItemStatus,
 } from "./models.js";
 import type { InventoryRepository } from "./repository.js";
@@ -244,6 +244,24 @@ export class InventoryService {
       throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
     }
     this.repository.saveAircraft({ ...aircraft, favorite });
+  }
+
+  saveAircraftLogbookEvent(event: AircraftLogbookEvent): void {
+    const snapshot = this.repository.getSnapshot();
+    if (!snapshot.aircraft.some((aircraft) => aircraft.id === event.aircraftId)) throw new InventoryError("Aéronef introuvable.");
+    if (!event.id.trim()) throw new InventoryError("Identifiant d'événement obligatoire.");
+    if (!["commissioning", "flight", "maintenance", "incident", "sale", "retirement"].includes(event.type)) throw new InventoryError("Type d'événement invalide.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(event.date) || Number.isNaN(Date.parse(event.date + "T00:00:00Z")) || new Date(event.date + "T00:00:00.000Z").toISOString().slice(0, 10) !== event.date) throw new InventoryError("La date de l'événement est invalide.");
+    if (event.flightCount !== undefined && (!Number.isInteger(event.flightCount) || event.flightCount < 0)) throw new InventoryError("Le nombre de vols doit être un entier positif ou nul.");
+    const normalized: AircraftLogbookEvent = { ...event };
+    const comment = event.comment?.trim();
+    if (comment) normalized.comment = comment; else delete normalized.comment;
+    this.repository.saveLogbookEvent(normalized);
+  }
+
+  deleteAircraftLogbookEvent(eventId: string): void {
+    if (!this.repository.getSnapshot().logbookEvents.some((event) => event.id === eventId)) throw new InventoryError("Événement de journal introuvable.");
+    this.repository.deleteLogbookEvent(eventId);
   }
 
   addProject(project: Project): void {

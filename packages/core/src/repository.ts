@@ -13,6 +13,8 @@ export interface InventoryRepository {
   deleteLot(lotId: string): void;
   saveAircraft(aircraft: Aircraft): void;
   deleteAircraft(aircraftId: string): void;
+  saveLogbookEvent(event: import("./models.js").AircraftLogbookEvent): void;
+  deleteLogbookEvent(eventId: string): void;
   saveProject(project: Project): void;
   appendMovement(movement: StockMovement): void;
 }

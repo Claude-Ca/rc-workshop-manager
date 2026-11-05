@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { Aircraft, ComponentCategory, ComponentReference, InventorySnapshot, Project, StockItem, StockLot } from "@rc-workshop/core";
+import type { Aircraft, AircraftLogbookEvent, ComponentCategory, ComponentReference, InventorySnapshot, Project, StockItem, StockLot } from "@rc-workshop/core";
 
 export type InventorySummary = { id: string; name: string; createdAt: string; lastUsedAt?: string; active: boolean; lastUsed: boolean; primary: boolean };
 export type InventoryList = { items: InventorySummary[]; activeId: string; lastUsedId: string };
@@ -27,6 +27,8 @@ export interface DesktopApi {
   addAircraft(input: Aircraft): Promise<InventorySnapshot>;
   updateAircraft(input: Aircraft): Promise<InventorySnapshot>;
   setAircraftFavorite(aircraftId: string, favorite: boolean): Promise<InventorySnapshot>;
+  saveAircraftLogbookEvent(input: AircraftLogbookEvent): Promise<InventorySnapshot>;
+  deleteAircraftLogbookEvent(eventId: string): Promise<InventorySnapshot>;
   addProject(input: Project): Promise<InventorySnapshot>;
   assignItem(itemId: string, target: { kind: "aircraft"; id: string } | { kind: "project"; id: string }): Promise<InventorySnapshot>;
   releaseItem(itemId: string): Promise<InventorySnapshot>;
@@ -57,6 +59,8 @@ const api: DesktopApi = {
   addAircraft: (input) => ipcRenderer.invoke("inventory:add-aircraft", input),
   updateAircraft: (input) => ipcRenderer.invoke("inventory:update-aircraft", input),
   setAircraftFavorite: (aircraftId, favorite) => ipcRenderer.invoke("inventory:set-aircraft-favorite", aircraftId, favorite),
+  saveAircraftLogbookEvent: (input) => ipcRenderer.invoke("inventory:save-aircraft-logbook-event", input),
+  deleteAircraftLogbookEvent: (eventId) => ipcRenderer.invoke("inventory:delete-aircraft-logbook-event", eventId),
   addProject: (input) => ipcRenderer.invoke("inventory:add-project", input),
   assignItem: (itemId, target) => ipcRenderer.invoke("inventory:assign-item", itemId, target),
   releaseItem: (itemId) => ipcRenderer.invoke("inventory:release-item", itemId),

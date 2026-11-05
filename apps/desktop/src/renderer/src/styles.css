@@ -101,3 +101,15 @@
 
 .aircraft-photo { width: 48px; height: 48px; flex: 0 0 48px; object-fit: cover; border-radius: 10px; background: var(--surface); }
 .aircraft-preview-photo { display: block; max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; margin: 0 auto 12px; }
+
+.aircraft-logbook { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 8px; }
+.logbook-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.logbook-heading h3 { margin: 0; }
+.logbook-heading span { color: var(--muted); font-size: 12px; }
+.logbook-list { list-style: none; padding: 0; margin: 8px 0 16px; display: grid; gap: 8px; }
+.logbook-list li { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.logbook-event { display: grid; gap: 3px; min-width: 0; }
+.logbook-event time { color: var(--muted); font-size: 12px; }
+.logbook-event p { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.logbook-form { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-alt); }
+.logbook-form .form-row { align-items: start; }

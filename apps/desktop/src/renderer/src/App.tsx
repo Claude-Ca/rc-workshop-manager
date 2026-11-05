@@ -5,6 +5,8 @@ import {
   type AircraftType,
   type AircraftOperationalState,
   type AircraftLifecycleState,
+  type AircraftLogbookEvent,
+  type AircraftLogbookEventType,
   type ComponentCategory,
   type ComponentReference,
   type InventorySnapshot,
@@ -27,7 +29,7 @@ const icons: Record<ComponentCategory, string> = {
   motor: "⚙️", esc: "🔌", radio: "📡", servo: "🎛️", battery: "🔋", supplies: "🧰", tool: "🔧", other: "📦",
   propeller: "🌀", receiver: "📡", connector: "🔗", control: "🕹️", structure: "🛩️", material: "🪵", construction: "🧰",
 };
-const emptySnapshot: InventorySnapshot = { references: [], items: [], lots: [], aircraft: [], projects: [], movements: [] };
+const emptySnapshot: InventorySnapshot = { logbookEvents: [], references: [], items: [], lots: [], aircraft: [], projects: [], movements: [] };
 const aircraftTypeLabels: Record<AircraftType, string> = {
   airplane: "Avion", glider: "Planeur", "motor-glider": "Motoplaneur", helicopter: "Hélicoptère", multirotor: "Multirotor", other: "Autre",
 };
@@ -36,6 +38,10 @@ const operationalStateLabels: Record<AircraftOperationalState, string> = {
 };
 const lifecycleStateLabels: Record<AircraftLifecycleState, string> = {
   active: "Actif", sold: "Vendu", retired: "Retiré",
+};
+const logbookEventLabels: Record<AircraftLogbookEventType, string> = {
+  commissioning: "Mise en service / premier vol", flight: "Vol", maintenance: "Maintenance",
+  incident: "Incident / crash", sale: "Vente", retirement: "Retrait définitif",
 };
 
 function isAssignableReference(reference: ComponentReference): boolean {
@@ -328,7 +334,7 @@ function App() {
       {showInventoryManager && <InventoryManagerModal inventoryList={inventoryList} busy={busy} error={error} onClose={() => setShowInventoryManager(false)} onOpen={(id) => void openInventory(id)} onCreate={(name) => void createInventory(name)} onImport={() => void importInventory()} onDelete={(id) => void deleteInventory(id)} />}
       {showNewReference && newReferenceCategory && <ReferenceModal initialCategory={newReferenceCategory} error={error} busy={busy} onClose={() => { setShowNewReference(false); setNewReferenceCategory(null); }} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.createReference(value); setShowNewReference(false); setNewReferenceCategory(null); setSection("inventory"); setCategory("all"); setSelectedId(value.id); return result; })} />}
       {showEditReference && selected && <ReferenceModal reference={selected} error={error} busy={busy} onClose={() => setShowEditReference(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.updateReference(value as ComponentReference); setShowEditReference(false); return result; })} />}
-      {previewAircraft && <AircraftPreviewModal aircraft={previewAircraft} snapshot={snapshot} onClose={() => setPreviewAircraft(null)} />}
+      {previewAircraft && <AircraftPreviewModal aircraft={previewAircraft} snapshot={snapshot} busy={busy} error={error} onClose={() => setPreviewAircraft(null)} onSaveEvent={(event) => runAction(() => window.rcWorkshop.saveAircraftLogbookEvent(event))} />}
       {showNewAircraft && <AircraftModal favoriteLimitReached={snapshot.aircraft.filter((entry) => entry.favorite).length >= 4} error={error} busy={busy} onClose={() => setShowNewAircraft(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.addAircraft({ id: crypto.randomUUID(), ...value }); setShowNewAircraft(false); return result; })} />}
       {editingAircraft && <AircraftModal aircraft={editingAircraft} favoriteLimitReached={snapshot.aircraft.filter((entry) => entry.favorite).length >= 4 && !Boolean(editingAircraft.favorite)} error={error} busy={busy} onClose={() => setEditingAircraft(null)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.updateAircraft({ id: editingAircraft!.id, ...value }); setEditingAircraft(null); return result; })} />}
       {showAddStock && selected && <StockModal reference={selected} snapshot={snapshot} error={error} busy={busy} onClose={() => setShowAddStock(false)} onSubmit={(value) => runAction(async () => { const result = selected.trackingMode === "individual" ? await window.rcWorkshop.addItem(value as Omit<StockItem, "createdAt">) : await window.rcWorkshop.addLot(value as StockLot); setShowAddStock(false); return result; })} />}
@@ -412,7 +418,7 @@ function StockModal({ reference, snapshot, onClose, onSubmit, busy, error }: { r
   function submit(event: FormEvent) { event.preventDefault(); if (reference.trackingMode === "individual") onSubmit({ id: crypto.randomUUID(), referenceId: reference.id, inventoryCode, status: "available", ...(serialNumber ? { serialNumber } : {}), ...(locationId ? { locationId } : {}), ...(isReceiver ? { tx16Name } : {}), ...(reference.category === "battery" && compatibleAircraftIds.length ? { compatibleAircraftIds } : {}) }); else onSubmit({ id: crypto.randomUUID(), referenceId: reference.id, quantity: Number(quantity), unit, ...(locationId ? { locationId } : {}) }); }
   return <Modal title={reference.trackingMode === "individual" ? "Ajouter un exemplaire" : "Ajouter une quantité"} onClose={onClose} error={error}><form onSubmit={submit} className="form-grid">{reference.trackingMode === "individual" ? <><p className="field-hint">Identifiant généré automatiquement selon la catégorie (ex. RX-001, MOT-001).</p>{isReceiver && <label>Nom / identifiant dans la TX16<input autoFocus value={tx16Name} onInput={(e) => setTx16Name(e.currentTarget.value)} placeholder="RX-007" /></label>}{reference.category === "battery" && <fieldset><legend>Avions compatibles</legend><p className="field-hint">Compatibilité indicative : la batterie reste en stock et n’est pas affectée à un avion.</p>{snapshot.aircraft.map((aircraft) => <label key={aircraft.id} className="checkbox-row"><input type="checkbox" checked={compatibleAircraftIds.includes(aircraft.id)} onChange={(event) => setCompatibleAircraftIds((current) => event.target.checked ? [...current, aircraft.id] : current.filter((id) => id !== aircraft.id))} />{aircraft.name}</label>)}</fieldset>}<label>Numéro de série<input autoFocus={!isReceiver} value={serialNumber} onInput={(e) => setSerialNumber(e.currentTarget.value)} /></label></> : <div className="form-row"><label>Quantité *<input type="number" min="1" step="1" required value={quantity} onChange={(e) => setQuantity(e.target.value)} /></label><label>Unité<input required value={unit} onChange={(e) => setUnit(e.target.value)} /></label></div>}<label>Emplacement (facultatif)<input value={locationId} onInput={(e) => setLocationId(e.currentTarget.value)} placeholder="Ex. boîte batteries / tiroir 3" /></label><div className="modal-actions"><button type="button" className="secondary" onClick={onClose}>Annuler</button><button className="primary" disabled={busy}>Enregistrer</button></div></form></Modal>;
 }
-function AircraftPreviewModal({ aircraft, snapshot, onClose }: { aircraft: Aircraft; snapshot: InventorySnapshot; onClose: () => void }) {
+function AircraftPreviewModal({ aircraft, snapshot, busy, error, onClose, onSaveEvent }: { aircraft: Aircraft; snapshot: InventorySnapshot; busy: boolean; error: string; onClose: () => void; onSaveEvent: (event: AircraftLogbookEvent) => void }) {
   const installed = snapshot.items.filter((item) => item.aircraftId === aircraft.id);
   const getReference = (item: StockItem) => snapshot.references.find((entry) => entry.id === item.referenceId);
   const isReceiver = (item: StockItem) => { const ref = getReference(item); return ref?.category === "radio" && ref.radioType === "receiver"; };
@@ -427,7 +433,8 @@ function AircraftPreviewModal({ aircraft, snapshot, onClose }: { aircraft: Aircr
   const displayedIds = new Set([receiver, ...motors, ...propellers, ...speedControllers].filter((item): item is StockItem => Boolean(item)).map((item) => item.id));
   const formatItem = (item: StockItem) => { const ref = getReference(item); return (ref?.name ?? item.referenceId) + " · " + item.inventoryCode; };
   const formatPropeller = (item: StockItem) => { const ref = getReference(item); return (ref?.brand?.trim() || ref?.name || item.referenceId) + " - " + item.inventoryCode + " - " + (ref?.propellerDiameter ?? "?") + "x" + (ref?.propellerPitch ?? "?"); };
-  return <Modal title="Aperçu de la fiche avion" onClose={onClose}><div className="form-grid">
+  const events = snapshot.logbookEvents.filter((event) => event.aircraftId === aircraft.id);
+  return <Modal title="Aperçu de la fiche avion" onClose={onClose} error={error}><div className="form-grid">
     {aircraft.photoPath && <img className="aircraft-preview-photo" src={aircraft.photoPath} alt={aircraft.name} />}
     <h3>{aircraft.name}</h3>
     <p>{[aircraft.manufacturer, aircraft.model].filter(Boolean).join(" · ") || "Constructeur / modèle non renseigné"}</p>
@@ -444,9 +451,49 @@ function AircraftPreviewModal({ aircraft, snapshot, onClose }: { aircraft: Aircr
     {electricMotorInstalled && <div className="attribute-row"><span>ESC</span><strong>{speedControllers.length ? speedControllers.map(formatItem).join(" · ") : "Aucun ESC affecté"}</strong></div>}
     {installed.some((item) => !displayedIds.has(item.id)) && <><h3>Autres équipements installés</h3>{installed.filter((item) => !displayedIds.has(item.id)).map((item) => <div className="item-row" key={item.id}><div><strong>{formatItem(item)}</strong></div></div>)}</>}
     {installed.length === 0 && <p className="muted">Aucun équipement installé.</p>}
+    <AircraftLogbook aircraftId={aircraft.id} events={events} busy={busy} onSave={onSaveEvent} />
     <div className="modal-actions"><button type="button" className="secondary" onClick={onClose}>Fermer</button></div>
   </div></Modal>;
 }
+function AircraftLogbook({ aircraftId, events, busy, onSave }: { aircraftId: string; events: AircraftLogbookEvent[]; busy: boolean; onSave: (event: AircraftLogbookEvent) => void }) {
+  const [editing, setEditing] = useState<AircraftLogbookEvent | null>(null);
+  const [type, setType] = useState<AircraftLogbookEventType>("flight");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [comment, setComment] = useState("");
+  const [flightCount, setFlightCount] = useState("");
+  function startNew() {
+    setEditing(null); setType("flight"); setDate(new Date().toISOString().slice(0, 10));
+    setComment(""); setFlightCount("");
+  }
+  function startEdit(event: AircraftLogbookEvent) {
+    setEditing(event); setType(event.type); setDate(event.date);
+    setComment(event.comment ?? ""); setFlightCount(event.flightCount === undefined ? "" : String(event.flightCount));
+  }
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    const count = flightCount.trim() === "" ? undefined : Number(flightCount);
+    onSave({ id: editing?.id ?? crypto.randomUUID(), aircraftId, type, date, ...(comment.trim() ? { comment: comment.trim() } : {}), ...(count === undefined ? {} : { flightCount: count }) });
+    startNew();
+  }
+  return <section className="aircraft-logbook">
+    <div className="logbook-heading"><h3>Journal de bord</h3><span>{events.length} événement(s)</span></div>
+    <p className="field-hint">Mémoire personnelle facultative — indépendante des mouvements de stock et des états de l’aéronef.</p>
+    {events.length ? <ol className="logbook-list">{events.map((event) => <li key={event.id}>
+      <div className="logbook-event"><time>{new Date(event.date + "T12:00:00").toLocaleDateString("fr-FR")}</time><strong>{logbookEventLabels[event.type]}</strong>
+        {event.flightCount !== undefined && <span>{event.flightCount} vol(s)</span>}
+        {event.comment && <p>{event.comment}</p>}
+      </div>
+      <button type="button" className="text-button" disabled={busy} onClick={() => startEdit(event)}>Modifier</button>
+    </li>)}</ol> : <p className="muted">Aucun événement enregistré. L’avion reste parfaitement utilisable sans journal.</p>}
+    <form className="logbook-form" onSubmit={submit}>
+      <strong>{editing ? "Modifier l’événement" : "Ajouter un événement"}</strong>
+      <div className="form-row"><label>Type<select value={type} onChange={(e) => setType(e.target.value as AircraftLogbookEventType)}>{Object.entries(logbookEventLabels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Date<input type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></label></div>
+      <div className="form-row"><label>Nombre de vols (facultatif)<input type="number" min="0" step="1" value={flightCount} onChange={(e) => setFlightCount(e.target.value)} placeholder="Ex. 3" /></label><label>Commentaire (facultatif)<input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Conditions, travaux, remarques…" /></label></div>
+      <div className="modal-actions">{editing && <button type="button" className="secondary" disabled={busy} onClick={startNew}>Annuler la modification</button>}<button className="primary" disabled={busy || !date || (flightCount.trim() !== "" && (!Number.isInteger(Number(flightCount)) || Number(flightCount) < 0))}>{editing ? "Enregistrer" : "Ajouter au journal"}</button></div>
+    </form>
+  </section>;
+}
+
 function AircraftModal({ aircraft, favoriteLimitReached = false, onClose, onSubmit, busy, error }: { aircraft?: Aircraft; favoriteLimitReached?: boolean; onClose: () => void; onSubmit: (value: Omit<Aircraft, "id">) => void; busy: boolean; error: string }) {
   const [name,setName]=useState(aircraft?.name ?? "");
   const [manufacturer,setManufacturer]=useState(aircraft?.manufacturer ?? "");

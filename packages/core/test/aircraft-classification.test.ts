@@ -3,7 +3,7 @@ import { InventoryError, InventoryService } from "../src/index.js";
 import type { Aircraft, ComponentReference, InventorySnapshot, InventoryRepository, Project, StockItem, StockLot, StockMovement } from "../src/index.js";
 
 class MemoryRepository implements InventoryRepository {
-  snapshot: InventorySnapshot = { references: [], items: [], lots: [], aircraft: [], projects: [], movements: [] };
+  snapshot: InventorySnapshot = { logbookEvents: [], references: [], items: [], lots: [], aircraft: [], projects: [], movements: [] };
   getSnapshot() { return structuredClone(this.snapshot); }
   saveReference(value: ComponentReference) { this.snapshot.references = [...this.snapshot.references.filter(x => x.id !== value.id), value]; }
   deleteReference(id: string) { this.snapshot.references = this.snapshot.references.filter(x => x.id !== id); }
@@ -12,7 +12,9 @@ class MemoryRepository implements InventoryRepository {
   saveLot(value: StockLot) { this.snapshot.lots = [...this.snapshot.lots.filter(x => x.id !== value.id), value]; }
   deleteLot(id: string) { this.snapshot.lots = this.snapshot.lots.filter(x => x.id !== id); }
   saveAircraft(value: Aircraft) { this.snapshot.aircraft = [...this.snapshot.aircraft.filter(x => x.id !== value.id), value]; }
-  deleteAircraft(id: string) { this.snapshot.aircraft = this.snapshot.aircraft.filter(x => x.id !== id); }
+  deleteAircraft(id: string) { this.snapshot.aircraft = this.snapshot.aircraft.filter(x => x.id !== id); this.snapshot.logbookEvents = this.snapshot.logbookEvents.filter(x => x.aircraftId !== id); }
+  saveLogbookEvent(value: import("../src/models.js").AircraftLogbookEvent) { this.snapshot.logbookEvents = [...this.snapshot.logbookEvents.filter(x => x.id !== value.id), value]; }
+  deleteLogbookEvent(id: string) { this.snapshot.logbookEvents = this.snapshot.logbookEvents.filter(x => x.id !== id); }
   saveProject(value: Project) { this.snapshot.projects.push(value); }
   appendMovement(value: StockMovement) { this.snapshot.movements.push(value); }
 }

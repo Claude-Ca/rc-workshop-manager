@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import type {
-  Aircraft, ComponentReference, InventorySnapshot, Project, StockItem, StockLot, StockMovement,
+  Aircraft, AircraftLogbookEvent, ComponentReference, InventorySnapshot, Project, StockItem, StockLot, StockMovement,
 } from "@rc-workshop/core";
 import type { InventoryRepository } from "@rc-workshop/core";
 
@@ -71,7 +71,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
 
   reset(): void {
     this.db.transaction(() => {
-      this.db.exec("DELETE FROM stock_movements; DELETE FROM stock_items; DELETE FROM stock_lots; DELETE FROM component_references; DELETE FROM aircraft; DELETE FROM projects;");
+      this.db.exec("DELETE FROM stock_movements; DELETE FROM aircraft_logbook; DELETE FROM stock_items; DELETE FROM stock_lots; DELETE FROM component_references; DELETE FROM aircraft; DELETE FROM projects;");
     })();
   }
 
@@ -95,6 +95,10 @@ export class SqliteInventoryRepository implements InventoryRepository {
       );
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL, notes TEXT
+      );
+      CREATE TABLE IF NOT EXISTS aircraft_logbook (
+        id TEXT PRIMARY KEY, aircraft_id TEXT NOT NULL REFERENCES aircraft(id) ON DELETE CASCADE,
+        type TEXT NOT NULL, event_date TEXT NOT NULL, comment TEXT, flight_count INTEGER CHECK(flight_count IS NULL OR flight_count >= 0)
       );
       CREATE TABLE IF NOT EXISTS stock_items (
         id TEXT PRIMARY KEY, reference_id TEXT NOT NULL REFERENCES component_references(id),
@@ -239,6 +243,11 @@ export class SqliteInventoryRepository implements InventoryRepository {
       id: String(row.id), name: String(row.name), status: row.status as Project["status"],
       ...(row.notes ? { notes: String(row.notes) } : {}),
     }));
+    const logbookEvents = (this.db.prepare("SELECT * FROM aircraft_logbook ORDER BY event_date ASC, id ASC").all() as Row[]).map((row): AircraftLogbookEvent => ({
+      id: String(row.id), aircraftId: String(row.aircraft_id), type: row.type as AircraftLogbookEvent["type"],
+      date: String(row.event_date), ...(row.comment ? { comment: String(row.comment) } : {}),
+      ...(row.flight_count !== null && row.flight_count !== undefined ? { flightCount: Number(row.flight_count) } : {}),
+    }));
     const movements = (this.db.prepare("SELECT * FROM stock_movements ORDER BY occurred_at DESC").all() as Row[]).map((row): StockMovement => ({
       id: String(row.id), type: row.type as StockMovement["type"], referenceId: String(row.reference_id), occurredAt: String(row.occurred_at),
       ...(row.item_id ? { itemId: String(row.item_id) } : {}),
@@ -250,7 +259,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.project_id ? { projectId: String(row.project_id) } : {}),
       ...(row.notes ? { notes: String(row.notes) } : {}),
     }));
-    return { references, items, lots, aircraft, projects, movements };
+    return { logbookEvents, references, items, lots, aircraft, projects, movements };
   }
 
   saveReference(value: ComponentReference): void {
@@ -314,6 +323,18 @@ export class SqliteInventoryRepository implements InventoryRepository {
 
   deleteAircraft(aircraftId: string): void {
     this.db.prepare("DELETE FROM aircraft WHERE id = ?").run(aircraftId);
+  }
+
+  saveLogbookEvent(value: AircraftLogbookEvent): void {
+    this.db.prepare(`INSERT INTO aircraft_logbook (id,aircraft_id,type,event_date,comment,flight_count)
+      VALUES (@id,@aircraftId,@type,@date,@comment,@flightCount)
+      ON CONFLICT(id) DO UPDATE SET aircraft_id=excluded.aircraft_id,type=excluded.type,event_date=excluded.event_date,
+      comment=excluded.comment,flight_count=excluded.flight_count`)
+      .run({ id:value.id,aircraftId:value.aircraftId,type:value.type,date:value.date,comment:value.comment??null,flightCount:value.flightCount??null });
+  }
+
+  deleteLogbookEvent(eventId: string): void {
+    this.db.prepare("DELETE FROM aircraft_logbook WHERE id = ?").run(eventId);
   }
 
   saveProject(value: Project): void {

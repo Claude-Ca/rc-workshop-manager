@@ -106,7 +106,19 @@ export interface StockMovement {
   occurredAt: string;
 }
 
+export type AircraftLogbookEventType = "commissioning" | "flight" | "maintenance" | "incident" | "sale" | "retirement";
+
+export interface AircraftLogbookEvent {
+  id: string;
+  aircraftId: string;
+  type: AircraftLogbookEventType;
+  date: string;
+  comment?: string;
+  flightCount?: number;
+}
+
 export interface InventorySnapshot {
+  logbookEvents: AircraftLogbookEvent[];
   references: ComponentReference[];
   items: StockItem[];
   lots: StockLot[];
