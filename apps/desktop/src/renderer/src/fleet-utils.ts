@@ -17,3 +17,20 @@ export function filterAircraft(aircraft: Aircraft[], filters: FleetFilters): Air
       (filters.lifecycleState === "all" || (entry.lifecycleState ?? "active") === filters.lifecycleState) && (!filters.favoritesOnly || Boolean(entry.favorite));
   });
 }
+
+export const FLEET_GROUP_ORDER = ["flight-ready", "maintenance", "parts", "out-of-service", "sold", "retired"] as const;
+
+export function getFleetGroupKey(entry: Aircraft): typeof FLEET_GROUP_ORDER[number] {
+  const lifecycle = entry.lifecycleState ?? "active";
+  return lifecycle === "active" ? entry.operationalState ?? "flight-ready" : lifecycle;
+}
+
+export function groupAircraft(aircraft: Aircraft[], grouping: "operational" | "lifecycle" = "operational"): Map<string, Aircraft[]> {
+  const groups = new Map<string, Aircraft[]>();
+  const order = grouping === "operational" ? FLEET_GROUP_ORDER : ["active", "sold", "retired"] as const;
+  for (const key of order) {
+    const entries = aircraft.filter((entry) => (grouping === "operational" ? getFleetGroupKey(entry) : entry.lifecycleState ?? "active") === key);
+    if (entries.length) groups.set(key, entries);
+  }
+  return groups;
+}

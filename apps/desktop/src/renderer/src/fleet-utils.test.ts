@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Aircraft } from "@rc-workshop/core";
-import { filterAircraft } from "./fleet-utils.js";
+import { filterAircraft, groupAircraft } from "./fleet-utils.js";
 
 const fleet: Aircraft[] = [
   { id: "A1", name: "Mistral", manufacturer: "E-flite", model: "Cub", aircraftType: "airplane", operationalState: "flight-ready", lifecycleState: "active", favorite: true },
@@ -19,5 +19,18 @@ describe("fleet filtering", () => {
   it("searches the aircraft details without regard to letter case", () => {
     expect(filterAircraft(fleet, { ...noFilters, query: "uaf-123" }).map((entry) => entry.id)).toEqual(["A2"]);
     expect(filterAircraft(fleet, { ...noFilters, query: "  E-FLITE " }).map((entry) => entry.id)).toEqual(["A1"]);
+  });
+});
+
+describe("fleet groups", () => {
+  it("orders operational and lifecycle groups without duplicating closed aircraft", () => {
+    const grouped = groupAircraft([
+      fleet[2]!,
+      { id: "A4", name: "Retiré", lifecycleState: "retired", operationalState: "flight-ready" },
+      { id: "A5", name: "Maintenance", lifecycleState: "active", operationalState: "maintenance" },
+      fleet[0]!,
+    ]);
+    expect([...grouped.keys()]).toEqual(["flight-ready", "maintenance", "sold", "retired"]);
+    expect([...grouped.values()].flat().map((entry) => entry.id)).toEqual(["A1", "A5", "A3", "A4"]);
   });
 });
