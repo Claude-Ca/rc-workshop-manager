@@ -15,6 +15,7 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - PR #18 — ergonomie de l'inventaire et création des avions — fusionnée dans `develop`.
 - PR #19 — typologie, états, favoris et photos d'aéronefs — fusionnée dans `develop`.
 - PR #20 — journal de bord facultatif des aéronefs — fusionnée dans `develop` (commit `7557eeb`).
+- PR #22 — vente et retrait définitif des aéronefs — fusionnée dans `develop` (commit `63f048d`).
 - Les caractéristiques facultatives de batterie (connecteur, taux de décharge, dimensions, poids) sont portées par la référence catalogue ; les compatibilités restent portées par les exemplaires et ne sont pas des affectations.
 
 ## Lots à réaliser
@@ -25,7 +26,8 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 | B — Typologie, états et favoris | `feature/aircraft-classification-and-favorites` | Type, état opérationnel, cycle de vie, quatre favoris maximum par inventaire et affichage sur la vue d'ensemble | Aucune | Haute |
 | C — Journal de bord | `feature/aircraft-logbook` | Événements facultatifs, ajout/modification et chronologie | B recommandé | Moyenne |
 | D — Récupération des équipements | `feature/aircraft-equipment-recovery` | Récupération sélective, désaffectation, remise à disposition et mouvements | Affectations existantes | Haute |
-| E — Vente et retrait | `feature/aircraft-retirement-and-sale` | Clôture, destination individuelle de chaque équipement, transaction atomique et historique | D | Haute |
+| E — Vente et retrait | `feature/aircraft-retirement-and-sale` | Clôture, destination individuelle de chaque équipement, transaction atomique et historique | D | Réalisé — PR #22 fusionnée |
+| F — Refonte de Ma Flotte | `feature/fleet-management-overhaul` | Vignettes et liste horizontale, fiche intégrée à la navigation, filtres, regroupements repliables et compteurs | E | En cours |
 
 ## État d'avancement des lots
 
@@ -33,7 +35,8 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - Lot B — Typologie, états et favoris : implémenté par PR #19, fusionné dans `develop`.
 - Lot C — Journal de bord : implémenté par PR #20, fusionné dans `develop`.
 - Lot D — Récupération des équipements : fusionné dans `develop`.
-- Lot E — Vente et retrait : implémenté sur la PR #22, en attente de recette UI et de validation. L'aperçu sépare la configuration, le bouton du journal (fenêtre défilante indépendante avec focus initial) et la gestion du cycle de vie ; les décisions de vente/retrait restent confirmées dans un parcours transactionnel dédié. La modification de fiche est accessible depuis l'aperçu et les boutons Aperçu / Modifier sont alignés dans les cartes.
+- Lot E — Vente et retrait : implémenté et fusionné dans `develop` par la PR #22. La clôture demeure transactionnelle et chaque équipement affecté reçoit une destination explicite.
+- Lot F — Refonte de Ma Flotte : en cours sur `feature/fleet-management-overhaul`. La page propose des vignettes et une liste horizontale portant les mêmes informations, une fiche complète intégrée à la navigation, des favoris indépendants, une recherche, des filtres par type/état/cycle de vie/favoris, deux regroupements et le repli des groupes hors service, vendus et retirés. Les règles métier du lot E sont conservées.
 - Le changement d'état opérationnel vers « Hors service » ne clôture pas l'aéronef et ne récupère aucun équipement.
 - Lot D : la disponibilité seule est colorée en vert ; le nombre total d'exemplaires conserve la couleur normale.
 - Lot D : le statut local SQLite est regroupé en haut à droite ; le pied de page est réservé à la version et au lien vers le code source.
@@ -47,6 +50,10 @@ Prévoir un lot post-RC distinct pour produire une bibliothèque cohérente d'il
 - Maîtriser le stockage : assets versionnés et optimisés, nomenclature stable et taille totale plafonnée ; ne pas générer ni télécharger d'images à l'exécution.
 - Vérifier les droits et conditions d'utilisation de l'outil de génération ainsi que les éventuelles marques/logos avant publication.
 - Valider le rendu dans les cartes et fiches, le contraste et le poids du paquet avant livraison.
+
+## Après le lot F — identité visuelle des aéronefs
+
+Prévoir une famille cohérente d'icônes vectorielles pour les six types déjà gérés (avion, planeur, motoplaneur, hélicoptère, multirotor et autre). Définir une charte réutilisable (géométrie, épaisseur de trait, palette, lisibilité petite taille et variantes clair/sombre) afin de soutenir la future ligne de produits. Ce travail reste à la feuille de route : aucune icône ni image n'est générée dans le lot F.
 
 ## Stratégie de réalisation
 

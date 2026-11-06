@@ -117,6 +117,18 @@ Les choix sont individuels. La clôture est impossible tant qu'un équipement af
 
 La clôture et le devenir de chaque équipement sont historisés. Les références catalogue et les identités physiques sont conservées ; une sortie du stock disponible ne signifie pas une suppression de l'enregistrement. L'opération complète doit être atomique : si une étape échoue, aucune partie de la clôture ne doit être appliquée.
 
+## 9.1 Consultation et navigation de la flotte (lot F)
+
+La page « Ma Flotte » propose un affichage en vignettes ou en liste horizontale. Les deux modes présentent le même résumé : nom, type, constructeur/modèle, état opérationnel, cycle de vie, immatriculation UAF lorsqu'elle existe, récepteur affecté lorsqu'il existe, nombre d'équipements installés et favori. L'étoile est une action indépendante de l'ouverture de la fiche.
+
+La sélection d'une ligne ou vignette ouvre la fiche complète dans la navigation principale. Elle expose les informations de l'aéronef, sa configuration, les actions Modifier et Journal de bord, ainsi que la section Cycle de vie qui donne accès aux opérations de vente et de retrait déjà régies par le lot E.
+
+À la création, le type proposé par défaut est « Avion » ; les aéronefs existants gardent leur type enregistré. Le journal de bord dispose d'une action explicite « Fermer ». Si un événement en cours a été modifié sans être enregistré, la fermeture demande confirmation avant d'abandonner ces changements. Depuis la fiche complète, Vendre et Retirer définitivement ouvrent directement le parcours transactionnel, avec le choix de destination de chaque équipement puis le récapitulatif de confirmation.
+
+La recherche couvre le nom, le constructeur, le modèle, l'immatriculation UAF et les notes. Les filtres peuvent combiner type, état opérationnel, cycle de vie et favoris. Le favori est un bouton toggle placé avec le choix Vignettes/Liste et mis en évidence lorsqu'il est actif. « Réinitialiser les filtres » remet la recherche, les filtres et le regroupement à leur valeur initiale sans modifier le mode d'affichage. En regroupement opérationnel, les sections suivent l'ordre « En état de vol », « En maintenance », « Pour pièces », « Hors service », « Vendu », « Retiré » ; les aéronefs clôturés n'apparaissent que dans leur groupe de cycle de vie. Chaque groupe est repliable. Les groupes « Hors service », « Vendu » et « Retiré » sont repliés par défaut. Les compteurs reflètent le résultat filtré et le nombre d'aéronefs dans chaque groupe.
+
+Les futures icônes vectorielles des six types d'aéronefs relèvent d'un lot ultérieur : une charte visuelle réutilisable pour la ligne de produits sera définie avant leur création.
+
 ## 10. Exigences et critères d'acceptation
 
 | ID | Exigence | Critère d'acceptation |
@@ -134,6 +146,10 @@ La clôture et le devenir de chaque équipement sont historisés. Les référenc
 | REQ-AIR-011 | Préserver les identités et l'historique | Aucun exemplaire ou référence n'est supprimé par la clôture |
 | REQ-AIR-012 | Garantir l'atomicité de la clôture | Une erreur annule l'ensemble de la transaction |
 | REQ-AIR-013 | Séparer les changements d’état des opérations de clôture | « Hors service » ne déclenche aucune récupération ; vente/retrait passent par l’action dédiée |
+| REQ-AIR-014 | Consulter la flotte sous deux formes cohérentes | Vignettes et liste présentent les mêmes informations et ouvrent la même fiche |
+| REQ-AIR-015 | Retrouver et filtrer les aéronefs | Recherche et filtres type, état opérationnel, cycle de vie et favoris sont combinables |
+| REQ-AIR-016 | Organiser les aéronefs par état ou cycle de vie | Chaque groupe a un compteur et se replie ; hors service/vendus/retirés sont repliés par défaut |
+| REQ-AIR-017 | Consulter une fiche complète intégrée à la navigation | La fiche regroupe informations, configuration, modification, journal et actions du cycle de vie |
 
 ## 11. Principes techniques à respecter
 
@@ -153,5 +169,6 @@ La clôture et le devenir de chaque équipement sont historisés. Les référenc
 | C — Journal de bord | Événements facultatifs et chronologie | B recommandé |
 | D — Récupération | Sélection, désaffectation, disponibilité et historique | Mécanisme d'affectation existant |
 | E — Vente et retrait | Clôture, destinations individuelles, transaction atomique | D |
+| F — Refonte de Ma Flotte | Vignettes/liste, fiche intégrée, recherche, filtres et groupes repliables | E |
 
 Chaque lot est développé dans une branche dédiée issue de `develop`, livré par PR et soumis à validation avant fusion. Le lot E dépend de la stabilisation du lot D.
