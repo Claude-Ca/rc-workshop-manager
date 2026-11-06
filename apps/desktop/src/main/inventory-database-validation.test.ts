@@ -23,6 +23,22 @@ describe("validateInventoryDatabase", () => {
     expect(() => validateInventoryDatabase(path)).not.toThrow();
   });
 
+  it("persists the merchant URL separately from a reference photo", () => {
+    const path = join(directory, "merchant-url.sqlite");
+    const repository = new SqliteInventoryRepository(path);
+    repository.saveReference({
+      id: "REF-1", name: "Moteur", category: "motor", trackingMode: "individual",
+      attributes: {}, photoPath: "file:///user-data/data/images/motor.png",
+      merchantUrl: "https://shop.example/motor", archived: false, createdAt: "2026-11-06T10:00:00.000Z",
+    });
+    const saved = repository.getSnapshot().references[0];
+    expect(saved).toMatchObject({ photoPath: "file:///user-data/data/images/motor.png", merchantUrl: "https://shop.example/motor" });
+    repository.close();
+    const reopened = new SqliteInventoryRepository(path);
+    expect(reopened.getSnapshot().references[0]).toMatchObject({ photoPath: "file:///user-data/data/images/motor.png", merchantUrl: "https://shop.example/motor" });
+    reopened.close();
+  });
+
   it("rejects an empty SQLite file instead of treating it as a new inventory", async () => {
     const path = join(directory, "empty.sqlite");
     await writeFile(path, new Uint8Array());

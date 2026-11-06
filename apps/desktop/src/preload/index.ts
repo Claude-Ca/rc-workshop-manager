@@ -5,6 +5,7 @@ export type InventorySummary = { id: string; name: string; createdAt: string; la
 export type InventoryList = { items: InventorySummary[]; activeId: string; lastUsedId: string };
 
 export interface DesktopApi {
+  choosePhoto(): Promise<string | null>;
   exportDatabase(): Promise<boolean>;
   exportInventoryCsv(categories: ComponentCategory[] | "all"): Promise<boolean>;
   resetInventory(): Promise<InventorySnapshot>;
@@ -39,6 +40,7 @@ export interface DesktopApi {
 }
 
 const api: DesktopApi = {
+  choosePhoto: () => ipcRenderer.invoke("photo:choose"),
   exportDatabase: () => ipcRenderer.invoke("export:database"),
   exportInventoryCsv: (categories) => ipcRenderer.invoke("export:csv", categories),
   resetInventory: () => ipcRenderer.invoke("inventory:reset"),

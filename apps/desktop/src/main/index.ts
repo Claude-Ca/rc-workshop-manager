@@ -1,5 +1,6 @@
-import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, type OpenDialogOptions } from "electron";
 import { basename, extname, join, resolve, sep } from "node:path";
+import { pathToFileURL } from "node:url";
 import { copyFile, mkdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { COMPONENT_CATEGORIES, InventoryService, type Aircraft, type ComponentCategory, type ComponentReference, type InventorySnapshot, type Project, type StockItem, type StockLot } from "@rc-workshop/core";
@@ -15,6 +16,24 @@ let inventory: InventoryService;
 let registry: InventoryRegistry;
 const registryPath = () => join(app.getPath("userData"), "inventories.json");
 const inventoryDirectory = () => join(app.getPath("userData"), "inventories");
+const imageDirectory = () => join(app.getPath("userData"), "data", "images");
+
+async function chooseAndCopyImage(): Promise<string | null> {
+  const options: OpenDialogOptions = {
+    title: "Choisir une photo",
+    properties: ["openFile"],
+    filters: [{ name: "Images", extensions: ["jpg", "jpeg", "png", "webp", "gif"] }],
+  };
+  const result = mainWindow ? await dialog.showOpenDialog(mainWindow, options) : await dialog.showOpenDialog(options);
+  if (result.canceled || !result.filePaths[0]) return null;
+  const source = result.filePaths[0];
+  const extension = extname(source).toLowerCase();
+  if (![".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(extension)) throw new Error("Format d’image non pris en charge.");
+  await mkdir(imageDirectory(), { recursive: true });
+  const destination = join(imageDirectory(), randomUUID() + extension);
+  await copyFile(source, destination);
+  return pathToFileURL(destination).href;
+}
 
 function summaries(): InventorySummary[] {
   return registry.entries.map(({ id, name, createdAt, lastUsedAt }, index) => ({
@@ -299,6 +318,7 @@ function createWindow(): void {
 
 function registerHandlers(): void {
   inventoryManagerHandlers();
+  ipcMain.handle("photo:choose", () => chooseAndCopyImage());
   ipcMain.handle("inventory:snapshot", () => inventory.getSnapshot());
   ipcMain.handle("inventory:update-reference", (_event, input: ComponentReference) => {
     inventory.updateReference(input);

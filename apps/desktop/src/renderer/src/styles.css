@@ -92,6 +92,9 @@
 .favorite-toggle { border: 0; background: transparent; color: var(--muted); font-size: 23px; cursor: pointer; padding: 2px 6px; }
 .favorite-toggle.active { color: #d69a22; }
 .favorite-toggle:disabled { opacity: .35; cursor: not-allowed; }
+.photo-picker-row { display: flex; align-items: center; gap: 10px; }
+.photo-picker-row > span { color: var(--muted); font-size: 11px; }
+.closure-list-actions { margin-top: 2px; }
 .aircraft-state-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .state-pill { display: inline-flex; align-items: center; border: 1px solid #40536a; border-radius: 999px; padding: 5px 10px; background: #293b4c; color: #e4edf7; font-size: 11px; font-weight: 600; line-height: 1.25; }
 .state-pill.flight-ready { background: #1f4939; border-color: #34765a; color: #b9f0d2; }
@@ -125,3 +128,4 @@
 .equipment-disposition-row small { color:var(--muted); font-size:10px; }
 .equipment-disposition-row select { min-width:0; width:100%; height:36px; background:#111923; border:1px solid #344151; border-radius:7px; padding:0 9px; color:#e7edf5; font-size:11px; }
 @media(max-width:760px){.equipment-disposition-row{grid-template-columns:1fr}}
+.modal{max-height:calc(100vh - 40px);overflow-y:auto;overscroll-behavior:contain}.aircraft-actions,.aircraft-preview-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.aircraft-actions>button{flex:1;min-width:0;white-space:nowrap}.aircraft-lifecycle-management{display:grid;gap:8px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#151d27}.aircraft-lifecycle-management h3,.aircraft-lifecycle-management p{margin:0}.aircraft-lifecycle-management h3{font-size:13px}.aircraft-lifecycle-management p{font-size:11px;line-height:1.5;color:var(--muted)}.aircraft-preview-actions>.secondary{white-space:nowrap}.aircraft-logbook{min-width:0}

@@ -33,6 +33,7 @@ export interface ComponentReference {
   propellerPitch?: string;
   attributes: Record<string, string | number | boolean>;
   photoPath?: string;
+  merchantUrl?: string;
   archived: boolean;
   createdAt: string;
 }

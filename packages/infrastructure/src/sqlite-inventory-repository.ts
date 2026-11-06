@@ -87,7 +87,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
         receiver_channels INTEGER, receiver_protocol TEXT, radio_type TEXT, transmitter_channels INTEGER, transmitter_protocols_json TEXT, firmware_version TEXT,
         battery_connector TEXT, battery_discharge_rate_c REAL, battery_dimensions_mm TEXT, battery_weight_g REAL,
         motorization_kind TEXT, motor_type TEXT, motor_voltage TEXT, motor_displacement TEXT, propeller_diameter TEXT, propeller_pitch TEXT,
-        attributes_json TEXT NOT NULL DEFAULT '{}', photo_path TEXT,
+        attributes_json TEXT NOT NULL DEFAULT '{}', photo_path TEXT, merchant_url TEXT,
         archived INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS aircraft (
@@ -118,6 +118,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
       );
     `);
     const referenceColumns = this.db.prepare("PRAGMA table_info(component_references)").all() as Row[];
+    if (!referenceColumns.some((column) => column.name === "merchant_url")) this.db.exec("ALTER TABLE component_references ADD COLUMN merchant_url TEXT");
     if (!referenceColumns.some((column) => column.name === "receiver_channels")) this.db.exec("ALTER TABLE component_references ADD COLUMN receiver_channels INTEGER");
     if (!referenceColumns.some((column) => column.name === "receiver_protocol")) this.db.exec("ALTER TABLE component_references ADD COLUMN receiver_protocol TEXT");
     if (!referenceColumns.some((column) => column.name === "radio_type")) this.db.exec("ALTER TABLE component_references ADD COLUMN radio_type TEXT");
@@ -194,6 +195,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
       ...(row.model ? { model: String(row.model) } : {}),
       ...(row.description ? { description: String(row.description) } : {}),
       ...(row.photo_path ? { photoPath: String(row.photo_path) } : {}),
+      ...(row.merchant_url ? { merchantUrl: String(row.merchant_url) } : {}),
       ...(row.receiver_channels !== null && row.receiver_channels !== undefined ? { receiverChannels: Number(row.receiver_channels) } : {}),
       ...(row.receiver_protocol ? { receiverProtocol: String(row.receiver_protocol) } : {}),
       ...(row.radio_type === "transmitter" || row.radio_type === "receiver" ? { radioType: row.radio_type } : {}),
@@ -264,15 +266,15 @@ export class SqliteInventoryRepository implements InventoryRepository {
 
   saveReference(value: ComponentReference): void {
     this.db.prepare(`INSERT INTO component_references
-      (id,name,category,brand,model,description,tracking_mode,attributes_json,photo_path,archived,created_at,receiver_channels,receiver_protocol,radio_type,transmitter_channels,transmitter_protocols_json,firmware_version,battery_connector,battery_discharge_rate_c,battery_dimensions_mm,battery_weight_g,motorization_kind,motor_type,motor_voltage,motor_displacement,propeller_diameter,propeller_pitch)
-      VALUES (@id,@name,@category,@brand,@model,@description,@trackingMode,@attributes,@photoPath,@archived,@createdAt,@receiverChannels,@receiverProtocol,@radioType,@transmitterChannels,@transmitterProtocols,@firmwareVersion,@batteryConnector,@batteryDischargeRateC,@batteryDimensionsMm,@batteryWeightG,@motorizationKind,@motorType,@motorVoltage,@motorDisplacement,@propellerDiameter,@propellerPitch)
+      (id,name,category,brand,model,description,tracking_mode,attributes_json,photo_path,merchant_url,archived,created_at,receiver_channels,receiver_protocol,radio_type,transmitter_channels,transmitter_protocols_json,firmware_version,battery_connector,battery_discharge_rate_c,battery_dimensions_mm,battery_weight_g,motorization_kind,motor_type,motor_voltage,motor_displacement,propeller_diameter,propeller_pitch)
+      VALUES (@id,@name,@category,@brand,@model,@description,@trackingMode,@attributes,@photoPath,@merchantUrl,@archived,@createdAt,@receiverChannels,@receiverProtocol,@radioType,@transmitterChannels,@transmitterProtocols,@firmwareVersion,@batteryConnector,@batteryDischargeRateC,@batteryDimensionsMm,@batteryWeightG,@motorizationKind,@motorType,@motorVoltage,@motorDisplacement,@propellerDiameter,@propellerPitch)
       ON CONFLICT(id) DO UPDATE SET name=excluded.name,category=excluded.category,brand=excluded.brand,
       model=excluded.model,description=excluded.description,tracking_mode=excluded.tracking_mode,
-      attributes_json=excluded.attributes_json,photo_path=excluded.photo_path,archived=excluded.archived,
+      attributes_json=excluded.attributes_json,photo_path=excluded.photo_path,merchant_url=excluded.merchant_url,archived=excluded.archived,
       receiver_channels=excluded.receiver_channels,receiver_protocol=excluded.receiver_protocol,radio_type=excluded.radio_type,transmitter_channels=excluded.transmitter_channels,transmitter_protocols_json=excluded.transmitter_protocols_json,firmware_version=excluded.firmware_version,battery_connector=excluded.battery_connector,battery_discharge_rate_c=excluded.battery_discharge_rate_c,battery_dimensions_mm=excluded.battery_dimensions_mm,battery_weight_g=excluded.battery_weight_g,motorization_kind=excluded.motorization_kind,motor_type=excluded.motor_type,motor_voltage=excluded.motor_voltage,motor_displacement=excluded.motor_displacement,propeller_diameter=excluded.propeller_diameter,propeller_pitch=excluded.propeller_pitch`)
       .run({ id:value.id,name:value.name,category:value.category,brand:value.brand??null,model:value.model??null,
         description:value.description??null,trackingMode:value.trackingMode,attributes:JSON.stringify(value.attributes),
-        photoPath:value.photoPath??null,archived:value.archived?1:0,createdAt:value.createdAt,
+        photoPath:value.photoPath??null,merchantUrl:value.merchantUrl??null,archived:value.archived?1:0,createdAt:value.createdAt,
         receiverChannels:value.receiverChannels??null,receiverProtocol:value.receiverProtocol??null,radioType:value.radioType??null,transmitterChannels:value.transmitterChannels??null,transmitterProtocols:value.transmitterProtocols?JSON.stringify(value.transmitterProtocols):null,firmwareVersion:value.firmwareVersion??null,
         batteryConnector:value.batteryConnector??null,batteryDischargeRateC:value.batteryDischargeRateC??null,batteryDimensionsMm:value.batteryDimensionsMm??null,batteryWeightG:value.batteryWeightG??null,
         motorizationKind:value.motorizationKind??null,motorType:value.motorType??null,motorVoltage:value.motorVoltage??null,motorDisplacement:value.motorDisplacement??null,propellerDiameter:value.propellerDiameter??null,propellerPitch:value.propellerPitch??null });
