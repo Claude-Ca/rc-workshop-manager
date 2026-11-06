@@ -208,56 +208,65 @@ export class InventoryService {
     if (!["airplane", "glider", "motor-glider", "helicopter", "multirotor", "other"].includes(normalized.aircraftType!)) throw new InventoryError("Type d'aéronef invalide.");
     if (!["flight-ready", "maintenance", "parts", "out-of-service"].includes(normalized.operationalState!)) throw new InventoryError("État opérationnel invalide.");
     if (!["active", "sold", "retired"].includes(normalized.lifecycleState!)) throw new InventoryError("Cycle de vie invalide.");
+    if (normalized.lifecycleState !== "active") throw new InventoryError("Un nouvel aéronef doit être actif. La vente et le retrait passent par l'action de clôture.");
     if (normalized.favorite && this.repository.getSnapshot().aircraft.filter((entry) => entry.favorite).length >= 4) {
       throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
     }
     this.repository.saveAircraft(normalized);
   }
 
-  updateAircraft(aircraft: Aircraft, dispositions: import("./models.js").AircraftEquipmentDisposition[] = [], movementIdPrefix = "AIRCRAFT-STATE", occurredAt = new Date().toISOString()): void {
+  updateAircraft(aircraft: Aircraft): void {
     const snapshot = this.repository.getSnapshot();
     const previous = snapshot.aircraft.find((entry) => entry.id === aircraft.id);
     if (!previous) throw new InventoryError("Avion introuvable.");
     if (!aircraft.name.trim()) throw new InventoryError("Le nom de l'avion est obligatoire.");
-    const updated: Aircraft = { ...aircraft, name: aircraft.name.trim(),
-      aircraftType: aircraft.aircraftType ?? "other", operationalState: aircraft.operationalState ?? "flight-ready",
-      lifecycleState: aircraft.lifecycleState ?? "active", favorite: aircraft.favorite ?? false };
+    if (aircraft.lifecycleState !== undefined && aircraft.lifecycleState !== (previous.lifecycleState ?? "active")) throw new InventoryError("La vente ou le retrait définitif doit être réalisé depuis l'action de clôture de la fiche aéronef.");
+    if ((previous.lifecycleState ?? "active") !== "active") throw new InventoryError("La fiche d'un aéronef clôturé ne peut plus être modifiée.");
+    const updated: Aircraft = { ...aircraft, name: aircraft.name.trim(), aircraftType: aircraft.aircraftType ?? "other", operationalState: aircraft.operationalState ?? "flight-ready", lifecycleState: "active", favorite: aircraft.favorite ?? false };
     if (!["airplane", "glider", "motor-glider", "helicopter", "multirotor", "other"].includes(updated.aircraftType!)) throw new InventoryError("Type d'aéronef invalide.");
     if (!["flight-ready", "maintenance", "parts", "out-of-service"].includes(updated.operationalState!)) throw new InventoryError("État opérationnel invalide.");
-    if (!["active", "sold", "retired"].includes(updated.lifecycleState!)) throw new InventoryError("Cycle de vie invalide.");
-    if (updated.favorite && !snapshot.aircraft.find((entry) => entry.id === aircraft.id)?.favorite &&
-      snapshot.aircraft.filter((entry) => entry.favorite).length >= 4) {
-      throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
-    }
+    if (updated.favorite && !previous.favorite && snapshot.aircraft.filter((entry) => entry.favorite).length >= 4) throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
     if (aircraft.manufacturer?.trim()) updated.manufacturer = aircraft.manufacturer.trim(); else delete updated.manufacturer;
     if (aircraft.model?.trim()) updated.model = aircraft.model.trim(); else delete updated.model;
     if (aircraft.notes?.trim()) updated.notes = aircraft.notes.trim(); else delete updated.notes;
     if (aircraft.uafRegistration?.trim()) updated.uafRegistration = aircraft.uafRegistration.trim(); else delete updated.uafRegistration;
     if (aircraft.photoPath?.trim()) updated.photoPath = aircraft.photoPath.trim(); else delete updated.photoPath;
-    const enteringOutOfService = updated.operationalState === "out-of-service" && previous.operationalState !== "out-of-service";
-    const enteringRetired = updated.lifecycleState === "retired" && previous.lifecycleState !== "retired";
-    const installed = snapshot.items.filter((item) => item.status === "installed" && item.aircraftId === aircraft.id);
-    if ((enteringOutOfService || enteringRetired) && installed.length > 0) {
-      if (!Array.isArray(dispositions) || dispositions.length !== installed.length) throw new InventoryError("Chaque équipement affecté doit avoir une destination avant ce changement d'état.");
-      const selected = new Map(dispositions.map((entry) => [entry.itemId, entry.status]));
-      if (selected.size !== installed.length || installed.some((item) => !selected.has(item.id))) throw new InventoryError("La sélection des destinations ne correspond plus aux équipements affectés.");
-      if (dispositions.some((entry) => !["available", "retired"].includes(entry.status))) throw new InventoryError("Destination d'équipement invalide.");
-      const entries = installed.map((item, index) => {
-        const status = selected.get(item.id)!;
-        const released: StockItem = { ...item, status }; delete released.aircraftId; delete released.projectId;
-        const movement: StockMovement = { id: movementIdPrefix + "-" + index, type: status === "available" ? "released" : "retired", referenceId: item.referenceId, itemId: item.id, aircraftId: aircraft.id, notes: status === "available" ? "Retour à l'inventaire lors du changement d'état de l'aéronef" : "Équipement déclaré HS lors du changement d'état de l'aéronef", occurredAt };
-        return { item: released, movement };
-      });
-      if (!this.repository.saveAircraftTransition) throw new InventoryError("Le dépôt ne prend pas en charge les transitions atomiques d'aéronef.");
-      this.repository.saveAircraftTransition(updated, entries); return;
-    }
     this.repository.saveAircraft(updated);
+  }
+
+  closeAircraft(aircraftId: string, lifecycleState: "sold" | "retired", dispositions: import("./models.js").AircraftEquipmentDisposition[], movementIdPrefix: string, occurredAt: string): void {
+    const snapshot = this.repository.getSnapshot();
+    const aircraft = snapshot.aircraft.find((entry) => entry.id === aircraftId);
+    if (!aircraft) throw new InventoryError("Aéronef introuvable.");
+    if ((aircraft.lifecycleState ?? "active") !== "active") throw new InventoryError("Cet aéronef est déjà clôturé.");
+    if (lifecycleState !== "sold" && lifecycleState !== "retired") throw new InventoryError("Type de clôture invalide.");
+    if (!movementIdPrefix.trim()) throw new InventoryError("Identifiant de clôture obligatoire.");
+    const assigned = snapshot.items.filter((item) => item.aircraftId === aircraftId);
+    if (assigned.some((item) => item.status !== "installed")) throw new InventoryError("Un équipement affecté présente un état incohérent. Corrige son affectation avant de clôturer l’aéronef.");
+    const installed = assigned;
+    if (!Array.isArray(dispositions) || dispositions.length !== installed.length) throw new InventoryError("Chaque équipement affecté doit recevoir une destination explicite.");
+    const selected = new Map(dispositions.map((entry) => [entry.itemId, entry.destination]));
+    const allowed: import("./models.js").AircraftClosureDestination[] = ["inventory", "sold-with-aircraft", "sold-separately", "scrapped"];
+    if (selected.size !== installed.length || installed.some((item) => !selected.has(item.id)) || dispositions.some((entry) => !allowed.includes(entry.destination))) throw new InventoryError("Les destinations des équipements sont incomplètes ou invalides.");
+    if (lifecycleState === "retired" && dispositions.some((entry) => entry.destination === "sold-with-aircraft")) throw new InventoryError("Un équipement ne peut pas être vendu avec un aéronef retiré sans vente.");
+    const labels: Record<import("./models.js").AircraftClosureDestination, string> = { inventory: "récupéré dans l'inventaire", "sold-with-aircraft": "vendu avec l'aéronef", "sold-separately": "vendu séparément", scrapped: "mis au rebut" };
+    const entries = installed.map((item, index) => {
+      const destination = selected.get(item.id)!;
+      const updatedItem: StockItem = { ...item, status: destination === "inventory" ? "available" : destination === "scrapped" ? "retired" : "sold" };
+      delete updatedItem.aircraftId; delete updatedItem.projectId;
+      const movement: StockMovement = { id: movementIdPrefix + "-" + index, type: destination === "inventory" ? "released" : destination === "scrapped" ? "retired" : "sold", referenceId: item.referenceId, itemId: item.id, aircraftId, notes: "Clôture de l'aéronef : " + labels[destination], occurredAt };
+      return { item: updatedItem, movement };
+    });
+    const closed: Aircraft = { ...aircraft, lifecycleState, favorite: false };
+    const event: AircraftLogbookEvent = { id: movementIdPrefix + "-LOGBOOK", aircraftId, type: lifecycleState === "sold" ? "sale" : "retirement", date: occurredAt.slice(0, 10), comment: lifecycleState === "sold" ? "Aéronef vendu et sorti de la flotte." : "Aéronef retiré définitivement de la flotte." };
+    this.repository.saveAircraftClosure(closed, entries, event);
   }
 
   setAircraftFavorite(aircraftId: string, favorite: boolean): void {
     const snapshot = this.repository.getSnapshot();
     const aircraft = snapshot.aircraft.find((entry) => entry.id === aircraftId);
     if (!aircraft) throw new InventoryError("Aéronef introuvable.");
+    if ((aircraft.lifecycleState ?? "active") !== "active" && favorite) throw new InventoryError("Un aéronef clôturé ne peut pas redevenir favori.");
     if (favorite && !aircraft.favorite && snapshot.aircraft.filter((entry) => entry.favorite).length >= 4) {
       throw new InventoryError("Quatre aéronefs favoris maximum par inventaire.");
     }

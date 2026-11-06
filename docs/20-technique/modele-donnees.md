@@ -16,7 +16,7 @@ Les chemins et opérations de fichiers restent dans le processus principal Elect
 
 ## Entités métier SQLite
 
-- `ComponentReference` / table `component_references` : référence catalogue, catégorie, marque/modèle/description, mode de suivi, propriétés radio, motorisation et batterie typées (connecteur, taux de décharge, dimensions et poids facultatifs), attributs, chemin de photo, archivage et date de création.
+- `ComponentReference` / table `component_references` : référence catalogue, catégorie, marque/modèle/description, mode de suivi, propriétés radio, motorisation et batterie typées (connecteur, taux de décharge, dimensions et poids facultatifs), attributs, chemin de photo, URL marchand distincte, archivage et date de création.
 - `StockItem` / table `stock_items` : exemplaire physique, code inventaire unique, numéro de série, état, emplacement, avion/projet éventuel, nom TX16, identifiant de l’émetteur lié et compatibilités avion éventuelles (notamment pour les batteries).
 - `StockLot` / table `stock_lots` : quantité entière non négative, unité et emplacement, rattachés à une référence.
 - `Aircraft` / table `aircraft` : nom, constructeur, modèle, notes, immatriculation UAF et chemin/URL de photo facultatifs ; type d'aéronef, état opérationnel, cycle de vie et indicateur de favori.
@@ -26,9 +26,11 @@ Les chemins et opérations de fichiers restent dans le processus principal Elect
 
 Le snapshot d’un inventaire regroupe références, exemplaires, lots, avions, projets, mouvements et événements de journal de bord.
 
-### Transition d'état et devenir des équipements
+### Vente et retrait définitif des aéronefs
 
-La méthode métier `updateAircraft` détecte le passage vers `out-of-service` ou `retired`. Si des exemplaires sont encore installés, elle exige une décision explicite pour chacun : `available` (retour inventaire) ou `retired` (HS / rebuté). Le dépôt SQLite enregistre dans une transaction unique la fiche aéronef, le statut de chaque exemplaire, la suppression de `aircraft_id` et le mouvement `released` ou `retired`. Le mouvement conserve l'identifiant de l'aéronef d'origine. Toute erreur annule la transition complète. L'aperçu de l'aéronef reste une vue de consultation.
+Les modifications ordinaires d'une fiche ne déclenchent aucune récupération automatique lorsqu'un aéronef passe à l'état « Hors service ». La vente et le retrait sont exécutés par une commande dédiée. Le service métier exige une destination pour chaque exemplaire encore affecté : retour dans l'inventaire, vente avec l'aéronef, vente séparée ou mise au rebut. La destination « vendu avec l'aéronef » est réservée à une vente.
+
+Le repository SQLite persiste dans une transaction unique le cycle de vie final, les statuts et désaffectations des exemplaires, les mouvements correspondants et l'événement de journal (vente ou retrait). Les exemplaires et références catalogue ne sont jamais supprimés. Une erreur annule toute l'opération. Les batteries ne sont pas concernées car elles ne sont pas affectées.
 
 ### Journal de bord des aéronefs
 
@@ -37,6 +39,8 @@ La table `aircraft_logbook` stocke séparément les événements de chaque aéro
 ### Classification des aéronefs
 
 La table `aircraft` porte les attributs `aircraft_type` (défaut `other`), `operational_state` (défaut `flight-ready`), `lifecycle_state` (défaut `active`), `favorite` (défaut `0`) et `photo_path` (facultatif). La migration ajoute ces colonnes sans réécrire les aéronefs existants. Les valeurs par défaut garantissent la compatibilité des anciennes bases ; les favoris sont limités à quatre par inventaire par le service métier.
+
+Une migration additive ajoute `merchant_url` à `component_references`. Les images choisies depuis l'application sont copiées dans `<userData>/data/images` via le dialogue de fichiers Electron. Le chemin est enregistré avec la référence ou l'aéronef, indépendamment de `merchant_url`. Ce répertoire se trouve dans les données persistantes de l'utilisateur, hors du répertoire d'installation.
 
 ## Catégories et compatibilité
 

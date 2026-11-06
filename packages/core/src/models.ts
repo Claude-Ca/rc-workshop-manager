@@ -4,7 +4,7 @@ export const COMPONENT_CATEGORIES = [
 
 export type ComponentCategory = (typeof COMPONENT_CATEGORIES)[number] | "propeller" | "receiver" | "connector" | "control" | "structure" | "material" | "construction";
 export type TrackingMode = "individual" | "quantity";
-export type ItemStatus = "available" | "installed" | "reserved" | "borrowed" | "repair" | "retired";
+export type ItemStatus = "available" | "installed" | "reserved" | "borrowed" | "repair" | "sold" | "retired";
 
 export interface ComponentReference {
   id: string;
@@ -33,6 +33,7 @@ export interface ComponentReference {
   propellerPitch?: string;
   attributes: Record<string, string | number | boolean>;
   photoPath?: string;
+  merchantUrl?: string;
   archived: boolean;
   createdAt: string;
 }
@@ -66,7 +67,8 @@ export type AircraftType = "airplane" | "glider" | "motor-glider" | "helicopter"
 export type AircraftOperationalState = "flight-ready" | "maintenance" | "parts" | "out-of-service";
 export type AircraftLifecycleState = "active" | "sold" | "retired";
 
-export type AircraftEquipmentDisposition = { itemId: string; status: "available" | "retired" };
+export type AircraftClosureDestination = "inventory" | "sold-with-aircraft" | "sold-separately" | "scrapped";
+export interface AircraftEquipmentDisposition { itemId: string; destination: AircraftClosureDestination; }
 
 export interface Aircraft {
   id: string;
@@ -91,7 +93,7 @@ export interface Project {
 
 export type MovementType =
   | "stock-in" | "installed" | "reserved" | "released"
-  | "transferred" | "adjusted" | "consumed" | "repair" | "retired" | "deleted";
+  | "transferred" | "adjusted" | "consumed" | "repair" | "sold" | "retired" | "deleted";
 
 export interface StockMovement {
   id: string;

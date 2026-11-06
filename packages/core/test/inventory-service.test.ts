@@ -18,6 +18,10 @@ class MemoryRepository implements InventoryRepository {
   deleteLogbookEvent(eventId: string) { this.snapshot.logbookEvents = this.snapshot.logbookEvents.filter(x => x.id !== eventId); }
   saveProject(value: Project) { this.snapshot.projects.push(value); }
   appendMovement(value: StockMovement) { this.snapshot.movements.push(value); }
+  saveAircraftClosure(aircraft: Aircraft, entries: Array<{ item: StockItem; movement: StockMovement }>, event: AircraftLogbookEvent) {
+    this.saveAircraft(aircraft); for (const entry of entries) { this.saveItem(entry.item); this.appendMovement(entry.movement); }
+    this.saveLogbookEvent(event);
+  }
 }
 
 const reference = (id: string, category: ComponentReference["category"], trackingMode: ComponentReference["trackingMode"]): ComponentReference => ({

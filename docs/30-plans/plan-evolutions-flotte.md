@@ -32,11 +32,21 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - Lot A — Ergonomie : implémenté par PR #18, fusionné dans `develop`.
 - Lot B — Typologie, états et favoris : implémenté par PR #19, fusionné dans `develop`.
 - Lot C — Journal de bord : implémenté par PR #20, fusionné dans `develop`.
-- Lot D — Récupération des équipements : en cours sur `feature/aircraft-equipment-recovery`.
-- Lot E — Vente et retrait : à réaliser.
-- Lot D : le traitement des équipements est déclenché depuis le changement d'état vers « Hors service » ou « Retiré », et non depuis l'aperçu.
+- Lot D — Récupération des équipements : fusionné dans `develop`.
+- Lot E — Vente et retrait : implémenté sur la PR #22, en attente de recette UI et de validation. L'aperçu sépare la configuration, le bouton du journal (fenêtre défilante indépendante avec focus initial) et la gestion du cycle de vie ; les décisions de vente/retrait restent confirmées dans un parcours transactionnel dédié. La modification de fiche est accessible depuis l'aperçu et les boutons Aperçu / Modifier sont alignés dans les cartes.
+- Le changement d'état opérationnel vers « Hors service » ne clôture pas l'aéronef et ne récupère aucun équipement.
 - Lot D : la disponibilité seule est colorée en vert ; le nombre total d'exemplaires conserve la couleur normale.
 - Lot D : le statut local SQLite est regroupé en haut à droite ; le pied de page est réservé à la version et au lien vers le code source.
+
+## Après la RC — bibliothèque d'illustrations d'équipements
+
+Prévoir un lot post-RC distinct pour produire une bibliothèque cohérente d'illustrations générées par IA. Aucun visuel généré n'est requis pour la RC.
+
+- Définir une charte commune (cadrage, fond, lumière, style, palette et niveau de détail) et des consignes par famille d'équipement.
+- Prévoir une illustration de repli intégrée pour chaque famille et un comportement propre lorsqu'une image manque.
+- Maîtriser le stockage : assets versionnés et optimisés, nomenclature stable et taille totale plafonnée ; ne pas générer ni télécharger d'images à l'exécution.
+- Vérifier les droits et conditions d'utilisation de l'outil de génération ainsi que les éventuelles marques/logos avant publication.
+- Valider le rendu dans les cartes et fiches, le contraste et le poids du paquet avant livraison.
 
 ## Stratégie de réalisation
 
