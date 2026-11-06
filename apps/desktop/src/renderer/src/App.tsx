@@ -469,7 +469,10 @@ function AircraftPreviewModal({ aircraft, snapshot, busy, error, initialClosureT
   const allDestinationsSelected = installed.every((item) => Boolean(destinations[item.id]));
   const selectedSummary = (Object.keys(destinationLabels) as import("@rc-workshop/core").AircraftClosureDestination[]).map((key) => ({ key, label: destinationLabels[key], count: installed.filter((item) => destinations[item.id] === key).length })).filter((entry) => entry.count > 0);
   function startClosure(target: "sold" | "retired") { setClosureTarget(target); setReview(false); setDestinations(Object.fromEntries(installed.map((item) => [item.id, ""]))); }
-  function cancelClosure() { setClosureTarget(null); setReview(false); setDestinations({}); }
+  function cancelClosure() {
+    if (initialClosureTarget) { onClose(); return; }
+    setClosureTarget(null); setReview(false); setDestinations({});
+  }
   const closureTitle = closureTarget === "sold" ? "Vendre l'avion" : "Retirer définitivement l'avion";
   return <Modal title={closureTarget ? (review ? "Récapitulatif de clôture" : closureTitle) : "Aperçu de la fiche avion"} onClose={closureTarget ? cancelClosure : onClose} error={error}>
     {closureTarget ? <div className="form-grid">
