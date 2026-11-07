@@ -5,6 +5,11 @@ export type InventorySummary = { id: string; name: string; createdAt: string; la
 export type InventoryList = { items: InventorySummary[]; activeId: string; lastUsedId: string };
 
 export interface DesktopApi {
+  minimizeWindow(): Promise<void>;
+  toggleMaximizeWindow(): Promise<boolean>;
+  isWindowMaximized(): Promise<boolean>;
+  closeWindow(): Promise<void>;
+  onWindowMaximizedChange(callback: (maximized: boolean) => void): () => void;
   choosePhoto(): Promise<string | null>;
   exportDatabase(): Promise<boolean>;
   exportInventoryCsv(categories: ComponentCategory[] | "all"): Promise<boolean>;
@@ -40,6 +45,15 @@ export interface DesktopApi {
 }
 
 const api: DesktopApi = {
+  minimizeWindow: () => ipcRenderer.invoke("window:minimize"),
+  toggleMaximizeWindow: () => ipcRenderer.invoke("window:toggle-maximize"),
+  isWindowMaximized: () => ipcRenderer.invoke("window:is-maximized"),
+  closeWindow: () => ipcRenderer.invoke("window:close"),
+  onWindowMaximizedChange: (callback) => {
+    const listener = (_event: Electron.IpcRendererEvent, maximized: boolean) => callback(maximized);
+    ipcRenderer.on("window:maximized-change", listener);
+    return () => ipcRenderer.removeListener("window:maximized-change", listener);
+  },
   choosePhoto: () => ipcRenderer.invoke("photo:choose"),
   exportDatabase: () => ipcRenderer.invoke("export:database"),
   exportInventoryCsv: (categories) => ipcRenderer.invoke("export:csv", categories),

@@ -1,0 +1,67 @@
+html,body,#root{width:100%;height:100%;min-height:100%;margin:0}
+#root{display:flex;flex-direction:column}
+.app-titlebar{height:38px;flex:0 0 38px;display:flex;align-items:center;background:#111923;border-bottom:1px solid #283849;color:#e5f2ff;user-select:none;-webkit-app-region:drag}
+.titlebar-brand{height:100%;display:flex;align-items:center;gap:9px;padding:0 12px;font-size:12px;font-weight:700;letter-spacing:.15px;-webkit-app-region:no-drag}
+.titlebar-brand img{width:23px;height:23px;object-fit:contain;border-radius:50%}
+.titlebar-drag-space{height:100%;flex:1;min-width:24px;-webkit-app-region:drag}
+.titlebar-button{width:46px;height:38px;flex:none;display:grid;place-items:center;padding:0;border:0;border-radius:0;background:transparent;color:inherit;-webkit-app-region:no-drag}
+.titlebar-button:hover{background:#26394c}
+.titlebar-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round}
+.titlebar-button.close-button:hover{background:#c42b1c;color:white}
+.theme-toggle{margin-right:8px;color:#8ddcf3}
+.shell{flex:1;min-height:0}
+.sidebar{padding-top:22px}
+.brand-mark{background:transparent}
+.brand-mark img{width:42px;height:42px;object-fit:contain;border-radius:50%}
+.nav-item>svg{width:18px;height:18px;flex:none;color:#8ba8c1}
+.nav-item.active>svg{color:#80dfff}
+.welcome{gap:28px}
+.welcome-copy{min-width:0}
+.welcome-logo{width:min(36%,360px);height:128px;padding:6px 10px;object-fit:contain;background:#edf5f8;border:1px solid #86bad4;border-radius:10px;box-shadow:0 0 22px #35c7e52b}
+.category-icon{color:#91e5fb;background:linear-gradient(145deg,#233a50,#1b2b3c);border:1px solid #395b74}
+.category-icon svg{filter:drop-shadow(0 0 4px #56c9e758)}
+.aircraft-icon{color:#9ee9fa;filter:drop-shadow(0 2px 5px #2eafcf38)}
+.nav-item:focus-visible,.titlebar-button:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #74def5;outline-offset:2px}
+@media(max-width:900px){.welcome-logo{width:32%;height:100px}.topbar{padding-left:24px;padding-right:24px}.content{padding-left:24px;padding-right:24px}}
+@media(max-width:680px){.welcome{align-items:flex-start}.welcome-logo{width:28%;height:82px}.top-actions{gap:8px}.local-chip{display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+[data-theme="light"]{color-scheme:light;--panel:#fff;--panel2:#f5f8fb;--line:#d5e0ea;--muted:#60758a;--accent:#147ca4;--accent2:#286ca7;color:#182c3d;background:#edf2f6}
+[data-theme="light"] body{background:#edf2f6;color:#182c3d}
+[data-theme="light"] .app-titlebar{background:#e8eff5;color:#183249;border-color:#cedbe6}
+[data-theme="light"] .titlebar-button:hover{background:#d5e2ec}
+[data-theme="light"] .sidebar,[data-theme="light"] .topbar{background:#f8fafc}
+[data-theme="light"] .sidebar{border-color:#d5e0ea}
+[data-theme="light"] .brand strong,[data-theme="light"] .topbar h1,[data-theme="light"] .section-heading h2,[data-theme="light"] .welcome h2{color:#183249}
+[data-theme="light"] .nav-item{color:#53697d}
+[data-theme="light"] .nav-item:hover,[data-theme="light"] .nav-item.active{background:#e4eff7;color:#173e5a}
+[data-theme="light"] .nav-item.active{box-shadow:inset 3px 0 #168eb5}
+[data-theme="light"] .nav-item>svg{color:#547a95}
+[data-theme="light"] .nav-item.active>svg{color:#087e9d}
+[data-theme="light"] .welcome{background:linear-gradient(105deg,#e2f0f7,#eef5f9 65%,#dceaf2);border-color:#c4d9e5}
+[data-theme="light"] .welcome p,[data-theme="light"] .muted,[data-theme="light"] .local-chip{color:#536b7f}
+[data-theme="light"] .eyebrow,[data-theme="light"] .nav-label{color:#58758a}
+[data-theme="light"] .panel,[data-theme="light"] .stat-card,[data-theme="light"] .reference-card,[data-theme="light"] .aircraft-card,[data-theme="light"] .favorite-aircraft-card,[data-theme="light"] .supply-row{background:#fff;border-color:#d5e0ea;color:#203447}
+[data-theme="light"] .recent-list,[data-theme="light"] .movement-list{background:#fff;border-color:#d5e0ea}
+[data-theme="light"] .recent-row{color:#203447;border-color:#e3eaf0}
+[data-theme="light"] .recent-row:hover{background:#f1f7fa}
+[data-theme="light"] .category-icon{background:#e6f1f6;border-color:#ccdee8;color:#087e9d}
+[data-theme="light"] .active-inventory-chip,[data-theme="light"] .last-inventory{background:#eaf3f8;border-color:#bfd3e1;color:#193b52}
+[data-theme="light"] .secondary,[data-theme="light"] .inventory-create input,[data-theme="light"] .toolbar select,[data-theme="light"] .item-actions select,[data-theme="light"] .fleet-toolbar>select,[data-theme="light"] .fleet-grouping select{background:#e6edf3;color:#244257;border:1px solid #ccd9e3}
+[data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] textarea{background:#fff;color:#1d3345;border-color:#cbd9e4}
+[data-theme="light"] .search-box,[data-theme="light"] .export-category-list,[data-theme="light"] .logbook-form{background:#f6f9fb;border-color:#d2dfe8;color:#4c6579}
+[data-theme="light"] .export-all,[data-theme="light"] .export-category-list label{color:#29465c}
+[data-theme="light"] .new-component-dropdown{background:#f8fafc;border-color:#cfdae4;box-shadow:0 12px 32px #1e3b5225}
+[data-theme="light"] .new-component-dropdown button{color:#203a50}
+[data-theme="light"] .new-component-dropdown button:hover{background:#eaf2f7}
+[data-theme="light"] .fleet-group-heading{background:#e7eff5;border-color:#d2dfe8;color:#223d53}
+[data-theme="light"] .state-pill{background:#e6edf3;border-color:#cbd9e4;color:#284459}
+[data-theme="light"] .state-pill.flight-ready{background:#e2f4e9;border-color:#acd7bb;color:#246441}
+[data-theme="light"] .state-pill.parts,[data-theme="light"] .state-pill.out-of-service{background:#f9e9e9;border-color:#e4bfc0;color:#873e42}
+[data-theme="light"] .state-pill.maintenance{background:#fff3dc;border-color:#e5d0a3;color:#78591c}
+[data-theme="light"] .aircraft-lifecycle-management{background:#f4f7f9;border-color:#d2dfe8}
+[data-theme="light"] .equipment-disposition-row{background:#f7f9fb;border-color:#d2dfe8}
+[data-theme="light"] .equipment-disposition-row strong{color:#20384b}
+[data-theme="light"] .equipment-disposition-row select{background:#fff;border-color:#cbd9e4;color:#1d3345}
+[data-theme="light"] .app-footer{color:#61788c;border-color:#d5e0ea}
+[data-theme="light"] .app-footer a{color:#286c9d}
+@media(forced-colors:active){.app-titlebar,.titlebar-button,.nav-item,.category-icon,.welcome{forced-color-adjust:auto}button:focus-visible,a:focus-visible{outline:2px solid Highlight}}

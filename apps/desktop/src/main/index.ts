@@ -301,6 +301,8 @@ function createWindow(): void {
     minWidth: 1080,
     minHeight: 700,
     title: "RC Workshop Manager",
+    frame: false,
+    titleBarStyle: "hidden",
     webPreferences: {
       preload: join(__dirname, "../preload/index.cjs"),
       contextIsolation: true,
@@ -308,6 +310,8 @@ function createWindow(): void {
       sandbox: true,
     },
   });
+  mainWindow.on("maximize", () => mainWindow?.webContents.send("window:maximized-change", true));
+  mainWindow.on("unmaximize", () => mainWindow?.webContents.send("window:maximized-change", false));
 
   if (process.env.ELECTRON_RENDERER_URL) {
     void mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
@@ -318,6 +322,15 @@ function createWindow(): void {
 
 function registerHandlers(): void {
   inventoryManagerHandlers();
+  ipcMain.handle("window:minimize", () => mainWindow?.minimize());
+  ipcMain.handle("window:toggle-maximize", () => {
+    if (!mainWindow) return false;
+    if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    else mainWindow.maximize();
+    return mainWindow.isMaximized();
+  });
+  ipcMain.handle("window:is-maximized", () => mainWindow?.isMaximized() ?? false);
+  ipcMain.handle("window:close", () => mainWindow?.close());
   ipcMain.handle("photo:choose", () => chooseAndCopyImage());
   ipcMain.handle("inventory:snapshot", () => inventory.getSnapshot());
   ipcMain.handle("inventory:update-reference", (_event, input: ComponentReference) => {
