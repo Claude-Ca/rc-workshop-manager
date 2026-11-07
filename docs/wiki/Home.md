@@ -1,6 +1,6 @@
 # RC Workshop Manager — guide utilisateur
 
-Bienvenue dans le guide de l'application de gestion d'un atelier d'aéromodélisme. Retrouvez-le dans l'application sous **Administration → Manuel utilisateur**. L'application fonctionne localement sur l'ordinateur et conserve les données dans des bases SQLite locales.
+Bienvenue dans le guide de l'application de gestion d'un atelier d'aéromodélisme. Retrouvez-le directement dans le menu principal **Manuel utilisateur**. L'application fonctionne localement sur l'ordinateur et conserve les données dans des bases SQLite locales.
 
 ## Navigation
 
