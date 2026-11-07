@@ -30,4 +30,4 @@ Aucun parcours d'annulation ou de réouverture après clôture n'est exposé dan
 - Le journal est une mémoire facultative et non un document réglementaire.
 - Les données et photos sont locales à l'installation.
 - Le registre multi-inventaires est séparé de chaque fichier SQLite exporté.
-- Le manuel se consulte dans l'application sous Administration → Manuel utilisateur; son contenu Markdown est versionné sous docs/wiki/.
+- Le manuel se consulte directement depuis l’entrée Manuel utilisateur du menu principal; son contenu Markdown est versionné sous docs/wiki/.
