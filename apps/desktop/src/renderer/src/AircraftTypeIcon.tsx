@@ -19,21 +19,23 @@ export function AircraftTypeIcon({ type, size = 40, className = "" }: { type: Ai
       <linearGradient id={`${gradientId}-highlight`} x1="0" y1="0" x2="1" y2="0"><stop stopColor="#2877b1" /><stop offset=".5" stopColor="#c1fbff" /><stop offset="1" stopColor="#36b9dc" /></linearGradient>
     </defs>
     {type === "airplane" && <g {...stroke}>
-      <path d="M8 31 38 28 56 8l5 1-8 20 30 4 9 3v3l-39-1 5 19-5 2-15-21-30-1z" fill={steel} />
-      <path d="m20 31 22 1m-4-3 18-19m-6 21 27 4m-28 1 4 17" stroke={highlight} strokeWidth=".8" />
-      <path d="m14 32 23 2m-18 2 20 1" stroke="#d1fbff" strokeWidth=".45" opacity=".8" />
-      <path d="M43 34h8l2 2-2 2h-8z" fill="#b8f6ff" strokeWidth=".7" />
+      <path d="M8 31 35 30 46 25 50 15 55 15 59 25 83 31 92 34 92 37 59 39 55 49 50 49 46 41 35 38 8 37z" fill={steel} />
+      <path d="m18 32 18-1m11-6 5-9m7 9 22 6m-22 8 22-1m-32 2 5 9" stroke={highlight} strokeWidth=".8" />
+      <path d="m14 33 23-1m-22 4 22 1" stroke="#d1fbff" strokeWidth=".45" opacity=".8" />
+      <circle cx="95" cy="35.5" r="2.2" fill="#b8f6ff" strokeWidth=".7" />
+      <path d="M95 27v17m-3.5-8.5h7" stroke="#d6fbff" strokeWidth="1" />
     </g>}
     {type === "glider" && <g {...stroke}>
-      <path d="M4 30 44 31 53 7h3l-4 24 27 1 15 3-1 3-41-1 4 20-3 1-13-21L4 38z" fill={steel} />
-      <path d="m10 32 34 1M20 34l24 1m10-5 3-21m-4 26 3 17m-20-14-11 9" stroke={highlight} strokeWidth=".75" />
-      <path d="m45 32 8-2m-8 7 9 2" stroke="#d8fcff" strokeWidth=".55" />
+      <path d="M4 31 45 32 52 3h4l-1 29 30 2 11 2-1 2-40-1 1 29h-4l-7-29L4 37z" fill={steel} />
+      <path d="M7 32 45 33m-36 3 36 1m7-4 4-28m-4 32 1 26" stroke={highlight} strokeWidth=".72" />
+      <path d="m45 32 9-2m-9 7 9 2m-14-4-8 1" stroke="#d8fcff" strokeWidth=".55" />
     </g>}
     {type === "motor-glider" && <g {...stroke}>
-      <path d="M6 29 43 30 52 8h3l-4 22 29 2 14 3-1 3-42-1 4 19-3 1-13-21L6 37z" fill={steel} />
-      <path d="m11 31 32 1M19 34l24 1m10-5 3-20m-4 27 3 15" stroke={highlight} strokeWidth=".75" />
-      <path d="M80 33h8l3 3-3 3h-8" fill="#8be9fb" strokeWidth=".9" />
-      <path d="M92 28v16m-3-13 6 10m0-10-6 10" stroke="#d6fbff" strokeWidth="1.05" />
+      <path d="M7 30 43 31 51 7h4l-1 25 29 2 11 2-1 2-39-1 1 24h-4l-8-25L7 37z" fill={steel} />
+      <path d="m12 31 31 1m-30 4 30 1m8-5 4-23m-4 30 1 21" stroke={highlight} strokeWidth=".72" />
+      <path d="M86 33h7l3 3-3 3h-7" fill="#8be9fb" strokeWidth=".9" />
+      <circle cx="98" cy="36" r="1.6" fill="#d6fbff" strokeWidth=".7" />
+      <path d="M98 29v14m-3-10 6 6m0-6-6 6" stroke="#d6fbff" strokeWidth="1.05" />
     </g>}
     {type === "helicopter" && <g {...stroke}>
       <path d="m14 34 14-4 11 3v8l-11 4-14-4z" fill={steel} />
