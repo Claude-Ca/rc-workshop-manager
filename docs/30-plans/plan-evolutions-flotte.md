@@ -41,7 +41,7 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - Lot F — Refonte de Ma Flotte : implémenté et fusionné par la PR #23. La page propose des vignettes et une liste horizontale portant les mêmes informations, une fiche complète intégrée à la navigation, des favoris indépendants, une recherche, des filtres par type/état/cycle de vie/favoris, deux regroupements et le repli des groupes hors service, vendus et retirés. Les règles métier du lot E sont conservées.
 - Le changement d'état opérationnel vers « Hors service » ne clôture pas l'aéronef et ne récupère aucun équipement.
 - Lot D : la disponibilité seule est colorée en vert ; le nombre total d'exemplaires conserve la couleur normale.
-- Lot D : le statut local SQLite est regroupé en haut à droite ; le pied de page indique que le guide utilisateur est accessible sous Administration.
+- Lot D : le statut local SQLite est regroupé en haut à droite ; le menu principal donne un accès direct au manuel utilisateur; le pied de page affiche la version et le copyright.
 
 ## Après la RC — bibliothèque d'illustrations d'équipements
 
