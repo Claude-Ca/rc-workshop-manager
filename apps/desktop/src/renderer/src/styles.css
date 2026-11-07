@@ -156,6 +156,14 @@
 .logbook-delete:hover{color:#ffc3c3}
 .logbook-form{margin-top:14px}
 .logbook-form>strong{font-size:14px;color:inherit}
+.logbook-form>label,.logbook-form .form-row>label{display:grid;min-width:0;gap:7px;font-size:11px;font-weight:600;color:var(--muted)}
+.logbook-form>label{width:100%}
+.logbook-form .form-row{align-items:end;gap:14px}
+.logbook-form input,.logbook-form select,.logbook-form textarea{width:100%;min-width:0}
+.logbook-form>label select,.logbook-form>label input[type="number"]{max-width:260px}
+.logbook-form textarea{min-height:118px;padding:11px 12px;line-height:1.5}
+.logbook-form .logbook-date-field{align-self:end}
+.logbook-form .modal-actions{margin-top:4px}
 .logbook-list li{align-items:center}
 .logbook-event{gap:5px}
 .logbook-event strong{font-size:12px}
