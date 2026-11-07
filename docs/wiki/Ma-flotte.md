@@ -6,7 +6,11 @@ Créez une fiche par aéronef avec son nom obligatoire et, facultativement, cons
 
 La flotte s'affiche en vignettes ou en liste. La recherche et les filtres peuvent être combinés : type, état opérationnel, cycle de vie et favoris. Le regroupement se fait par état opérationnel ou par cycle de vie; les groupes sont repliables. Les groupes hors service, vendus et retirés sont repliés par défaut.
 
-Ouvrez une fiche pour consulter ses informations et sa configuration : récepteur, bind radio, moteur, hélice, ESC lorsque pertinent, et autres équipements installés. Depuis cette fiche, utilisez Modifier la fiche ou Journal de bord.
+Ouvrez une fiche pour consulter ses informations et sa configuration : récepteur, bind radio, moteur, hélice, ESC lorsque pertinent, et autres équipements installés. Les actions Modifier et Historique sont sur la première ligne ; Journal de bord apparaît dessous.
+
+## Historique des mouvements
+
+Dans la fiche aéronef, choisissez **Historique** pour consulter les mouvements de stock associés à cet aéronef : affectations, désaffectations, ventes ou retraits d’équipements. Cette liste en lecture seule est distincte du journal de bord.
 
 ## Favoris
 
@@ -20,6 +24,8 @@ La vente et le retrait définitif sont des actions dédiées depuis la fiche d'u
 
 ## Journal de bord
 
-Le journal facultatif accepte : mise en service/premier vol, vol, maintenance, incident/crash, vente et retrait définitif. La date et le type sont requis; commentaire et nombre de vols sont facultatifs. Les événements sont affichés par ordre chronologique et un événement peut être modifié.
+Le journal facultatif accepte les événements de mise en service, de vol, de maintenance, d’incident, de vente et de retrait, ainsi que des notes et tâches. Les entrées récentes s’affichent en premier. Ouvrez **Ajouter une entrée** pour choisir son type et sa date ; le nombre de vols est facultatif pour un vol. Les entrées peuvent être modifiées ou supprimées.
+
+Une tâche contient une description et un état **À faire** ou **Terminée**. Utilisez **Terminer** ou **Rouvrir** depuis la liste pour changer son état. Le compteur du journal inclut toutes les entrées, même les tâches terminées.
 
 Le journal est une mémoire personnelle, pas un carnet réglementaire. Ajouter un événement ne change ni l'état de l'aéronef ni le stock. Une fiche reste utilisable sans événement.
