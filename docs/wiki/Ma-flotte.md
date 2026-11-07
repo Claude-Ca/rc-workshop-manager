@@ -6,7 +6,7 @@ Créez une fiche par aéronef avec son nom obligatoire et, facultativement, cons
 
 La flotte s'affiche en vignettes ou en liste. La recherche et les filtres peuvent être combinés : type, état opérationnel, cycle de vie et favoris. Le regroupement se fait par état opérationnel ou par cycle de vie; les groupes sont repliables. Les groupes hors service, vendus et retirés sont repliés par défaut.
 
-Ouvrez une fiche pour consulter ses informations et sa configuration : récepteur, bind radio, moteur, hélice, ESC lorsque pertinent, et autres équipements installés. Les actions Modifier et Historique sont sur la première ligne ; Journal de bord apparaît dessous.
+Ouvrez une fiche pour consulter ses informations et sa configuration : récepteur, bind radio, moteur, hélice, ESC lorsque pertinent, et autres équipements installés. Les actions Modifier et Historique sont sur la première ligne ; Journal de bord apparaît dessous. Historique et Journal de bord s’ouvrent dans une page dédiée avec un bouton de retour à la fiche.
 
 ## Historique des mouvements
 
@@ -24,7 +24,7 @@ La vente et le retrait définitif sont des actions dédiées depuis la fiche d'u
 
 ## Journal de bord
 
-Le journal facultatif accepte les événements de mise en service, de vol, de maintenance, d’incident, de vente et de retrait, ainsi que des notes et tâches. Les entrées récentes s’affichent en premier. Ouvrez **Ajouter une entrée** pour choisir son type et sa date ; le nombre de vols est facultatif pour un vol. Les entrées peuvent être modifiées ou supprimées.
+Le journal facultatif accepte les événements de mise en service, de vol, de maintenance, d’incident, de vente et de retrait, ainsi que des notes et tâches. Les entrées récentes s’affichent en premier. Ouvrez **Ajouter une entrée** pour choisir son type et sa date ; le nombre de vols est facultatif pour un vol. Les entrées peuvent être modifiées ou supprimées. Après validation ou annulation d’une saisie, l’application revient à la fiche aéronef.
 
 Une tâche contient une description et un état **À faire** ou **Terminée**. Utilisez **Terminer** ou **Rouvrir** depuis la liste pour changer son état. Le compteur du journal inclut toutes les entrées, même les tâches terminées.
 
