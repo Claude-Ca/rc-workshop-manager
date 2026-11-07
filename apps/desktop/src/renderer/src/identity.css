@@ -115,7 +115,7 @@ html,body,#root{width:100%;height:100%;min-height:100%;margin:0}
 [data-theme="light"] .manual-nav-item:hover{background:#eef4f8;color:#18364e}
 [data-theme="light"] .manual-nav-item.active{background:#e4eff7;border-color:#c8dbe7;color:#173e5a}
 [data-theme="light"] .manual-nav-item.active svg{color:#087e9d}
-[data-theme="light"] .manual-article-heading h2,.manual-markdown h2,[data-theme="light"] .manual-markdown h3,[data-theme="light"] .manual-markdown h4{color:#183249}
+[data-theme="light"] .manual-article-heading h2,[data-theme="light"] .manual-markdown h2,[data-theme="light"] .manual-markdown h3,[data-theme="light"] .manual-markdown h4{color:#183249}
 [data-theme="light"] .manual-markdown{color:#425a6e}
 [data-theme="light"] .manual-markdown strong{color:#203a50}
 [data-theme="light"] .manual-markdown blockquote{background:#eef5f9;color:#39566d}
