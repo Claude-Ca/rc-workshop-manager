@@ -146,6 +146,9 @@ export class SqliteInventoryRepository implements InventoryRepository {
     if (!aircraftColumns.some((column) => column.name === "lifecycle_state")) this.db.exec("ALTER TABLE aircraft ADD COLUMN lifecycle_state TEXT NOT NULL DEFAULT 'active'");
     if (!aircraftColumns.some((column) => column.name === "favorite")) this.db.exec("ALTER TABLE aircraft ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0");
     if (!aircraftColumns.some((column) => column.name === "photo_path")) this.db.exec("ALTER TABLE aircraft ADD COLUMN photo_path TEXT");
+    const logbookColumns = this.db.prepare("PRAGMA table_info(aircraft_logbook)").all() as Row[];
+    if (!logbookColumns.some((column) => column.name === "task_status")) this.db.exec("ALTER TABLE aircraft_logbook ADD COLUMN task_status TEXT");
+    this.db.exec("UPDATE aircraft_logbook SET task_status = 'todo' WHERE type = 'task' AND task_status IS NULL");
     // Convert legacy quantity-tracked tools into individual physical items.
     // Preserve the count and original unit in each generated item's notes.
     this.db.transaction(() => {
@@ -249,6 +252,7 @@ export class SqliteInventoryRepository implements InventoryRepository {
       id: String(row.id), aircraftId: String(row.aircraft_id), type: row.type as AircraftLogbookEvent["type"],
       date: String(row.event_date), ...(row.comment ? { comment: String(row.comment) } : {}),
       ...(row.flight_count !== null && row.flight_count !== undefined ? { flightCount: Number(row.flight_count) } : {}),
+      ...(row.task_status ? { taskStatus: String(row.task_status) as NonNullable<AircraftLogbookEvent["taskStatus"]> } : {}),
     }));
     const movements = (this.db.prepare("SELECT * FROM stock_movements ORDER BY occurred_at DESC").all() as Row[]).map((row): StockMovement => ({
       id: String(row.id), type: row.type as StockMovement["type"], referenceId: String(row.reference_id), occurredAt: String(row.occurred_at),
@@ -337,11 +341,11 @@ export class SqliteInventoryRepository implements InventoryRepository {
   }
 
   saveLogbookEvent(value: AircraftLogbookEvent): void {
-    this.db.prepare(`INSERT INTO aircraft_logbook (id,aircraft_id,type,event_date,comment,flight_count)
-      VALUES (@id,@aircraftId,@type,@date,@comment,@flightCount)
+    this.db.prepare(`INSERT INTO aircraft_logbook (id,aircraft_id,type,event_date,comment,flight_count,task_status)
+      VALUES (@id,@aircraftId,@type,@date,@comment,@flightCount,@taskStatus)
       ON CONFLICT(id) DO UPDATE SET aircraft_id=excluded.aircraft_id,type=excluded.type,event_date=excluded.event_date,
-      comment=excluded.comment,flight_count=excluded.flight_count`)
-      .run({ id:value.id,aircraftId:value.aircraftId,type:value.type,date:value.date,comment:value.comment??null,flightCount:value.flightCount??null });
+      comment=excluded.comment,flight_count=excluded.flight_count,task_status=excluded.task_status`)
+      .run({ id:value.id,aircraftId:value.aircraftId,type:value.type,date:value.date,comment:value.comment??null,flightCount:value.flightCount??null,taskStatus:value.type === "task" ? value.taskStatus ?? "todo" : null });
   }
 
   deleteLogbookEvent(eventId: string): void {

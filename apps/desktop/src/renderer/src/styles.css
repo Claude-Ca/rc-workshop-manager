@@ -134,6 +134,22 @@
 @media(max-width:900px){.fleet-row{grid-template-columns:1fr auto;gap:10px}.fleet-summary{grid-column:1}.aircraft-detail .detail-columns{grid-template-columns:1fr}.fleet-toolbar .result-count{margin-left:auto}}
 @media(max-width:560px){.fleet-row{grid-template-columns:1fr auto}.fleet-toolbar>select{flex:1;max-width:none}.fleet-grouping{width:auto;justify-content:flex-start}.fleet-controls-row{width:100%;justify-content:flex-start}.fleet-reset-button{flex:1}.aircraft-detail>.detail-header{align-items:flex-start;flex-wrap:wrap}.aircraft-detail .detail-actions{width:100%}}
 
+.aircraft-detail-actions{display:grid;grid-template-columns:1fr;justify-items:stretch;gap:8px;min-width:226px}
+.aircraft-detail-actions>div{display:flex;justify-content:flex-end;gap:8px}
+.aircraft-detail-actions>button{justify-self:end}
+.logbook-type-date-row{align-items:end!important}
+.logbook-date-field{align-self:end}
+.logbook-date-field input{height:38px}
+.logbook-form textarea{min-height:76px;resize:vertical}
+.logbook-task-status{font-size:11px;color:var(--muted)}
+.logbook-task-status.done{color:#8de0b3}
+.logbook-entry-actions{display:flex;align-items:flex-start;gap:6px;flex:none}
+.aircraft-movement-history{list-style:none;padding:0;margin:14px 0;display:grid;gap:8px;max-height:55vh;overflow:auto}
+.aircraft-movement-history li{display:grid;gap:5px;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+.aircraft-movement-history time,.aircraft-movement-history span{font-size:11px;color:var(--muted)}
+.aircraft-movement-history strong{font-size:12px}
+.aircraft-movement-history p{margin:0;font-size:11px;white-space:pre-wrap}
+
 .reference-photo>.reference-type-icon{width:78px;height:78px;display:grid;place-items:center;opacity:1;border-radius:19px;background:linear-gradient(145deg,#304a61,#16283d);border:1px solid #4e91c5;box-shadow:inset 0 1px 0 #b3eeff55,0 8px 22px #06101f88;color:#b5efff}
 .reference-type-icon svg{display:block;max-width:68px;max-height:58px;filter:drop-shadow(0 2px 5px #29bdeb66)}
 .inventory-display-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin:-8px 0 18px}

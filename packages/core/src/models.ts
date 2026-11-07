@@ -110,7 +110,7 @@ export interface StockMovement {
   occurredAt: string;
 }
 
-export type AircraftLogbookEventType = "commissioning" | "flight" | "maintenance" | "incident" | "sale" | "retirement";
+export type AircraftLogbookEventType = "commissioning" | "flight" | "maintenance" | "incident" | "sale" | "retirement" | "note" | "task";
 
 export interface AircraftLogbookEvent {
   id: string;
@@ -119,6 +119,7 @@ export interface AircraftLogbookEvent {
   date: string;
   comment?: string;
   flightCount?: number;
+  taskStatus?: "todo" | "done";
 }
 
 export interface InventorySnapshot {

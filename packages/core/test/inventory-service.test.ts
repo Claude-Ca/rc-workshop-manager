@@ -57,6 +57,20 @@ describe("InventoryService", () => {
     expect(() => service.saveAircraftLogbookEvent({ ...valid, aircraftId: "MISSING" })).toThrow(/Aéronef introuvable/);
   });
 
+  it("stores notes and tasks independently of stock movements and defaults tasks to todo", () => {
+    const repository = new MemoryRepository();
+    const service = new InventoryService(repository);
+    repository.snapshot.aircraft = [{ id: "AIR-LOG", name: "Planeur" }];
+    service.saveAircraftLogbookEvent({ id: "NOTE-1", aircraftId: "AIR-LOG", type: "note", date: "2026-11-05", comment: "Hélice équilibrée" });
+    service.saveAircraftLogbookEvent({ id: "TASK-1", aircraftId: "AIR-LOG", type: "task", date: "2026-11-05", comment: "Vérifier la chape" });
+    expect(repository.snapshot.logbookEvents.map((entry) => entry.type)).toEqual(["note", "task"]);
+    expect(repository.snapshot.logbookEvents[1]?.taskStatus).toBe("todo");
+    service.saveAircraftLogbookEvent({ id: "TASK-1", aircraftId: "AIR-LOG", type: "task", date: "2026-11-05", comment: "Vérifier la chape", taskStatus: "done" });
+    expect(repository.snapshot.logbookEvents[1]?.taskStatus).toBe("done");
+    expect(repository.snapshot.movements).toHaveLength(0);
+    expect(() => service.saveAircraftLogbookEvent({ id: "NOTE-2", aircraftId: "AIR-LOG", type: "note", date: "2026-11-05" })).toThrow(/doit contenir un texte/);
+  });
+
   it("requires receiver references to be individually tracked", () => {
     const service = new InventoryService(new MemoryRepository());
     expect(() => service.createReference(reference("REF-1", "receiver", "quantity"))).toThrow(InventoryError);
