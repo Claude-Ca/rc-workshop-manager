@@ -39,7 +39,7 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - Lot F — Refonte de Ma Flotte : implémenté et fusionné par la PR #23. La page propose des vignettes et une liste horizontale portant les mêmes informations, une fiche complète intégrée à la navigation, des favoris indépendants, une recherche, des filtres par type/état/cycle de vie/favoris, deux regroupements et le repli des groupes hors service, vendus et retirés. Les règles métier du lot E sont conservées.
 - Le changement d'état opérationnel vers « Hors service » ne clôture pas l'aéronef et ne récupère aucun équipement.
 - Lot D : la disponibilité seule est colorée en vert ; le nombre total d'exemplaires conserve la couleur normale.
-- Lot D : le statut local SQLite est regroupé en haut à droite ; le pied de page est réservé à la version et au lien vers le code source.
+- Lot D : le statut local SQLite est regroupé en haut à droite ; le pied de page présente la version et pointe désormais vers le Wiki utilisateur (publication en attente).
 
 ## Après la RC — bibliothèque d'illustrations d'équipements
 
@@ -53,7 +53,7 @@ Prévoir un lot post-RC distinct pour produire une bibliothèque cohérente d'il
 
 ## Identité visuelle des aéronefs — première mouture
 
-La première famille cohérente d'icônes vectorielles pour les six types et la barre d'identité visuelle sont implémentées par la PR #24, fusionnée le 2026-11-07. La recette Windows des interactions de fenêtre et des thèmes reste à réaliser. Les travaux restants listés dans cette section constituent des pistes d'amélioration, pas des engagements exclusifs à l'après-RC.\n\nLes améliorations avant RC restent possibles selon les résultats de recette.riantes clair/sombre) afin de soutenir la future ligne de produits. Ce travail reste à la feuille de route : aucune icône ni image n'est générée dans le lot F.
+La première famille cohérente d'icônes vectorielles pour les six types et la barre d'identité visuelle sont implémentées par la PR #24, fusionnée le 2026-11-07. La recette Windows des interactions de fenêtre et des thèmes reste à réaliser. Les améliorations de la bibliothèque d'illustrations restent une piste de travail; des améliorations avant RC restent possibles selon la recette et les priorités du produit.
 
 ## Stratégie de réalisation
 
