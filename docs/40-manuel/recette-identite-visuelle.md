@@ -1,6 +1,6 @@
 # Recette — première mouture de l’identité visuelle
 
-Cette branche ajoute une barre de titre Electron compacte, les originaux de marque, et les premières icônes SVG. Elle conserve les libellés et catégories métier existants.
+Cette branche ajoute une barre de titre Electron compacte, le bandeau d’accueil inspiré de la proposition visuelle, et les premières icônes SVG. Elle conserve les catégories métier existantes et différencie les récepteurs RX des émetteurs TX dans les références.
 
 ## Préparer l’application
 
@@ -19,9 +19,10 @@ Pour vérifier la compilation distribuable, lancer `pnpm --filter @rc-workshop/d
 2. Déplacer la fenêtre par une zone vide de la barre. Double-cliquer la zone vide pour agrandir puis restaurer. Vérifier les bords de redimensionnement et les dimensions minimales.
 3. Utiliser chaque bouton de fenêtre et vérifier que l’icône agrandir/restaurer suit l’état réel de la fenêtre.
 4. Basculer entre thèmes clair et sombre. Fermer puis relancer l’application et vérifier que le choix reste mémorisé.
-5. Au tableau de bord, vérifier que le logo d’origine est affiché dans le bandeau « Bienvenue dans ton atelier RC. » et que le texte garde son agencement à différentes largeurs.
-6. Vérifier les icônes de navigation, des familles d’équipement et les six silhouettes d’aéronefs (avion, planeur, motoplaneur, hélicoptère, multirotor et autre) dans les favoris, la flotte et la fiche aéronef.
-7. Parcourir les commandes avec Tab et Maj+Tab. Vérifier les libellés accessibles des boutons de fenêtre et du thème, ainsi que les contours de focus.
+5. Au tableau de bord, vérifier l’illustration aéronautique à gauche du bandeau, le texte à droite et sa lisibilité dans les deux thèmes.
+6. Vérifier que les icônes et libellés des récepteurs (RX) et émetteurs (TX) sont distincts dans les références radio.
+7. Vérifier les icônes de navigation, des familles d’équipement et les six silhouettes d’aéronefs (avion, planeur, motoplaneur, hélicoptère, multirotor et autre) dans les favoris, la flotte et la fiche aéronef.
+8. Parcourir les commandes avec Tab et Maj+Tab. Vérifier les libellés accessibles des boutons de fenêtre et du thème, ainsi que les contours de focus.
 
 ## Limites de cette première mouture
 
