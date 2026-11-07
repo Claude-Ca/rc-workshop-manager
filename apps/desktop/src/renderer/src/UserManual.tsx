@@ -100,8 +100,8 @@ function MarkdownContent({ markdown, navigate }: { markdown: string; navigate: (
     if (line.startsWith("#")) {
       const level = Math.min((line.match(/^#+/)?.[0].length ?? 2) + 1, 4);
       const title = line.replace(/^#+\s*/, "");
-      const Heading = `h${level}` as keyof JSX.IntrinsicElements;
-      blocks.push(<Heading key={index}>{inlineMarkdown(title, navigate)}</Heading>);
+      const heading = inlineMarkdown(title, navigate);
+      blocks.push(level <= 2 ? <h2 key={index}>{heading}</h2> : level === 3 ? <h3 key={index}>{heading}</h3> : <h4 key={index}>{heading}</h4>);
       index += 1;
       continue;
     }
