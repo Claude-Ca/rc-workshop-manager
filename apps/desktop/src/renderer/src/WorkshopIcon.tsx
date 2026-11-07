@@ -1,4 +1,4 @@
-export type ComponentIconName = "dashboard" | "inventory" | "fleet" | "projects" | "movements" | "admin" | "motor" | "esc" | "radio" | "radio-receiver" | "radio-transmitter" | "servo" | "battery" | "supplies" | "tool" | "other";
+export type ComponentIconName = "dashboard" | "inventory" | "fleet" | "projects" | "movements" | "admin" | "manual" | "motor" | "esc" | "radio" | "radio-receiver" | "radio-transmitter" | "servo" | "battery" | "supplies" | "tool" | "other";
 
 const paths: Record<ComponentIconName, string> = {
   dashboard: "M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z",
@@ -7,6 +7,7 @@ const paths: Record<ComponentIconName, string> = {
   projects: "M4 4h16v16H4zM8 8h8M8 12h8M8 16h5",
   movements: "M4 8h15l-3-3m3 3-3 3M20 16H5l3 3m-3-3 3-3",
   admin: "M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1M15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z",
+  manual: "M5 3.5h10a3 3 0 0 1 3 3v14H8a3 3 0 0 0-3 0zM5 3.5v17M8 7h7m-7 4h7m-7 4h5",
   motor: "M7 7h10v10H7zM9 2v5m6-5v5m-6 10v5m6-5v5M2 9h5m10 0h5M2 15h5m10 0h5",
   esc: "M8 3h8v4H8zM10 7v5m4-5v5m-9 0h14v8H5zM9 16h6",
   radio: "M4 8a12 12 0 0 1 16 0M7 11a8 8 0 0 1 10 0m-7 3a3 3 0 0 1 4 0M12 17v4",
