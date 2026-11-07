@@ -107,6 +107,7 @@
 
 .aircraft-logbook { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 8px; }
 .logbook-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.logbook-heading>div{display:flex;align-items:baseline;gap:12px}
 .logbook-heading h3 { margin: 0; }
 .logbook-heading span { color: var(--muted); font-size: 12px; }
 .logbook-list { list-style: none; padding: 0; margin: 8px 0 16px; display: grid; gap: 8px; }
@@ -145,10 +146,21 @@
 .logbook-task-status.done{color:#8de0b3}
 .logbook-entry-actions{display:flex;align-items:flex-start;gap:6px;flex:none}
 .aircraft-movement-history{list-style:none;padding:0;margin:14px 0;display:grid;gap:8px;max-height:55vh;overflow:auto}
-.aircraft-movement-history li{display:grid;gap:5px;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+.aircraft-movement-history li{display:grid;grid-template-columns:minmax(125px,.6fr) minmax(170px,.8fr) minmax(220px,1.5fr);align-items:baseline;gap:8px 14px;padding:12px 10px;border-bottom:1px solid var(--line)}
 .aircraft-movement-history time,.aircraft-movement-history span{font-size:11px;color:var(--muted)}
 .aircraft-movement-history strong{font-size:12px}
-.aircraft-movement-history p{margin:0;font-size:11px;white-space:pre-wrap}
+.aircraft-movement-history p{grid-column:2/-1;margin:0;font-size:11px;white-space:pre-wrap;color:var(--muted)}
+.logbook-heading{margin-bottom:10px}
+.logbook-heading .primary{padding:9px 12px}
+.logbook-delete{color:#e89b9b}
+.logbook-delete:hover{color:#ffc3c3}
+.logbook-form{margin-top:14px}
+.logbook-form>strong{font-size:14px;color:inherit}
+.logbook-list li{align-items:center}
+.logbook-event{gap:5px}
+.logbook-event strong{font-size:12px}
+.logbook-event p{font-size:12px;line-height:1.5;color:inherit}
+@media(max-width:640px){.aircraft-movement-history li{grid-template-columns:1fr}.aircraft-movement-history p{grid-column:1}.logbook-heading{align-items:flex-start}.logbook-heading>div{display:grid;gap:4px}}
 
 .reference-photo>.reference-type-icon{width:78px;height:78px;display:grid;place-items:center;opacity:1;border-radius:19px;background:linear-gradient(145deg,#304a61,#16283d);border:1px solid #4e91c5;box-shadow:inset 0 1px 0 #b3eeff55,0 8px 22px #06101f88;color:#b5efff}
 .reference-type-icon svg{display:block;max-width:68px;max-height:58px;filter:drop-shadow(0 2px 5px #29bdeb66)}

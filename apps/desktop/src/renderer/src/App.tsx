@@ -391,7 +391,7 @@ function App() {
       {showNewReference && newReferenceCategory && <ReferenceModal initialCategory={newReferenceCategory} error={error} busy={busy} onClose={() => { setShowNewReference(false); setNewReferenceCategory(null); }} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.createReference(value); setShowNewReference(false); setNewReferenceCategory(null); setSection("inventory"); setCategory("all"); setSelectedId(value.id); return result; })} />}
       {showEditReference && selected && <ReferenceModal reference={selected} error={error} busy={busy} onClose={() => setShowEditReference(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.updateReference(value as ComponentReference); setShowEditReference(false); return result; })} />}
       {previewAircraft && <AircraftPreviewModal key={previewAircraft.id + (aircraftClosureIntent ?? "preview")} aircraft={previewAircraft} snapshot={snapshot} busy={busy} error={error} initialClosureTarget={aircraftClosureIntent} onClose={() => { setPreviewAircraft(null); setAircraftClosureIntent(null); }} onEdit={() => { setEditingAircraft(previewAircraft); setPreviewAircraft(null); setAircraftClosureIntent(null); }} onOpenLogbook={() => setLogbookAircraft(previewAircraft)} onCloseAircraft={(lifecycleState, dispositions) => { void (async () => { const success = await runAction(() => window.rcWorkshop.closeAircraft(previewAircraft.id, lifecycleState, dispositions)); if (success) { setPreviewAircraft(null); setAircraftClosureIntent(null); } })(); }} />}
-      {logbookAircraft && <AircraftLogbookModal aircraft={logbookAircraft} events={snapshot.logbookEvents.filter((event) => event.aircraftId === logbookAircraft.id)} busy={busy} error={error} onClose={() => setLogbookAircraft(null)} onSave={(event) => runAction(() => window.rcWorkshop.saveAircraftLogbookEvent(event))} />}
+      {logbookAircraft && <AircraftLogbookModal aircraft={logbookAircraft} events={snapshot.logbookEvents.filter((event) => event.aircraftId === logbookAircraft.id)} busy={busy} error={error} onClose={() => setLogbookAircraft(null)} onSave={(event) => runAction(() => window.rcWorkshop.saveAircraftLogbookEvent(event))} onDelete={(eventId) => runAction(() => window.rcWorkshop.deleteAircraftLogbookEvent(eventId))} />}
       {historyAircraft && <AircraftMovementHistoryModal aircraft={historyAircraft} movements={snapshot.movements.filter((movement) => movement.aircraftId === historyAircraft.id)} snapshot={snapshot} onClose={() => setHistoryAircraft(null)} />}
       {showNewAircraft && <AircraftModal favoriteLimitReached={snapshot.aircraft.filter((entry) => entry.favorite).length >= 4} error={error} busy={busy} onClose={() => setShowNewAircraft(false)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.addAircraft({ id: crypto.randomUUID(), ...value }); setShowNewAircraft(false); return result; })} />}
       {editingAircraft && <AircraftModal aircraft={editingAircraft} favoriteLimitReached={snapshot.aircraft.filter((entry) => entry.favorite).length >= 4 && !Boolean(editingAircraft.favorite)} error={error} busy={busy} onClose={() => setEditingAircraft(null)} onSubmit={(value) => runAction(async () => { const result = await window.rcWorkshop.updateAircraft({ id: editingAircraft!.id, ...value }); setEditingAircraft(null); return result; })} />}
@@ -555,8 +555,9 @@ function AircraftPreviewModal({ aircraft, snapshot, busy, error, initialClosureT
   </Modal>;
 }
 
-function AircraftLogbook({ aircraftId, events, busy, onSave, onClose, registerCloseHandler }: { aircraftId: string; events: AircraftLogbookEvent[]; busy: boolean; onSave: (event: AircraftLogbookEvent) => void; onClose: () => void; registerCloseHandler: (handler: () => void) => void }) {
+function AircraftLogbook({ aircraftId, events, busy, onSave, onDelete, onClose, registerCloseHandler }: { aircraftId: string; events: AircraftLogbookEvent[]; busy: boolean; onSave: (event: AircraftLogbookEvent) => void; onDelete: (eventId: string) => void; onClose: () => void; registerCloseHandler: (handler: () => void) => void }) {
   const [editing, setEditing] = useState<AircraftLogbookEvent | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [type, setType] = useState<AircraftLogbookEventType>("flight");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [comment, setComment] = useState("");
@@ -566,55 +567,62 @@ function AircraftLogbook({ aircraftId, events, busy, onSave, onClose, registerCl
   function startNew() {
     const nextDate = new Date().toISOString().slice(0, 10);
     setEditing(null); setType("flight"); setDate(nextDate); setTaskStatus("todo");
-    setComment(""); setFlightCount(""); setSavedDraft({ type: "flight", date: nextDate, comment: "", flightCount: "", taskStatus: "todo" });
+    setComment(""); setFlightCount(""); setSavedDraft({ type: "flight", date: nextDate, comment: "", flightCount: "", taskStatus: "todo" }); setFormOpen(true);
   }
   function startEdit(event: AircraftLogbookEvent) {
     setEditing(event); setType(event.type); setDate(event.date);
     const nextDraft = { type: event.type, date: event.date, comment: event.comment ?? "", flightCount: event.flightCount === undefined ? "" : String(event.flightCount), taskStatus: event.taskStatus ?? "todo" };
-    setComment(nextDraft.comment); setFlightCount(nextDraft.flightCount); setTaskStatus(nextDraft.taskStatus); setSavedDraft(nextDraft);
+    setComment(nextDraft.comment); setFlightCount(nextDraft.flightCount); setTaskStatus(nextDraft.taskStatus); setSavedDraft(nextDraft); setFormOpen(true);
   }
   const hasUnsavedChanges = type !== savedDraft.type || date !== savedDraft.date || comment !== savedDraft.comment || flightCount !== savedDraft.flightCount || taskStatus !== savedDraft.taskStatus;
   function requestClose() {
-    if (hasUnsavedChanges && !window.confirm("Les modifications de l’événement ne sont pas enregistrées. Fermer le journal et les abandonner ?")) return;
+    if (formOpen && hasUnsavedChanges && !window.confirm("Les modifications de l’entrée ne sont pas enregistrées. Fermer le journal et les abandonner ?")) return;
     onClose();
   }
-  useEffect(() => { registerCloseHandler(requestClose); }, [hasUnsavedChanges, savedDraft, type, date, comment, flightCount, taskStatus]);
+  useEffect(() => { registerCloseHandler(requestClose); }, [formOpen, hasUnsavedChanges, savedDraft, type, date, comment, flightCount, taskStatus]);
   function submit(event: FormEvent) {
     event.preventDefault();
     const count = flightCount.trim() === "" ? undefined : Number(flightCount);
     onSave({ id: editing?.id ?? crypto.randomUUID(), aircraftId, type, date, ...(comment.trim() ? { comment: comment.trim() } : {}), ...(count === undefined || type !== "flight" ? {} : { flightCount: count }), ...(type === "task" ? { taskStatus } : {}) });
-    startNew();
+    setEditing(null); setFormOpen(false);
+  }
+  function cancelForm() {
+    if (hasUnsavedChanges && !window.confirm("Abandonner les modifications en cours ?")) return;
+    setEditing(null); setFormOpen(false);
+  }
+  function removeEvent(event: AircraftLogbookEvent) {
+    if (window.confirm(`Supprimer cette entrée « ${logbookEventLabels[event.type]} » ?`)) onDelete(event.id);
   }
   return <section className="aircraft-logbook">
-    <div className="logbook-heading"><h3>Journal de bord</h3><span>{events.length} entrée(s)</span></div>
-    <p className="field-hint">Mémoire personnelle facultative — indépendante des mouvements de stock et des états de l’aéronef.</p>
-    {events.length ? <ol className="logbook-list">{events.map((event) => <li key={event.id}>
+    <div className="logbook-heading"><div><h3>Journal de bord</h3><span>{events.length} entrée(s)</span></div><button type="button" className="primary" disabled={busy} onClick={startNew}>＋ Ajouter une entrée</button></div>
+    <p className="field-hint">Événements, notes et tâches de cet aéronef. L’historique des mouvements de stock reste dans la vue Historique.</p>
+    {events.length ? <ol className="logbook-list">{[...events].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)).map((event) => <li key={event.id}>
       <div className="logbook-event"><time>{new Date(event.date + "T12:00:00").toLocaleDateString("fr-FR")}</time><strong>{logbookEventLabels[event.type]}</strong>
         {event.flightCount !== undefined && <span>{event.flightCount} vol(s)</span>}{event.type === "task" && <span className={"logbook-task-status " + (event.taskStatus ?? "todo")}>{event.taskStatus === "done" ? "Terminée" : "À faire"}</span>}
         {event.comment && <p>{event.comment}</p>}
       </div>
-      <div className="logbook-entry-actions">{event.type === "task" && <button type="button" className="text-button" disabled={busy} onClick={() => onSave({ ...event, taskStatus: event.taskStatus === "done" ? "todo" : "done" })}>{event.taskStatus === "done" ? "Rouvrir" : "Terminer"}</button>}<button type="button" className="text-button" disabled={busy} onClick={() => startEdit(event)}>Modifier</button></div>
-    </li>)}</ol> : <p className="muted">Aucun événement enregistré. L’avion reste parfaitement utilisable sans journal.</p>}
-    <form className="logbook-form" onSubmit={submit}>
-      <strong>{editing ? "Modifier l’entrée" : "Ajouter au journal"}</strong>
-      <div className="form-row logbook-type-date-row"><label>Type<select value={type} onChange={(e) => setType(e.target.value as AircraftLogbookEventType)}>{Object.entries(logbookEventLabels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="logbook-date-field"><input aria-label="Date" type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></label></div>
+      <div className="logbook-entry-actions">{event.type === "task" && <button type="button" className="text-button" disabled={busy} onClick={() => onSave({ ...event, taskStatus: event.taskStatus === "done" ? "todo" : "done" })}>{event.taskStatus === "done" ? "Rouvrir" : "Terminer"}</button>}<button type="button" className="text-button" disabled={busy} onClick={() => startEdit(event)}>Modifier</button><button type="button" className="text-button logbook-delete" disabled={busy} onClick={() => removeEvent(event)}>Supprimer</button></div>
+    </li>)}</ol> : <p className="muted">Aucune entrée. Ajoutez un événement, une note ou une tâche pour commencer le suivi.</p>}
+    {formOpen && <form className="logbook-form" onSubmit={submit}>
+      <strong>{editing ? "Modifier l’entrée" : type === "note" ? "Nouvelle note" : type === "task" ? "Nouvelle tâche" : "Nouvel événement"}</strong>
+      <div className="form-row logbook-type-date-row"><label>Type<select value={type} onChange={(e) => setType(e.target.value as AircraftLogbookEventType)}><optgroup label="Événement">{Object.entries(logbookEventLabels).filter(([value]) => value !== "note" && value !== "task").map(([value,label]) => <option key={value} value={value}>{label}</option>)}</optgroup><option value="note">Note</option><option value="task">Tâche</option></select></label><label className="logbook-date-field"><input aria-label="Date" type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></label></div>
       {type === "task" && <label>État<select value={taskStatus} onChange={(e) => setTaskStatus(e.target.value as "todo" | "done")}><option value="todo">À faire</option><option value="done">Terminée</option></select></label>}
       {type === "flight" && <label>Nombre de vols (facultatif)<input type="number" min="0" step="1" value={flightCount} onChange={(e) => setFlightCount(e.target.value)} placeholder="Ex. 3" /></label>}
-      <label>Commentaire (facultatif)<textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder={type === "note" ? "Note libre…" : type === "task" ? "Ex. Vérifier la chape à boule de la profondeur…" : "Conditions, travaux, remarques…"} /></label>
-      <div className="modal-actions">{editing && <button type="button" className="secondary" disabled={busy} onClick={startNew}>Annuler la modification</button>}<button className="primary" disabled={busy || !date || (flightCount.trim() !== "" && (!Number.isInteger(Number(flightCount)) || Number(flightCount) < 0))}>{editing ? "Enregistrer" : "Ajouter au journal"}</button></div>
-    </form>
+      <label>{type === "note" ? "Note" : type === "task" ? "Description de la tâche" : "Commentaire (facultatif)"}<textarea required={type === "note" || type === "task"} value={comment} onChange={(e) => setComment(e.target.value)} placeholder={type === "note" ? "Saisir une note…" : type === "task" ? "Ex. Vérifier la chape à boule de la profondeur…" : "Conditions, travaux, remarques…"} /></label>
+      <div className="modal-actions"><button type="button" className="secondary" disabled={busy} onClick={cancelForm}>Annuler</button><button className="primary" disabled={busy || !date || ((type === "note" || type === "task") && !comment.trim()) || (flightCount.trim() !== "" && (!Number.isInteger(Number(flightCount)) || Number(flightCount) < 0))}>{editing ? "Enregistrer" : "Ajouter"}</button></div>
+    </form>}
     <div className="modal-actions logbook-close-actions"><button type="button" className="secondary" disabled={busy} onClick={requestClose}>Fermer</button></div>
   </section>;
 }
 
-function AircraftLogbookModal({ aircraft, events, busy, error, onClose, onSave }: { aircraft: Aircraft; events: AircraftLogbookEvent[]; busy: boolean; error: string; onClose: () => void; onSave: (event: AircraftLogbookEvent) => void }) {
+function AircraftLogbookModal({ aircraft, events, busy, error, onClose, onSave, onDelete }: { aircraft: Aircraft; events: AircraftLogbookEvent[]; busy: boolean; error: string; onClose: () => void; onSave: (event: AircraftLogbookEvent) => void; onDelete: (eventId: string) => void }) {
   const closeHandler = useRef(onClose);
   useEffect(() => {
     const firstField = document.querySelector<HTMLInputElement>(".logbook-form input");
     firstField?.focus();
   }, []);
   return <Modal title={`Journal de bord — ${aircraft.name}`} onClose={() => closeHandler.current()} error={error}>
-    <AircraftLogbook aircraftId={aircraft.id} events={events} busy={busy} onSave={onSave} onClose={onClose} registerCloseHandler={(handler) => { closeHandler.current = handler; }} />
+    <AircraftLogbook aircraftId={aircraft.id} events={events} busy={busy} onSave={onSave} onDelete={onDelete} onClose={onClose} registerCloseHandler={(handler) => { closeHandler.current = handler; }} />
   </Modal>;
 }
 
