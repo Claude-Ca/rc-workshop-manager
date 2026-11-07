@@ -310,7 +310,7 @@ function App() {
           <button className={section === "aircraft" ? "nav-item active" : "nav-item"} onClick={() => setSection("aircraft")}><WorkshopIcon name="fleet" /> <span>Mes avions</span><b>{snapshot.aircraft.length}</b></button>
           <button className={section === "projects" ? "nav-item active" : "nav-item"} onClick={() => setSection("projects")}><WorkshopIcon name="projects" /> <span>Projets</span><b>{snapshot.projects.length}</b></button>
           <button className={section === "movements" ? "nav-item active" : "nav-item"} onClick={() => setSection("movements")}><WorkshopIcon name="movements" /> <span>Mouvements</span></button>
-          <button className={section === "admin" || section === "reset" || section === "export" ? "nav-item active" : "nav-item"} onClick={() => setSection("admin")}><WorkshopIcon name="admin" /> <span>Administration</span></button>
+          <button className={section === "admin" || section === "manual" || section === "reset" || section === "export" ? "nav-item active" : "nav-item"} onClick={() => setSection("admin")}><WorkshopIcon name="admin" /> <span>Administration</span></button>
         </nav>
         <footer className="app-footer"><span>RC Workshop Manager · v0.1.0</span><span>Guide utilisateur · Administration</span></footer>
       </aside>
