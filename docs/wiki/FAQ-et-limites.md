@@ -30,4 +30,4 @@ Aucun parcours d'annulation ou de réouverture après clôture n'est exposé dan
 - Le journal est une mémoire facultative et non un document réglementaire.
 - Les données et photos sont locales à l'installation.
 - Le registre multi-inventaires est séparé de chaque fichier SQLite exporté.
-- Le Wiki GitHub n'est pas publié par cette PR; les pages préparées sont versionnées sous docs/wiki/.
+- Le manuel se consulte dans l'application sous Administration → Manuel utilisateur; son contenu Markdown est versionné sous docs/wiki/.
