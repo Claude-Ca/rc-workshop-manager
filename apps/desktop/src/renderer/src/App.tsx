@@ -22,8 +22,9 @@ import { AircraftTypeIcon } from "./AircraftTypeIcon.js";
 import { WorkshopIcon, type ComponentIconName } from "./WorkshopIcon.js";
 import appIcon from "./assets/brand/icone.png";
 import welcomeAircraft from "./assets/brand/welcome-aircraft.png";
+import { UserManual } from "./UserManual.js";
 
-type Section = "dashboard" | "inventory" | "aircraft" | "projects" | "movements" | "export" | "admin" | "reset";
+type Section = "dashboard" | "inventory" | "aircraft" | "projects" | "movements" | "export" | "admin" | "manual" | "reset";
 type AssignmentTarget = { kind: "aircraft" | "project"; id: string };
 const labels: Record<ComponentCategory, string> = {
   motor: "Motorisation", esc: "Variateurs ESC", radio: "Radio RX / TX", servo: "Servos",
@@ -311,10 +312,10 @@ function App() {
           <button className={section === "movements" ? "nav-item active" : "nav-item"} onClick={() => setSection("movements")}><WorkshopIcon name="movements" /> <span>Mouvements</span></button>
           <button className={section === "admin" || section === "reset" || section === "export" ? "nav-item active" : "nav-item"} onClick={() => setSection("admin")}><WorkshopIcon name="admin" /> <span>Administration</span></button>
         </nav>
-        <footer className="app-footer"><span>RC Workshop Manager · v0.1.0</span><a href="https://github.com/Claude-Ca/rc-workshop-manager/wiki" target="_blank" rel="noreferrer">Wiki utilisateur ↗</a></footer>
+        <footer className="app-footer"><span>RC Workshop Manager · v0.1.0</span><span>Guide utilisateur · Administration</span></footer>
       </aside>
       <main className="main">
-        <header className="topbar"><div><span className="eyebrow">RC WORKSHOP MANAGER</span><h1>{section === "dashboard" ? "Vue d'ensemble" : section === "inventory" ? "Inventaire" : section === "aircraft" ? "Ma flotte" : section === "projects" ? "Mes projets" : section === "movements" ? "Historique des mouvements" : section === "export" ? "Exporter l’inventaire" : section === "admin" ? "Administration" : "Réinitialiser l’inventaire"}</h1></div><div className="top-actions"><div className="active-inventory-chip" title="Base d’inventaire actuellement ouverte"><span className="active-inventory-icon">▣</span><span><small>BASE ACTIVE</small><strong>{inventoryList?.items.find((entry) => entry.active)?.name ?? "Chargement…"}</strong></span></div><span className="local-chip"><span className="status-dot" /> Hors ligne · SQLite local</span></div></header>
+        <header className="topbar"><div><span className="eyebrow">RC WORKSHOP MANAGER</span><h1>{section === "dashboard" ? "Vue d'ensemble" : section === "inventory" ? "Inventaire" : section === "aircraft" ? "Ma flotte" : section === "projects" ? "Mes projets" : section === "movements" ? "Historique des mouvements" : section === "export" ? "Exporter l’inventaire" : section === "admin" ? "Administration" : section === "manual" ? "Manuel utilisateur" : "Réinitialiser l’inventaire"}</h1></div><div className="top-actions"><div className="active-inventory-chip" title="Base d’inventaire actuellement ouverte"><span className="active-inventory-icon">▣</span><span><small>BASE ACTIVE</small><strong>{inventoryList?.items.find((entry) => entry.active)?.name ?? "Chargement…"}</strong></span></div><span className="local-chip"><span className="status-dot" /> Hors ligne · SQLite local</span></div></header>
         {error && <div className="error-banner">{error}<button onClick={() => setError("")}>×</button></div>}{notice && <div className="success-banner">{notice}<button onClick={() => setNotice("")}>×</button></div>}
         {section === "dashboard" && <section className="content">
           <div className="welcome welcome-workshop"><img className="welcome-aircraft" src={welcomeAircraft} alt="" /><div className="welcome-copy"><span className="eyebrow">TON ATELIER, EN UN COUP D'ŒIL</span><h2>Bienvenue dans ton atelier</h2><p>Gère tes aéronefs, ton inventaire et ta passion.</p></div></div>
@@ -354,9 +355,11 @@ function App() {
           <div className="admin-card"><div><h3>Gérer les bases d’inventaire</h3><p>Créer une nouvelle base, ouvrir une base existante ou importer une base SQLite. Chaque inventaire reste indépendant.</p></div><button className="primary" disabled={busy} onClick={() => { setError(""); setShowInventoryManager(true); }}>Gérer les inventaires</button></div>
           <div className="admin-card"><div><h3>Maintenance de la base SQLite</h3><p>Compacter la base active pour récupérer l’espace inutilisé après des suppressions ou des opérations de maintenance.</p></div><button className="subtle-button" disabled={busy} onClick={() => void compactActiveDatabase()}>Compacter la base</button></div>
           <div className="admin-card"><div><h3>Exporter l’inventaire</h3><p>Créer une sauvegarde SQLite complète ou exporter en CSV l’inventaire entier ou les catégories choisies.</p></div><button className="subtle-button" disabled={busy} onClick={() => setSection("export")}>Accéder aux exports</button></div>
-          <div className="admin-card"><div><h3>Réinitialiser l’inventaire</h3><p>Efface le catalogue, les exemplaires, les quantités, les avions, les projets et l’historique de la base active. Une sauvegarde SQLite sera créée avant l’opération.</p></div><button className="danger-button" disabled={busy} onClick={() => setSection("reset")}>Accéder à la réinitialisation</button></div>
+          <div className="admin-card"><div><h3>Manuel utilisateur</h3><p>Parcourir le guide de l’application : inventaire, flotte, batteries, sauvegardes et autres fonctions.</p></div><button className="subtle-button" onClick={() => setSection("manual")}>Ouvrir le manuel</button></div>
+           <div className="admin-card"><div><h3>Réinitialiser l’inventaire</h3><p>Efface le catalogue, les exemplaires, les quantités, les avions, les projets et l’historique de la base active. Une sauvegarde SQLite sera créée avant l’opération.</p></div><button className="danger-button" disabled={busy} onClick={() => setSection("reset")}>Accéder à la réinitialisation</button></div>
         </section>}
-        {section === "reset" && <section className="content admin-page">
+        {section === "manual" && <UserManual />}
+         {section === "reset" && <section className="content admin-page">
           <div className="export-intro"><span className="eyebrow">ACTION DESTRUCTIVE</span><h2>Réinitialiser l’inventaire actif</h2><p>Cette opération effacera toutes les données de <strong>{inventoryList?.items.find((entry) => entry.active)?.name ?? "la base active"}</strong>. Les autres bases resteront intactes. Une copie SQLite sera sauvegardée automatiquement avant la remise à zéro.</p></div>
           <div className="admin-card reset-card"><div><h3>Contenu supprimé de la base active</h3><p>Références, exemplaires, fournitures et quantités, avions, projets et mouvements.</p></div><button className="danger-button" disabled={busy} onClick={() => { setError(""); setShowResetConfirmation(true); }}>Réinitialiser l’inventaire…</button></div>
         </section>}
