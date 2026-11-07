@@ -15,7 +15,9 @@ Ce plan complète le [plan de développement V1](plan-de-developpement.md). Les 
 - PR #18 — ergonomie de l'inventaire et création des avions — fusionnée dans `develop`.
 - PR #19 — typologie, états, favoris et photos d'aéronefs — fusionnée dans `develop`.
 - PR #20 — journal de bord facultatif des aéronefs — fusionnée dans `develop` (commit `7557eeb`).
-- PR #22 — vente et retrait définitif des aéronefs — fusionnée dans `develop`.\n- PR #23 — refonte de Ma Flotte — fusionnée dans `develop`.\n- PR #24 — première mouture de l'identité visuelle, icônes, thèmes et vue liste inventaire — fusionnée dans `develop`.
+- PR #22 — vente et retrait définitif des aéronefs — fusionnée dans `develop`.
+- PR #23 — refonte de Ma Flotte — fusionnée dans `develop`.
+- PR #24 — première mouture de l'identité visuelle, icônes, thèmes et vue liste inventaire — fusionnée dans `develop`.
 - Les caractéristiques facultatives de batterie (connecteur, taux de décharge, dimensions, poids) sont portées par la référence catalogue ; les compatibilités restent portées par les exemplaires et ne sont pas des affectations.
 
 ## Lots à réaliser
