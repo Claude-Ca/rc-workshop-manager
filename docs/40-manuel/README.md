@@ -1,5 +1,6 @@
 # Manuel
 
+- [Guide utilisateur](utilisateur.md)
 - [Guide développeur](developpement.md)
 
 ## Guide utilisateur

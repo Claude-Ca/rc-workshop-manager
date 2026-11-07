@@ -107,6 +107,7 @@
 
 .aircraft-logbook { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 8px; }
 .logbook-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.logbook-heading>div{display:flex;align-items:baseline;gap:12px}
 .logbook-heading h3 { margin: 0; }
 .logbook-heading span { color: var(--muted); font-size: 12px; }
 .logbook-list { list-style: none; padding: 0; margin: 8px 0 16px; display: grid; gap: 8px; }
@@ -133,6 +134,48 @@
 .fleet-controls-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.fleet-favorites-toggle{height:34px;box-sizing:border-box;padding:0 13px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--muted);font-size:11px;font-weight:600;white-space:nowrap}.fleet-grouping select{height:34px}.fleet-favorites-toggle.active{background:#293b4f;border-color:#638bb4;color:#c8e2ff}.fleet-reset-button{height:40px;white-space:nowrap}.logbook-close-actions{justify-content:flex-end;margin-top:12px}
 @media(max-width:900px){.fleet-row{grid-template-columns:1fr auto;gap:10px}.fleet-summary{grid-column:1}.aircraft-detail .detail-columns{grid-template-columns:1fr}.fleet-toolbar .result-count{margin-left:auto}}
 @media(max-width:560px){.fleet-row{grid-template-columns:1fr auto}.fleet-toolbar>select{flex:1;max-width:none}.fleet-grouping{width:auto;justify-content:flex-start}.fleet-controls-row{width:100%;justify-content:flex-start}.fleet-reset-button{flex:1}.aircraft-detail>.detail-header{align-items:flex-start;flex-wrap:wrap}.aircraft-detail .detail-actions{width:100%}}
+
+.aircraft-detail-actions{display:grid;grid-template-columns:1fr;justify-items:stretch;gap:8px;min-width:226px}
+.aircraft-detail-actions>div{display:flex;justify-content:flex-end;gap:8px}
+.aircraft-detail-actions>button{justify-self:end}
+.logbook-type-date-row{align-items:end!important}
+.logbook-date-field{align-self:end}
+.logbook-date-field input{height:38px}
+.logbook-form textarea{min-height:76px;resize:vertical}
+.logbook-task-status{font-size:11px;color:var(--muted)}
+.logbook-task-status.done{color:#8de0b3}
+.logbook-entry-actions{display:flex;align-items:flex-start;gap:6px;flex:none;flex-wrap:wrap}
+.aircraft-subpage{display:grid;gap:14px;min-width:0;width:100%}
+.aircraft-subpage-heading{margin:4px 0 8px}
+.aircraft-subpage-heading h2{margin:6px 0;font:800 22px Manrope}
+.aircraft-subpage-heading p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.aircraft-history-page{overflow-x:hidden}
+.aircraft-movement-history{list-style:none;padding:0;margin:0;display:grid;width:100%;min-width:0;max-height:none;overflow-x:hidden;overflow-y:visible}
+.aircraft-movement-history li{display:grid;grid-template-columns:minmax(110px,.7fr) minmax(130px,.9fr) minmax(0,2fr);align-items:baseline;gap:8px 14px;padding:13px 10px;border-bottom:1px solid var(--line);min-width:0}
+.aircraft-movement-history time,.aircraft-movement-history span{font-size:11px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.aircraft-movement-history strong{font-size:12px}
+.aircraft-movement-history p{grid-column:2/-1;margin:0;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted)}
+.logbook-heading{margin-bottom:10px}
+.logbook-heading .primary{padding:9px 12px}
+.logbook-delete{color:#e89b9b}
+.logbook-delete:hover{color:#ffc3c3}
+.aircraft-logbook-page .aircraft-logbook{border-top:0;padding-top:0;margin-top:0}
+.logbook-form{margin-top:14px;width:100%;max-width:900px}
+.logbook-form>strong{font-size:14px;color:inherit}
+.logbook-form>label,.logbook-form .form-row>label{display:grid;min-width:0;gap:7px;font-size:11px;font-weight:600;color:var(--muted)}
+.logbook-form>label{width:100%}
+.logbook-form .form-row{align-items:end;gap:14px}
+.logbook-form input,.logbook-form select,.logbook-form textarea{width:100%;min-width:0}
+.logbook-form>label select,.logbook-form>label input[type="number"]{max-width:260px}
+.logbook-form textarea{min-height:118px;padding:11px 12px;line-height:1.5}
+.logbook-form .logbook-date-field{align-self:end}
+.logbook-form .modal-actions{margin-top:4px}
+.logbook-list li{align-items:center}
+.logbook-event{gap:5px}
+.logbook-event strong{font-size:12px}
+.logbook-event p{font-size:12px;line-height:1.5;color:inherit}
+@media(max-width:760px){.aircraft-movement-history li{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}.aircraft-movement-history li>span{grid-column:1/-1}.aircraft-movement-history p{grid-column:1/-1}}
+@media(max-width:640px){.aircraft-movement-history li{grid-template-columns:1fr}.aircraft-movement-history p{grid-column:1}.logbook-heading{align-items:flex-start}.logbook-heading>div{display:grid;gap:4px}.aircraft-logbook-page .logbook-heading{flex-wrap:wrap}}
 
 .reference-photo>.reference-type-icon{width:78px;height:78px;display:grid;place-items:center;opacity:1;border-radius:19px;background:linear-gradient(145deg,#304a61,#16283d);border:1px solid #4e91c5;box-shadow:inset 0 1px 0 #b3eeff55,0 8px 22px #06101f88;color:#b5efff}
 .reference-type-icon svg{display:block;max-width:68px;max-height:58px;filter:drop-shadow(0 2px 5px #29bdeb66)}
